@@ -1,17 +1,12 @@
-import { useConvexMutation } from "@convex-dev/react-query";
+import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@omi/ui/dropdown-menu";
+import { ContextMenu } from "@omi/ui/context-menu";
 import { toastManager } from "@omi/ui/toast";
-import { RiDeleteBinFill, RiMoreFill } from "@remixicon/react";
-import { useMutation } from "@tanstack/react-query";
+import { RiDeleteBinFill, RiPushpinFill, RiUnpinFill } from "@remixicon/react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
 import { type Ref, useCallback } from "react";
@@ -72,6 +67,17 @@ export function CollectionRow({
     },
   });
 
+  const { mutate: togglePin } = useMutation({
+    mutationFn: useConvexMutation(api.collection.mutations.togglePin),
+  });
+
+  const { data: pinnedCollections } = useQuery(
+    convexQuery(api.collection.queries.listPinned, { workspaceId })
+  );
+  const isPinned = (pinnedCollections ?? []).some(
+    (c) => c._id === collection._id
+  );
+
   const dragData: DragItemData = {
     type: "collection",
     collectionId: collection._id,
@@ -107,61 +113,67 @@ export function CollectionRow({
     });
 
   return (
-    <div
-      className={cn(
-        "group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component",
-        isDragging && "opacity-50",
-        isOver && "bg-ui-bg-subtle-hover ring-2 ring-ui-fg-interactive"
-      )}
-      ref={mergedRef as Ref<HTMLDivElement>}
-      {...listeners}
-      {...attributes}
-    >
-      <Link
-        className="absolute inset-0 z-10 rounded-lg"
-        params={{ workspaceId, collectionId: collection._id }}
-        preload="intent"
-        tabIndex={-1}
-        to="/workspace/$workspaceId/library/collection/$collectionId"
-      />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
-        <CollectionIcon
-          icon={collection.icon ?? undefined}
-          iconColor={collection.iconColor ?? undefined}
-          size="sm"
+    <ContextMenu>
+      <ContextMenu.Trigger
+        render={
+          <div
+            className={cn(
+              "group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component",
+              isDragging && "opacity-50",
+              isOver && "bg-ui-bg-subtle-hover ring-2 ring-ui-fg-interactive"
+            )}
+            ref={mergedRef as Ref<HTMLDivElement>}
+            {...listeners}
+            {...attributes}
+          />
+        }
+      >
+        <Link
+          className="absolute inset-0 z-10 rounded-lg"
+          params={{ workspaceId, collectionId: collection._id }}
+          preload="intent"
+          tabIndex={-1}
+          to="/workspace/$workspaceId/library/collection/$collectionId"
         />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <EditableText
-          autoEdit={autoEdit}
-          className="font-medium text-sm text-ui-fg-base"
-          onCancel={onEdited}
-          onClick={handleNavigate}
-          onSave={(name) => {
-            rename({ workspaceId, collectionId: collection._id, name });
-            onEdited?.();
-          }}
-          value={collection.name}
-        />
-      </div>
-      <div className="relative z-20 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-            <RiMoreFill className="h-3.5 w-3.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={4}>
-            <DropdownMenuItem
-              className="text-ui-fg-error"
-              onClick={() =>
-                remove({ workspaceId, collectionId: collection._id })
-              }
-            >
-              <RiDeleteBinFill className="h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+          <CollectionIcon
+            icon={collection.icon ?? undefined}
+            iconColor={collection.iconColor ?? undefined}
+            size="sm"
+          />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <EditableText
+            autoEdit={autoEdit}
+            className="font-medium text-sm text-ui-fg-base"
+            onCancel={onEdited}
+            onClick={handleNavigate}
+            onSave={(name) => {
+              rename({ workspaceId, collectionId: collection._id, name });
+              onEdited?.();
+            }}
+            value={collection.name}
+          />
+        </div>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content className="z-[110]!">
+        <ContextMenu.Item
+          onClick={() =>
+            togglePin({ workspaceId, collectionId: collection._id })
+          }
+        >
+          {isPinned ? <RiUnpinFill /> : <RiPushpinFill />}
+          {isPinned ? "Unpin" : "Pin"}
+        </ContextMenu.Item>
+        <ContextMenu.Separator />
+        <ContextMenu.Item
+          className="text-ui-fg-error"
+          onClick={() => remove({ workspaceId, collectionId: collection._id })}
+        >
+          <RiDeleteBinFill className="text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+          Delete
+        </ContextMenu.Item>
+      </ContextMenu.Content>
+    </ContextMenu>
   );
 }

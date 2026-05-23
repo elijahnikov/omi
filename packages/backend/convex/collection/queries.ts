@@ -75,3 +75,27 @@ export const listAll = workspaceQuery({
       .collect();
   },
 });
+
+export const listPinned = workspaceQuery({
+  args: {},
+  handler: async (ctx) => {
+    const pins = await ctx.db
+      .query("userCollectionPin")
+      .withIndex("by_user_workspace", (q) =>
+        q.eq("userId", ctx.user._id).eq("workspaceId", ctx.workspace._id)
+      )
+      .collect();
+
+    const collections = await Promise.all(
+      pins.map(async (pin) => {
+        const collection = await ctx.db.get(pin.collectionId);
+        if (!collection || collection.deletedAt) {
+          return null;
+        }
+        return collection;
+      })
+    );
+
+    return collections.filter((c) => c !== null);
+  },
+});

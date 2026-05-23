@@ -336,6 +336,16 @@ export default defineSchema({
     .index("by_user_workspace", ["userId", "workspaceId"])
     .index("by_user_resource", ["userId", "resourceId"]),
 
+  // USER COLLECTION PIN (per-user folder pins)
+  userCollectionPin: defineTable({
+    userId: v.id("user"),
+    collectionId: v.id("collection"),
+    workspaceId: v.id("workspace"),
+    pinnedAt: v.number(),
+  })
+    .index("by_user_workspace", ["userId", "workspaceId"])
+    .index("by_user_collection", ["userId", "collectionId"]),
+
   // CONCEPT (AI-extracted canonical concepts with embeddings for dedup)
   concept: defineTable({
     workspaceId: v.id("workspace"),

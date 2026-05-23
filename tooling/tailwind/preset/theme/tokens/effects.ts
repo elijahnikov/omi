@@ -35,13 +35,13 @@ export const effects = {
     "--borders-base-light":
       "0px -1px 0px 0px rgba(255, 255, 255, 0.05), 0px 0px 0px 1px rgba(255, 255, 255, 0.05), 0px 0px 0px 1px rgba(28, 28, 32, 1)",
     "--borders-base":
-      "0px -1px 0px 0px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(39, 39, 42, 1), 0px 0px 0px 0px rgba(0, 0, 0, 0.24), 0px 0px 0px 0px rgba(0, 0, 0, 0.24)",
+      "0px -1px 0px 0px rgba(255, 255, 255, 0.05), 0px 0px 0px 1px rgba(255, 255, 255, 0.05), 0px 0px 0px 1px rgba(28, 28, 31, 1), 0px 1px 1px 0px rgba(0, 0, 0, 0.32), 0px 0px 0px 0px rgba(0, 0, 0, 0.32)",
     "--elevation-card-hover":
       "0px -1px 0px 0px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(39, 39, 42, 1), 0px 1px 4px 0px rgba(0, 0, 0, 0.48), 0px 2px 8px 0px rgba(0, 0, 0, 0.48)",
     "--elevation-card-rest":
       "0px -1px 0px 0px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(39, 39, 42, 1), 0px 0px 0px 0px rgba(0, 0, 0, 0.32), 0px 0px 0px 0px rgba(0, 0, 0, 0.32)",
     "--buttons-neutral":
-      "0px -1px 0px 0px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(39, 39, 42, 1), 0px 0px 0px 0px rgba(0, 0, 0, 0.24), 0px 0px 0px 0px rgba(0, 0, 0, 0.24)",
+      "0px -1px 0px 0px rgba(255, 255, 255, 0.05), 0px 0px 0px 1px rgba(255, 255, 255, 0.05), 0px 0px 0px 1px rgba(28, 28, 31, 1), 0px 1px 1px 0px rgba(0, 0, 0, 0.32), 0px 0px 0px 0px rgba(0, 0, 0, 0.32)",
     "--elevation-code-block":
       "0px -1px 0px 0px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(255, 255, 255, 0.06), 0px 0px 0px 1px rgba(39, 39, 42, 1), 0px 1px 2px 0px rgba(0, 0, 0, 0.32), 0px 2px 4px 0px rgba(0, 0, 0, 0.32)",
     "--buttons-neutral-focus":

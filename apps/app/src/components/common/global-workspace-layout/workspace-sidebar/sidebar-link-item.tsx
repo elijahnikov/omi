@@ -13,6 +13,7 @@ interface SidebarLinkItemProps {
   icon?: React.ElementType;
   iconNode?: React.ReactNode;
   isActive?: boolean;
+  preload?: "intent" | "render" | "viewport" | false;
   shortcut?: string[];
   sidebarOpen?: boolean;
   title: string;
@@ -26,6 +27,7 @@ function SidebarLinkItem({
   iconNode,
   isActive,
   external,
+  preload = "intent",
   shortcut,
   className,
   sidebarOpen,
@@ -100,7 +102,9 @@ function SidebarLinkItem({
   const button = (
     <Button
       className={buttonClassName}
-      render={<Link preload="intent" preloadDelay={100} search={{}} to={url} />}
+      render={
+        <Link preload={preload} preloadDelay={100} search={{}} to={url} />
+      }
       size="small"
       variant={buttonVariant}
     >
