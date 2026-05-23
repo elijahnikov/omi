@@ -412,8 +412,8 @@ async function upgradeTo(plan: "basic" | "pro", cadence: "monthly" | "yearly") {
   const { data, error } = await authClient.subscription.upgrade({
     plan,
     annual: cadence === "yearly",
-    successUrl: `${window.location.origin}/account?tab=billing&checkout=success`,
-    cancelUrl: `${window.location.origin}/account?tab=billing&checkout=cancel`,
+    successUrl: `${window.location.origin}/settings?tab=billing&checkout=success`,
+    cancelUrl: `${window.location.origin}/settings?tab=billing&checkout=cancel`,
   });
   if (error) {
     return;

@@ -367,7 +367,7 @@ function ConnectionSourceDialog({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                router.navigate({ to: "/account" });
+                router.navigate({ to: "/settings" });
               }}
               variant="omi"
             >

@@ -59,22 +59,54 @@ function middleTruncate(text: string, font: string, maxWidth: number): string {
   return `${start}${ELLIPSIS}${end}`;
 }
 
-export function MiddleTruncate({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) {
+// Truncates a URL pathname while keeping the last segment intact.
+// e.g. "/hub/blog/personal-computer-is-here" → "/…/personal-computer-is-here"
+// If the last segment alone doesn't fit, falls back to a middle-truncate
+// of the segment itself (still prefixed with "/…/").
+function urlPathTruncate(
+  pathname: string,
+  font: string,
+  maxWidth: number
+): string {
+  if (pathname.length === 0 || maxWidth <= 0) {
+    return pathname;
+  }
+  if (measure(pathname, font) <= maxWidth) {
+    return pathname;
+  }
+
+  const lastSlashIdx = pathname.lastIndexOf("/");
+  if (lastSlashIdx <= 0) {
+    return middleTruncate(pathname, font, maxWidth);
+  }
+
+  const lastSegment = pathname.slice(lastSlashIdx + 1);
+  const prefix = `/${ELLIPSIS}/`;
+  const candidate = `${prefix}${lastSegment}`;
+
+  if (measure(candidate, font) <= maxWidth) {
+    return candidate;
+  }
+
+  // Not enough room to keep the full last segment with a /…/ prefix.
+  // Falling back to middle-truncating the whole pathname keeps characters
+  // visible from both ends (e.g. "/hub/bl…r-is-here") instead of degrading
+  // to "/…/…" which tells the user nothing.
+  return middleTruncate(pathname, font, maxWidth);
+}
+
+function useTruncatedText(
+  text: string,
+  truncate: (text: string, font: string, maxWidth: number) => string
+) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [truncated, setTruncated] = useState(text);
+  const [result, setResult] = useState(text);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) {
       return;
     }
-
     const parent = el.parentElement;
     if (!parent) {
       return;
@@ -83,8 +115,7 @@ export function MiddleTruncate({
     const update = () => {
       const style = getComputedStyle(el);
       const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-      const maxWidth = parent.clientWidth;
-      setTruncated(middleTruncate(text, font, maxWidth));
+      setResult(truncate(text, font, parent.clientWidth));
     };
 
     update();
@@ -92,11 +123,37 @@ export function MiddleTruncate({
     const observer = new ResizeObserver(update);
     observer.observe(parent);
     return () => observer.disconnect();
-  }, [text]);
+  }, [text, truncate]);
 
+  return { ref, result };
+}
+
+export function MiddleTruncate({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) {
+  const { ref, result } = useTruncatedText(text, middleTruncate);
   return (
     <span className={className} ref={ref}>
-      {truncated}
+      {result}
+    </span>
+  );
+}
+
+export function URLPathTruncate({
+  pathname,
+  className,
+}: {
+  pathname: string;
+  className?: string;
+}) {
+  const { ref, result } = useTruncatedText(pathname, urlPathTruncate);
+  return (
+    <span className={className} ref={ref}>
+      {result}
     </span>
   );
 }

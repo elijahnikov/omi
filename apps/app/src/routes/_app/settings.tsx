@@ -20,8 +20,8 @@ interface Search {
   tab?: UserSettingsTab;
 }
 
-export const Route = createFileRoute("/_app/account")({
-  component: AccountPage,
+export const Route = createFileRoute("/_app/settings")({
+  component: SettingsPage,
   validateSearch: (search: Record<string, unknown>): Search => {
     const tab = USER_SETTINGS_TABS.includes(search.tab as UserSettingsTab)
       ? (search.tab as UserSettingsTab)
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_app/account")({
   },
 });
 
-function AccountPage() {
+function SettingsPage() {
   const { tab } = Route.useSearch();
   const navigate = Route.useNavigate();
 

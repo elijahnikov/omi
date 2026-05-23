@@ -56,7 +56,7 @@ export function PlanGate({ children, feature, workspaceId }: PlanGateProps) {
       </Text>
       <Button
         onClick={() => {
-          window.location.href = "/account";
+          window.location.href = "/settings";
         }}
         size="small"
       >

@@ -126,7 +126,7 @@ export function ChatArea({
           type: "error",
           title: "You're out of AI actions",
           description:
-            "Upgrade your plan at /account?tab=billing to keep chatting.",
+            "Upgrade your plan at /settings?tab=billing to keep chatting.",
         });
         return;
       }

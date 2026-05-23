@@ -62,14 +62,14 @@ export function SelectionDock({
     <AnimatePresence>
       <motion.div
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-24 left-1/2 z-50 flex h-10 -translate-x-1/2 items-center gap-x-1 rounded-lg border-[0.5px] bg-ui-bg-component p-1.5 pl-1"
+        className="fixed bottom-24 left-1/2 z-50 flex h-10 -translate-x-1/2 items-center gap-x-1 rounded-lg bg-ui-bg-component p-1.5 pl-1 shadow-elevation-flyout"
         exit={{ opacity: 0, y: 8 }}
         initial={{ opacity: 0, y: 8 }}
         key="dock"
         transition={{ type: "spring", stiffness: 500, damping: 35 }}
       >
         <Badge
-          className="mx-1 mr-0 rounded-full px-2 py-0.25"
+          className="mx-1 mr-0 rounded-md px-2 py-0.25"
           variant={"secondary"}
         >
           <Text className="py-0.5 font-medium font-mono text-ui-fg-base text-xs">

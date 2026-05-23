@@ -24,7 +24,7 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as AppAccountRouteImport } from './routes/_app/account'
+import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as WorkspaceWorkspaceWorkspaceIdRouteRouteImport } from './routes/_workspace/workspace/$workspaceId/route'
 import { Route as WorkspaceWorkspaceWorkspaceIdIndexRouteImport } from './routes/_workspace/workspace/$workspaceId/index'
@@ -116,9 +116,9 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
-const AppAccountRoute = AppAccountRouteImport.update({
-  id: '/account',
-  path: '/account',
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -236,7 +236,7 @@ export interface FileRoutesByFullPath {
   '/connect-extension': typeof ConnectExtensionRoute
   '/connect-raycast': typeof ConnectRaycastRoute
   '/onboarding': typeof OnboardingRoute
-  '/account': typeof AppAccountRoute
+  '/settings': typeof AppSettingsRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/verify-email': typeof AuthVerifyEmailRoute
@@ -269,7 +269,7 @@ export interface FileRoutesByTo {
   '/connect-extension': typeof ConnectExtensionRoute
   '/connect-raycast': typeof ConnectRaycastRoute
   '/onboarding': typeof OnboardingRoute
-  '/account': typeof AppAccountRoute
+  '/settings': typeof AppSettingsRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/verify-email': typeof AuthVerifyEmailRoute
@@ -302,7 +302,7 @@ export interface FileRoutesById {
   '/connect-extension': typeof ConnectExtensionRoute
   '/connect-raycast': typeof ConnectRaycastRoute
   '/onboarding': typeof OnboardingRoute
-  '/_app/account': typeof AppAccountRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
@@ -337,7 +337,7 @@ export interface FileRouteTypes {
     | '/connect-extension'
     | '/connect-raycast'
     | '/onboarding'
-    | '/account'
+    | '/settings'
     | '/login'
     | '/register'
     | '/verify-email'
@@ -370,7 +370,7 @@ export interface FileRouteTypes {
     | '/connect-extension'
     | '/connect-raycast'
     | '/onboarding'
-    | '/account'
+    | '/settings'
     | '/login'
     | '/register'
     | '/verify-email'
@@ -402,7 +402,7 @@ export interface FileRouteTypes {
     | '/connect-extension'
     | '/connect-raycast'
     | '/onboarding'
-    | '/_app/account'
+    | '/_app/settings'
     | '/_auth/login'
     | '/_auth/register'
     | '/_auth/verify-email'
@@ -552,11 +552,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/_app/account': {
-      id: '/_app/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AppAccountRouteImport
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/api/auth/$': {
@@ -689,11 +689,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppAccountRoute: typeof AppAccountRoute
+  AppSettingsRoute: typeof AppSettingsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAccountRoute: AppAccountRoute,
+  AppSettingsRoute: AppSettingsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

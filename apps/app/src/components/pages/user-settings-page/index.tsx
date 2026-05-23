@@ -46,7 +46,7 @@ export function UserSettingsPageComponent({
   return (
     <SidebarProvider className="relative bg-ui-bg-subtle!" open>
       <UserSettingsSidebar onTabChange={onTabChange} tab={tab} />
-      <SidebarInset className="relative mx-2 mt-1 rounded-t-2xl shadow-borders-base transition-[background-color,box-shadow] duration-200 md:h-[calc(100vh-12px)]">
+      <SidebarInset className="relative mx-2 mt-1 rounded-t-2xl shadow-borders-base transition-[background-color,box-shadow] duration-200 md:h-[calc(100vh-16px)]">
         <main className="h-full flex-1 overflow-y-auto">
           <Tabs
             className="h-full"

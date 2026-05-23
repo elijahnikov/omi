@@ -79,17 +79,10 @@ function parsePlainTextWithResources(text: string): ReactNode[] {
 }
 
 function preprocessResourceLinks(text: string): string {
-  // Clean up patterns where the model put a resource reference on its own
-  // line followed by stray punctuation on the next line. E.g.:
-  //   "...some text\n\n[[resource:...]]\n."
-  // becomes:
-  //   "...some text [[resource:...]]."
   let cleaned = text.replace(
     /[ \t]*\n\s*(\[\[resource:[^\]]+\]\])\s*\n+([.,;:!?])/g,
     " $1$2"
   );
-  // Also collapse a resource reference that sits alone on its own line
-  // (no trailing punctuation) into the preceding paragraph.
   cleaned = cleaned.replace(
     /([^\n])[ \t]*\n+[ \t]*(\[\[resource:[^\]]+\]\])(?=\s*(?:\n|$))/g,
     "$1 $2"
@@ -134,7 +127,6 @@ const markdownComponents = {
 function Timestamp({ date }: { date: Date }) {
   const [, tick] = useState(0);
 
-  // Re-render every 30s so relative time stays fresh
   useEffect(() => {
     const interval = setInterval(() => tick((n) => n + 1), 30_000);
     return () => clearInterval(interval);
@@ -285,9 +277,9 @@ export function MessageBubble({
       >
         <div
           className={cn(
-            "min-w-0 max-w-full rounded-xl px-3 py-2 text-sm",
+            "min-w-0 max-w-full rounded-lg px-3 py-2 text-sm",
             isUser
-              ? "bg-ui-bg-component-hover dark:bg-ui-bg-component"
+              ? "bg-ui-bg-component-hover shadow-elevation-card-rest dark:bg-ui-bg-component"
               : "bg-transparent"
           )}
         >

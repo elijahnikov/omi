@@ -28,7 +28,7 @@ export function UpgradeNudgeCard() {
           <div className="mt-3 flex items-center gap-2">
             <Button
               onClick={() =>
-                navigate({ to: "/account", search: { tab: "billing" } })
+                navigate({ to: "/settings", search: { tab: "billing" } })
               }
               size="small"
               variant="omi"

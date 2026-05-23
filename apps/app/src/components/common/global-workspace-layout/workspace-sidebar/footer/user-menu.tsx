@@ -197,7 +197,7 @@ export function UserMenu() {
         side="bottom"
         sideOffset={6}
       >
-        <DropdownMenuItem onClick={() => router.navigate({ to: "/account" })}>
+        <DropdownMenuItem onClick={() => router.navigate({ to: "/settings" })}>
           <RiSettings4Fill />
           Settings
         </DropdownMenuItem>

@@ -95,19 +95,24 @@ function DropdownMenuTrigger(
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  children,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         className={cn(
-          "z-50 min-w-52 origin-(--radix-dropdown-menu-content-transform-origin) overflow-y-auto overflow-x-hidden rounded-2xl border bg-ui-bg-component p-1",
+          "relative z-50 flex min-w-52 origin-(--radix-dropdown-menu-content-transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in",
           className
         )}
         sideOffset={sideOffset}
         {...props}
-      />
+      >
+        <div className="max-h-(--radix-dropdown-menu-content-available-height) w-full overflow-y-auto overflow-x-hidden p-1">
+          {children}
+        </div>
+      </DropdownMenuPrimitive.Content>
     </DropdownMenuPrimitive.Portal>
   );
 }
@@ -124,11 +129,11 @@ function DropdownMenuItem({
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        "txt-compact-small relative flex cursor-pointer select-none items-center gap-2 rounded-xl px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base",
-        "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
+        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover [&_svg]:text-ui-fg-subtle focus:[&_svg]:text-ui-fg-base",
+        "active:bg-ui-bg-component-hover",
+        "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled data-[disabled]:[&_svg]:text-ui-fg-disabled",
         "data-[variant=destructive]:text-ui-fg-error data-[variant=destructive]:focus:bg-ui-bg-component-hover",
-        "[&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-subtle focus:[&_svg]:text-ui-fg-base",
         "data-[inset]:pl-8",
         className
       )}
@@ -149,8 +154,9 @@ function DropdownMenuCheckboxItem({
     <DropdownMenuPrimitive.CheckboxItem
       checked={checked}
       className={cn(
-        "txt-compact-small relative flex cursor-pointer select-none items-center gap-2 rounded-xl py-1.5 pr-2 pl-8 font-medium text-ui-fg-subtle outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md py-1.5 pr-2 pl-8 font-medium text-ui-fg-subtle outline-none transition-colors",
+        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover",
+        "active:bg-ui-bg-component-hover",
         "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled",
         className
       )}
@@ -191,7 +197,7 @@ function DropdownMenuSeparator({
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
   return (
     <DropdownMenuPrimitive.Separator
-      className={cn("-mx-1 my-1 h-px bg-ui-fg-muted/10", className)}
+      className={cn("-mx-2 my-1 h-px bg-ui-fg-muted/10", className)}
       {...props}
     />
   );
@@ -214,9 +220,10 @@ function DropdownMenuSubTrigger({
   return (
     <DropdownMenuPrimitive.SubTrigger
       className={cn(
-        "txt-compact-small flex cursor-pointer select-none items-center rounded-xl px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base",
-        "data-[state=open]:bg-ui-bg-component-hover data-[state=open]:text-ui-fg-base",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pr-2 pl-2 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
+        "focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-[state=open]:bg-ui-bg-component-hover data-[state=open]:text-ui-fg-base [&_svg]:text-ui-fg-subtle focus:[&_svg]:text-ui-fg-base",
+        "active:bg-ui-bg-component-hover",
+        "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled data-[disabled]:[&_svg]:text-ui-fg-disabled",
         "data-[inset]:pl-8",
         className
       )}
@@ -224,25 +231,30 @@ function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <RiArrowRightSFill className="ml-auto size-4 opacity-80" />
+      <RiArrowRightSFill className="ml-auto opacity-80" />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }
 
 function DropdownMenuSubContent({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.SubContent
         className={cn(
-          "z-50 min-w-52 origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-2xl border bg-ui-bg-component p-1",
+          "relative z-50 flex min-w-52 origin-(--radix-dropdown-menu-content-transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in",
           className
         )}
         {...props}
-      />
+      >
+        <div className="max-h-(--radix-dropdown-menu-content-available-height) w-full overflow-y-auto overflow-x-hidden p-1">
+          {children}
+        </div>
+      </DropdownMenuPrimitive.SubContent>
     </DropdownMenuPrimitive.Portal>
   );
 }
@@ -267,6 +279,7 @@ function StrandPopoverContent({
   className,
   align = "center",
   sideOffset = 4,
+  children,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
   return (
@@ -274,13 +287,17 @@ function StrandPopoverContent({
       <PopoverPrimitive.Content
         align={align}
         className={cn(
-          "z-50 w-72 overflow-hidden rounded-2xl border bg-ui-bg-component p-1 text-ui-fg-base outline-none",
+          "relative z-50 w-72 origin-(--radix-popover-content-transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding text-ui-fg-base shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in",
           className
         )}
         sideOffset={sideOffset}
         {...props}
-      />
+      >
+        <div className="max-h-(--radix-popover-content-available-height) w-full overflow-y-auto overflow-x-hidden rounded-[inherit] p-1">
+          {children}
+        </div>
+      </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   );
 }
@@ -334,7 +351,7 @@ function SelectContent({
   return (
     <SelectPrimitive.Content
       className={cn(
-        "relative z-50 min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-2xl border bg-ui-bg-component p-1",
+        "relative z-50 min-w-[8rem] origin-(--radix-select-content-transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=open]:animate-in",
         position === "popper" &&
           "data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
@@ -364,8 +381,9 @@ function SelectItem({
   return (
     <SelectPrimitive.Item
       className={cn(
-        "txt-compact-small relative flex w-full cursor-pointer select-none items-center gap-2 rounded-xl py-1.5 pr-8 pl-2 font-medium text-ui-fg-subtle outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base",
+        "txt-compact-small group/menuitem relative flex w-full cursor-pointer select-none items-center gap-2 rounded-md py-1.5 pr-8 pl-2 font-medium text-ui-fg-subtle outline-none transition-colors",
+        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover",
+        "active:bg-ui-bg-component-hover",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}

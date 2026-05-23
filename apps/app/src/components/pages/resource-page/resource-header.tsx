@@ -17,7 +17,10 @@ import { type FC, type SVGProps, useCallback } from "react";
 import { DotGridLoader } from "~/components/common/dot-grid-loader";
 import { EditableText } from "~/components/common/editable-text";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
-import { MiddleTruncate } from "~/components/common/middle-truncate";
+import {
+  MiddleTruncate,
+  URLPathTruncate,
+} from "~/components/common/middle-truncate";
 import { ShortcutTooltipBody } from "~/components/common/shortcut-tooltip";
 import { UserAvatar } from "~/components/common/user-avatar";
 import {
@@ -93,7 +96,7 @@ export function ResourceHeader({ resource }: { resource: GetResourceData }) {
           {isAiProcessing && (
             <motion.div
               animate={{ opacity: 1, scale: 1 }}
-              className="absolute -left-5"
+              className="absolute -left-6"
               exit={{ opacity: 0, scale: 0.5 }}
               initial={{ opacity: 0, scale: 0.5 }}
               transition={{ type: "spring", stiffness: 500, damping: 25 }}
@@ -256,13 +259,13 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
       }
       return (
         <a
-          className="flex min-w-0 max-w-[420px]"
+          className="flex min-w-0 max-w-[420px] shrink"
           href={website.url}
           rel="noopener"
           target="_blank"
         >
           <Badge
-            className="min-w-0 max-w-full text-ui-fg-subtle text-xs"
+            className="min-w-0 max-w-full shrink text-ui-fg-subtle text-xs"
             variant="mono"
           >
             <img
@@ -275,8 +278,8 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
             <span className="shrink-0 font-medium text-ui-fg-base">
               {new URL(website.url).hostname}
             </span>
-            <span className="-ml-1 inline-block min-w-0 flex-1">
-              <MiddleTruncate text={new URL(website.url).pathname} />
+            <span className="-ml-1 min-w-0 flex-1 truncate">
+              <URLPathTruncate pathname={new URL(website.url).pathname} />
             </span>
             <RiArrowRightUpLine className="shrink-0" />
           </Badge>
@@ -289,13 +292,13 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
         return null;
       }
       return (
-        <Badge className="min-w-0 max-w-[460px] text-xs" variant="mono">
+        <Badge className="min-w-0 max-w-[460px] shrink text-xs" variant="mono">
           <FileKindIcon
             className="h-3.5 w-3.5 shrink-0"
             fileName={file.fileName}
             mimeType={file.mimeType}
           />
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 flex-1 truncate">
             <MiddleTruncate text={file.fileName} />
           </span>
         </Badge>

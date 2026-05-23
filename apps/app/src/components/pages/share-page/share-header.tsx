@@ -3,7 +3,10 @@ import { Separator } from "@omi/ui/separator";
 import { RiArrowRightUpLine } from "@remixicon/react";
 import { format } from "date-fns";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
-import { MiddleTruncate } from "~/components/common/middle-truncate";
+import {
+  MiddleTruncate,
+  URLPathTruncate,
+} from "~/components/common/middle-truncate";
 import { UserAvatar } from "~/components/common/user-avatar";
 import type { ShareResourceData } from "./types";
 
@@ -41,13 +44,13 @@ function TypeBadge({ resource }: { resource: ShareResourceData }) {
     const website = resource.website;
     return (
       <a
-        className="flex min-w-0 max-w-[420px]"
+        className="flex min-w-0 max-w-[420px] shrink"
         href={website.url}
         rel="noopener"
         target="_blank"
       >
         <Badge
-          className="min-w-0 max-w-full text-ui-fg-subtle text-xs"
+          className="min-w-0 max-w-full shrink text-ui-fg-subtle text-xs"
           variant="mono"
         >
           {website.favicon && (
@@ -62,8 +65,8 @@ function TypeBadge({ resource }: { resource: ShareResourceData }) {
           <span className="shrink-0 font-medium text-ui-fg-base">
             {website.domain ?? new URL(website.url).hostname}
           </span>
-          <span className="-ml-1 inline-block min-w-0 flex-1">
-            <MiddleTruncate text={new URL(website.url).pathname} />
+          <span className="-ml-1 min-w-0 flex-1 truncate">
+            <URLPathTruncate pathname={new URL(website.url).pathname} />
           </span>
           <RiArrowRightUpLine className="shrink-0" />
         </Badge>
@@ -73,13 +76,13 @@ function TypeBadge({ resource }: { resource: ShareResourceData }) {
   if (resource.type === "file" && resource.file) {
     const file = resource.file;
     return (
-      <Badge className="min-w-0 max-w-[460px] text-xs" variant="mono">
+      <Badge className="min-w-0 max-w-[460px] shrink text-xs" variant="mono">
         <FileKindIcon
           className="h-3.5 w-3.5 shrink-0"
           fileName={file.fileName}
           mimeType={file.mimeType}
         />
-        <span className="min-w-0 flex-1">
+        <span className="min-w-0 flex-1 truncate">
           <MiddleTruncate text={file.fileName} />
         </span>
       </Badge>
