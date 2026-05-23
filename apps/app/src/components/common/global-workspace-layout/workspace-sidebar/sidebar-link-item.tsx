@@ -10,7 +10,8 @@ import { ShortcutTooltipBody } from "~/components/common/shortcut-tooltip";
 interface SidebarLinkItemProps {
   className?: string;
   external?: boolean;
-  icon: React.ElementType;
+  icon?: React.ElementType;
+  iconNode?: React.ReactNode;
   isActive?: boolean;
   shortcut?: string[];
   sidebarOpen?: boolean;
@@ -22,13 +23,22 @@ function SidebarLinkItem({
   url,
   title,
   icon,
+  iconNode,
   isActive,
   external,
   shortcut,
   className,
   sidebarOpen,
 }: SidebarLinkItemProps) {
-  const Icon = icon as React.ComponentType<{ className?: string }>;
+  const Icon = icon as React.ComponentType<{ className?: string }> | undefined;
+
+  const renderedIcon = iconNode ? (
+    <span className="flex size-3.5 shrink-0 items-center justify-center overflow-hidden">
+      {iconNode}
+    </span>
+  ) : Icon ? (
+    <Icon className="size-3.5 shrink-0" />
+  ) : null;
 
   const buttonClassName = cn(
     "group/menu flex h-7 gap-x-2 overflow-hidden rounded-md px-2 text-left font-sans text-[13px] focus-visible:bg-transparent! focus-visible:shadow-borders-interactive-with-active!",
@@ -38,7 +48,7 @@ function SidebarLinkItem({
         )
       : "text-ui-fg-muted/70 transition-colors duration-200 hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base dark:hover:bg-[rgba(255,255,255,0.070)]",
     sidebarOpen
-      ? "w-full items-center justify-start"
+      ? "w-full items-center justify-start pr-3"
       : "items-center! justify-center! w-7.5!",
     className
   );
@@ -64,9 +74,13 @@ function SidebarLinkItem({
             />
           }
         >
-          <Icon className="size-3.5 shrink-0" />
+          {renderedIcon}
           {sidebarOpen && (
-            <Text className={fadeClassName} size={"small"} weight="plus">
+            <Text
+              className={cn("min-w-0 flex-1 truncate", fadeClassName)}
+              size={"small"}
+              weight="plus"
+            >
               {title}
             </Text>
           )}
@@ -90,16 +104,20 @@ function SidebarLinkItem({
       size="small"
       variant={buttonVariant}
     >
-      <Icon className="size-3.5 shrink-0" />
+      {renderedIcon}
       {sidebarOpen && (
-        <Text className={fadeClassName} size={"small"} weight="plus">
+        <Text
+          className={cn("min-w-0 flex-1 truncate", fadeClassName)}
+          size={"small"}
+          weight="plus"
+        >
           {title}
         </Text>
       )}
     </Button>
   );
 
-  if (!shortcut) {
+  if (!(shortcut || !sidebarOpen)) {
     return button;
   }
 

@@ -17,7 +17,6 @@ import {
   RiMoreFill,
   RiPushpinFill,
   RiResetLeftFill,
-  RiStarFill,
   RiStickyNoteFill,
   RiUnpinFill,
 } from "@remixicon/react";
@@ -485,10 +484,6 @@ function RowDropdownMenu({
         <RiMoreFill className="h-3.5 w-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={4}>
-        <DropdownMenuItem>
-          <RiStarFill className="h-4 w-4" />
-          Favorite
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onTogglePin(resource._id)}>
           {isPinned ? (
             <RiUnpinFill className="h-4 w-4" />

@@ -1,3 +1,4 @@
+import { cn } from "@omi/ui";
 import { Heading } from "@omi/ui/heading";
 import { RiArrowRightSFill } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
@@ -5,6 +6,7 @@ import { type ReactNode, useState } from "react";
 
 export function CollapsibleSection({
   title,
+  titleClassName,
   children,
   className,
   secondary,
@@ -13,6 +15,7 @@ export function CollapsibleSection({
   onToggle,
 }: {
   title: string;
+  titleClassName?: string;
   children: ReactNode;
   className?: string;
   secondary?: ReactNode;
@@ -23,6 +26,7 @@ export function CollapsibleSection({
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const isControlled = controlledCollapsed !== undefined;
   const collapsed = isControlled ? controlledCollapsed : internalCollapsed;
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const handleToggle = () => {
     if (onToggle) {
@@ -47,7 +51,7 @@ export function CollapsibleSection({
         >
           <RiArrowRightSFill className="h-3.5 w-3.5 text-ui-fg-muted" />
         </motion.div>
-        <Heading className="text-sm" level="h3">
+        <Heading className={cn("text-sm", titleClassName)} level="h3">
           {title}
         </Heading>
         {secondary}
@@ -58,7 +62,9 @@ export function CollapsibleSection({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             initial={{ height: 0, opacity: 0 }}
-            style={{ overflow: "hidden" }}
+            onAnimationComplete={() => setIsAnimating(false)}
+            onAnimationStart={() => setIsAnimating(true)}
+            style={{ overflow: isAnimating ? "hidden" : "visible" }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
             {children}

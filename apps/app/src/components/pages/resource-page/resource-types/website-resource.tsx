@@ -15,7 +15,12 @@ import { PageContent } from "~/components/common/page-content";
 const NoteEditor = lazy(() => import("./note-editor"));
 
 import { RiFileCodeFill, RiGlobeFill } from "@remixicon/react";
-import { Tweet } from "react-tweet";
+import {
+  EmbeddedTweet,
+  TweetNotFound,
+  TweetSkeleton,
+  useTweet,
+} from "react-tweet";
 import type { GetResourceData } from "~/lib/convex-types";
 import { RelatedResources } from "../related-resources";
 import { ResourceHeader } from "../resource-header";
@@ -33,7 +38,7 @@ function OgImage({ alt, src }: { alt: string; src: string }) {
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: image error fallback
     <img
       alt={alt}
-      className="mx-auto mt-4 aspect-auto h-[400px] w-full rounded-xl object-cover shadow-borders-base ring-0"
+      className="mx-auto mt-4 aspect-auto h-[400px] w-full rounded-xl object-cover ring-0"
       height="auto"
       onError={() => setError(true)}
       src={src}
@@ -109,6 +114,43 @@ export function WebsiteImage({
   );
 }
 
+// react-tweet's enrichTweet throws "entities is not iterable" when the
+// syndication payload is missing one of entities.{hashtags,urls,user_mentions,
+// symbols,media}. Normalize the payload so every expected array exists.
+function normalizeTweet<T>(tweet: T): T {
+  if (!tweet || typeof tweet !== "object") {
+    return tweet;
+  }
+  const t = tweet as Record<string, unknown>;
+  const entities = (t.entities as Record<string, unknown> | undefined) ?? {};
+  t.entities = {
+    ...entities,
+    hashtags: Array.isArray(entities.hashtags) ? entities.hashtags : [],
+    urls: Array.isArray(entities.urls) ? entities.urls : [],
+    user_mentions: Array.isArray(entities.user_mentions)
+      ? entities.user_mentions
+      : [],
+    symbols: Array.isArray(entities.symbols) ? entities.symbols : [],
+    ...(entities.media === undefined ? {} : { media: entities.media }),
+  };
+  if (t.quoted_tweet) {
+    t.quoted_tweet = normalizeTweet(t.quoted_tweet);
+  }
+  return tweet;
+}
+
+function SafeTweet({ id }: { id: string }) {
+  const { data, error, isLoading } = useTweet(id);
+
+  if (isLoading) {
+    return <TweetSkeleton />;
+  }
+  if (error || !data) {
+    return <TweetNotFound error={error} />;
+  }
+  return <EmbeddedTweet tweet={normalizeTweet(data)} />;
+}
+
 export function WebsiteEmbed({
   embedType,
   embedId,
@@ -122,7 +164,7 @@ export function WebsiteEmbed({
     case "tweet":
       return (
         <div className="mt-4 [&_.react-tweet-theme]:mx-auto! [&_.react-tweet-theme]:my-0!">
-          <Tweet id={embedId} />
+          <SafeTweet id={embedId} />
         </div>
       );
     case "youtube":
