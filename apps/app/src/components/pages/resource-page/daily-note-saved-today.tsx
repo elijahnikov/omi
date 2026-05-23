@@ -2,9 +2,9 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Badge } from "@omi/ui/badge";
+import { RiFileFill, RiGlobeFill, RiStickyNoteFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { FileIcon, GlobeIcon, StickyNoteIcon } from "lucide-react";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
 import { getBrowserTimeZone } from "~/lib/format";
 import { CollapsibleSection } from "./collapsible-section";
@@ -54,7 +54,7 @@ function WebsitePreview({ preview }: { preview: PreviewData }) {
   }
   return (
     <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
-      <GlobeIcon className="h-5 w-5 text-ui-fg-muted" />
+      <RiGlobeFill className="h-5 w-5 text-ui-fg-muted" />
     </div>
   );
 }
@@ -85,7 +85,7 @@ function FilePreview({ preview }: { preview: PreviewData }) {
 function NotePreview() {
   return (
     <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
-      <StickyNoteIcon className="h-4 w-4 text-ui-fg-muted" />
+      <RiStickyNoteFill className="h-4 w-4 text-ui-fg-muted" />
     </div>
   );
 }
@@ -107,7 +107,7 @@ function ResourcePreview({
     default:
       return (
         <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
-          <FileIcon className="h-5 w-5 text-ui-fg-muted" />
+          <RiFileFill className="h-5 w-5 text-ui-fg-muted" />
         </div>
       );
   }

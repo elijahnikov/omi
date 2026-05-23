@@ -19,8 +19,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@omi/ui/tooltip";
+import { RiLayoutLeft2Fill } from "@remixicon/react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
 import React, { useCallback, useMemo } from "react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
@@ -276,7 +276,7 @@ const SidebarTrigger = ({
       variant="ghost"
       {...props}
     >
-      <PanelLeft className="size-3.5 shrink-0" />
+      <RiLayoutLeft2Fill className="size-3.5 shrink-0" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

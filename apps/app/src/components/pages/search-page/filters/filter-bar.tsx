@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
-import { ArrowUpDownIcon } from "lucide-react";
+import { RiArrowUpDownFill } from "@remixicon/react";
 import { useState } from "react";
 import {
   type SearchSort,
@@ -63,7 +63,7 @@ export function FilterBar({
             />
           }
         >
-          <ArrowUpDownIcon className="size-3.5 shrink-0" />
+          <RiArrowUpDownFill className="size-3.5 shrink-0" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {SORT_VALUES.map((value) => (

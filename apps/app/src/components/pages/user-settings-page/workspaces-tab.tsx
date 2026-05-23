@@ -24,16 +24,16 @@ import { Input } from "@omi/ui/input";
 import { LoadingButton } from "@omi/ui/loading-button";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
+import {
+  RiAddFill,
+  RiDeleteBinFill,
+  RiExternalLinkFill,
+  RiLogoutBoxFill,
+  RiMoreFill,
+} from "@remixicon/react";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
-import {
-  ExternalLinkIcon,
-  LogOutIcon,
-  MoreHorizontalIcon,
-  PlusIcon,
-  TrashIcon,
-} from "lucide-react";
 import { useState } from "react";
 import { WorkspaceIcon } from "~/components/common/workspace-icon/workspace-icon";
 import { WorkspaceIconSelector } from "~/components/common/workspace-icon/workspace-icon-selector";
@@ -166,7 +166,7 @@ function CreateWorkspaceForm() {
           type="submit"
           variant="omi"
         >
-          <PlusIcon className="size-3 shrink-0" />
+          <RiAddFill className="size-3 shrink-0" />
           Create
         </LoadingButton>
       </form>
@@ -268,11 +268,11 @@ function WorkspaceRow({ workspace }: WorkspaceRowProps) {
             className="flex size-7 items-center justify-center rounded-md hover:bg-ui-bg-subtle-hover"
             render={<button type="button" />}
           >
-            <MoreHorizontalIcon className="size-4 text-ui-fg-muted" />
+            <RiMoreFill className="size-4 text-ui-fg-muted" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={4}>
             <DropdownMenuItem onClick={handleOpen}>
-              <ExternalLinkIcon className="size-4" />
+              <RiExternalLinkFill className="size-4" />
               Open
             </DropdownMenuItem>
             {!isOwner && (
@@ -282,7 +282,7 @@ function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                   className="text-destructive"
                   onClick={() => setConfirmAction("leave")}
                 >
-                  <LogOutIcon className="size-4" />
+                  <RiLogoutBoxFill className="size-4" />
                   Leave workspace
                 </DropdownMenuItem>
               </>
@@ -294,7 +294,7 @@ function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                   className="text-destructive"
                   onClick={() => setConfirmAction("delete")}
                 >
-                  <TrashIcon className="size-4" />
+                  <RiDeleteBinFill className="size-4" />
                   Delete workspace
                 </DropdownMenuItem>
               </>

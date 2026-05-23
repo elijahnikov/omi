@@ -21,7 +21,6 @@
     "@remixicon/react": "catalog:",
     "class-variance-authority": "^0.7.1",
     "date-fns": "^4.1.0",
-    "lucide-react": "^0.563.0",
     "postprocessing": "^6.36.0",
     "react-day-picker": "^9.13.0",
     "recharts": "2.15.4",

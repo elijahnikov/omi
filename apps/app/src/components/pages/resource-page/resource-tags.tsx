@@ -3,9 +3,9 @@ import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Badge } from "@omi/ui/badge";
 import { Skeleton } from "@omi/ui/skeleton";
+import { RiAddFill } from "@remixicon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { PlusIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import type { GetResourceData } from "~/lib/convex-types";
@@ -169,7 +169,7 @@ export function ResourceTags({
                 onClick={() => setIsAdding(true)}
                 type="button"
               >
-                <PlusIcon className="h-3 w-3" />
+                <RiAddFill className="h-3 w-3" />
                 tag
               </button>
             )}

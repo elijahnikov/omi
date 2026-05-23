@@ -30,13 +30,13 @@ import {
   RiAddLine,
   RiCloseFill,
   RiDeleteBin6Line,
+  RiFolderFill,
   RiFolderLine,
   RiPushpinFill,
   RiPushpinLine,
 } from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { FolderIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useMemo, useState } from "react";
 import { useLibrarySelection } from "~/lib/selection/library-selection";
@@ -322,7 +322,7 @@ function MoveButton({
                           {item.icon ? (
                             <span>{item.icon}</span>
                           ) : (
-                            <FolderIcon className="size-3.5 shrink-0 text-ui-fg-muted" />
+                            <RiFolderFill className="size-3.5 shrink-0 text-ui-fg-muted" />
                           )}
                           <Text className="flex-1 truncate text-[13px]">
                             {item.name}

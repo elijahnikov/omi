@@ -11,15 +11,15 @@ import {
 } from "@omi/ui/dropdown-menu";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { RiDownload2Fill } from "@remixicon/react";
+import {
+  RiCloseFill,
+  RiDeleteBinFill,
+  RiDownload2Fill,
+  RiMoreFill,
+  RiSparklingFill,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import {
-  MoreHorizontalIcon,
-  SparklesIcon,
-  TrashIcon,
-  XIcon,
-} from "lucide-react";
 import { resolveJobDisplay } from "./source-meta";
 
 type ImportJob = Doc<"importJob">;
@@ -167,14 +167,14 @@ function JobRow({
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-          <MoreHorizontalIcon className="h-3.5 w-3.5" />
+          <RiMoreFill className="h-3.5 w-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={4}>
           {isActive ? (
             <DropdownMenuItem
               onClick={() => cancel({ workspaceId, jobId: job._id })}
             >
-              <XIcon className="h-4 w-4" />
+              <RiCloseFill className="h-4 w-4" />
               Cancel
             </DropdownMenuItem>
           ) : (
@@ -185,7 +185,7 @@ function JobRow({
                     disabled={enriching}
                     onClick={() => enrich({ workspaceId, jobId: job._id })}
                   >
-                    <SparklesIcon className="h-4 w-4" />
+                    <RiSparklingFill className="h-4 w-4" />
                     Enrich all {job.counts.imported} with AI
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -195,7 +195,7 @@ function JobRow({
                 className="text-ui-fg-error"
                 onClick={() => remove({ workspaceId, jobId: job._id })}
               >
-                <TrashIcon className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+                <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
                 Remove
               </DropdownMenuItem>
             </>

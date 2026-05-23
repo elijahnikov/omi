@@ -4,10 +4,13 @@ import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Badge } from "@omi/ui/badge";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { RiBookShelfLine } from "@remixicon/react";
+import {
+  RiBookShelfLine,
+  RiCloseFill,
+  RiSparklingFill,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { SparklesIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CollapsibleSection } from "~/components/common/collapsible-section";
 import { EmptyState } from "~/components/common/empty-state";
@@ -115,7 +118,7 @@ export function SearchSuggestions({
     <div className="flex flex-col gap-y-10 pt-6">
       {showFallbackBanner ? (
         <div className="rounded-lg border-[0.5px] bg-ui-bg-component px-4 py-3 text-ui-fg-subtle text-xs">
-          <SparklesIcon className="mr-1.5 inline size-3.5 align-text-top" />
+          <RiSparklingFill className="mr-1.5 inline size-3.5 align-text-top" />
           AI-enhanced results unlock once your library finishes processing.
           Title search is active now.
         </div>
@@ -134,7 +137,7 @@ export function SearchSuggestions({
               }}
               type="button"
             >
-              <XIcon className="size-3" />
+              <RiCloseFill className="size-3" />
             </button>
           }
           title="Recent searches"

@@ -4,7 +4,7 @@ import { Autocomplete as AutocompletePrimitive } from "@base-ui/react/autocomple
 import { cn } from "@omi/ui";
 import { Input } from "@omi/ui/input";
 import { ScrollArea } from "@omi/ui/scroll-area";
-import { ChevronsUpDownIcon, XIcon } from "lucide-react";
+import { RiCloseFill, RiExpandVerticalFill } from "@remixicon/react";
 
 const Autocomplete = AutocompletePrimitive.Root;
 
@@ -56,7 +56,7 @@ function AutocompleteInput({
           )}
         >
           <AutocompletePrimitive.Icon data-slot="autocomplete-icon">
-            <ChevronsUpDownIcon />
+            <RiExpandVerticalFill />
           </AutocompletePrimitive.Icon>
         </AutocompleteTrigger>
       )}
@@ -67,7 +67,7 @@ function AutocompleteInput({
             sizeValue === "small" ? "end-0" : "end-0.5"
           )}
         >
-          <XIcon />
+          <RiCloseFill />
         </AutocompleteClear>
       )}
     </div>
@@ -247,7 +247,7 @@ function AutocompleteClear({
       data-slot="autocomplete-clear"
       {...props}
     >
-      <XIcon />
+      <RiCloseFill />
     </AutocompletePrimitive.Clear>
   );
 }

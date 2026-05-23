@@ -3,9 +3,9 @@ import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
 import { Button } from "@omi/ui/button";
+import { RiCheckFill, RiFileCopyFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import type { UIMessage } from "ai";
-import { CheckIcon, CopyIcon } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Streamdown } from "streamdown";
 import { UserAvatar } from "~/components/common/user-avatar";
@@ -168,9 +168,9 @@ function CopyButton({ text }: { text: string }) {
       variant="ghost"
     >
       {copied ? (
-        <CheckIcon className="size-3.5 shrink-0" />
+        <RiCheckFill className="size-3.5 shrink-0" />
       ) : (
-        <CopyIcon className="size-3.5 shrink-0" />
+        <RiFileCopyFill className="size-3.5 shrink-0" />
       )}
     </Button>
   );

@@ -26,7 +26,7 @@ import {
   RiHome2Fill,
   RiSearch2Fill,
   RiSettings5Fill,
-  RiStickyNoteLine,
+  RiStickyNoteFill,
   RiUploadCloud2Line,
 } from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -552,7 +552,7 @@ function CommandResourceIcon({
     return <RiGlobalLine className="size-4 shrink-0 text-ui-fg-muted" />;
   }
   if (type === "note") {
-    return <RiStickyNoteLine className="size-4 shrink-0 text-ui-fg-muted" />;
+    return <RiStickyNoteFill className="size-4 shrink-0 text-ui-fg-muted" />;
   }
   if (type === "file") {
     if (mimeType?.startsWith("image/") && fileUrl) {

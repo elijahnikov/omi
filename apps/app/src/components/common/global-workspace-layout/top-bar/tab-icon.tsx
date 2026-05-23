@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
-import { RiChat1Line, RiStickyNoteLine } from "@remixicon/react";
+import { RiChat1Line, RiStickyNoteFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import { CollectionIcon } from "~/components/common/collection-icon";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
@@ -86,7 +86,7 @@ function ResourceTabIcon({
   }
 
   if (resource.type === "note") {
-    return <RiStickyNoteLine className="size-3.5 text-ui-fg-muted" />;
+    return <RiStickyNoteFill className="size-3.5 text-ui-fg-muted" />;
   }
 
   if (resource.type === "file") {

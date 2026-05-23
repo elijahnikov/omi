@@ -1,5 +1,5 @@
 import { cn } from "@omi/ui";
-import { FolderIcon } from "lucide-react";
+import { RiFolderFill } from "@remixicon/react";
 import { getWorkspaceIcon } from "~/lib/workspace-icons";
 
 const sizeConfig = {
@@ -41,7 +41,7 @@ export function CollectionIcon({
     );
   }
 
-  const IconComponent = icon ? getWorkspaceIcon(icon) : FolderIcon;
+  const IconComponent = icon ? getWorkspaceIcon(icon) : RiFolderFill;
   return (
     <span
       className={cn(

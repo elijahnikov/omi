@@ -8,7 +8,7 @@ import {
   CommandItem,
   CommandList,
 } from "@omi/ui/command";
-import { CheckIcon } from "lucide-react";
+import { RiCheckFill } from "@remixicon/react";
 import { type ReactNode, useMemo, useState } from "react";
 
 export interface MultiSelectItem {
@@ -86,7 +86,7 @@ export function MultiSelectPicker({
                   >
                     <span className="flex size-4 shrink-0 items-center justify-center">
                       {selectedSet.has(item.id) ? (
-                        <CheckIcon className="size-3.5" />
+                        <RiCheckFill className="size-3.5" />
                       ) : null}
                     </span>
                     {item.icon ? (

@@ -17,11 +17,16 @@ import { ScrollArea } from "@omi/ui/scroll-area";
 import { Skeleton } from "@omi/ui/skeleton";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { RiAddLine, RiChatSmile2Fill } from "@remixicon/react";
+import {
+  RiAddLine,
+  RiChatSmile2Fill,
+  RiDeleteBinFill,
+  RiMoreFill,
+  RiPencilFill,
+} from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
-import { MoreHorizontalIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EditableText } from "~/components/common/editable-text";
@@ -233,7 +238,7 @@ function ThreadItem({
               className="flex h-6 w-6 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base"
               onClick={(e) => e.preventDefault()}
             >
-              <MoreHorizontalIcon className="h-3.5 w-3.5" />
+              <RiMoreFill className="h-3.5 w-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem
@@ -243,7 +248,7 @@ function ThreadItem({
                   setIsRenaming(true);
                 }}
               >
-                <PencilIcon className="h-4 w-4" />
+                <RiPencilFill className="h-4 w-4" />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -254,7 +259,7 @@ function ThreadItem({
                   onDelete(thread._id);
                 }}
               >
-                <TrashIcon className="h-4 w-4 text-ui-fg-error!" />
+                <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error!" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

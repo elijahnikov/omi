@@ -1,5 +1,5 @@
 import { Heading } from "@omi/ui/heading";
-import { ChevronRightIcon } from "lucide-react";
+import { RiArrowRightSFill } from "@remixicon/react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useState } from "react";
 
@@ -45,7 +45,7 @@ export function CollapsibleSection({
           initial={false}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <ChevronRightIcon className="h-3.5 w-3.5 text-ui-fg-muted" />
+          <RiArrowRightSFill className="h-3.5 w-3.5 text-ui-fg-muted" />
         </motion.div>
         <Heading className="text-sm" level="h3">
           {title}

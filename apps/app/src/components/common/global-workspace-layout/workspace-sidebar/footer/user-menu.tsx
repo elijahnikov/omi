@@ -18,28 +18,28 @@ import {
 } from "@omi/ui/dropdown-menu";
 import { Skeleton } from "@omi/ui/skeleton";
 import { useTheme } from "@omi/ui/theme";
+import {
+  RiAddFill,
+  RiCheckFill,
+  RiComputerFill,
+  RiFolderOpenFill,
+  RiLogoutBoxFill,
+  RiMoonFill,
+  RiSettingsFill,
+  RiSunFill,
+} from "@remixicon/react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { UseNavigateResult } from "@tanstack/react-router";
 import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import BoringAvatar from "boring-avatars";
-import {
-  CheckIcon,
-  FolderOpenIcon,
-  LogOutIcon,
-  MonitorIcon,
-  MoonIcon,
-  PlusIcon,
-  SettingsIcon,
-  SunIcon,
-} from "lucide-react";
 import { WorkspaceIcon } from "~/components/common/workspace-icon";
 
 type Workspace = Doc<"workspace"> & { role: string };
 
 const THEME_OPTIONS = [
-  { value: "light", label: "Light", icon: SunIcon },
-  { value: "dark", label: "Dark", icon: MoonIcon },
-  { value: "auto", label: "System", icon: MonitorIcon },
+  { value: "light", label: "Light", icon: RiSunFill },
+  { value: "dark", label: "Dark", icon: RiMoonFill },
+  { value: "auto", label: "System", icon: RiComputerFill },
 ] as const;
 
 function WorkspaceItem({
@@ -91,7 +91,7 @@ function WorkspaceSubMenu() {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <FolderOpenIcon />
+        <RiFolderOpenFill />
         <span className="truncate">Workspaces</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent className="w-56 max-w-56 overflow-x-hidden">
@@ -126,7 +126,7 @@ function WorkspaceSubMenu() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem>
-          <PlusIcon />
+          <RiAddFill />
           New workspace
         </DropdownMenuItem>
       </DropdownMenuSubContent>
@@ -160,7 +160,7 @@ function ThemeSubMenu() {
               <span className={cn("flex-1", isActive && "text-ui-fg-base")}>
                 {label}
               </span>
-              {isActive && <CheckIcon className="ml-2 size-3.5" />}
+              {isActive && <RiCheckFill className="ml-2 size-3.5" />}
             </DropdownMenuItem>
           );
         })}
@@ -198,7 +198,7 @@ export function UserMenu() {
         sideOffset={6}
       >
         <DropdownMenuItem onClick={() => router.navigate({ to: "/account" })}>
-          <SettingsIcon />
+          <RiSettingsFill />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -211,7 +211,7 @@ export function UserMenu() {
             router.navigate({ to: "/login" });
           }}
         >
-          <LogOutIcon />
+          <RiLogoutBoxFill />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

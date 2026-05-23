@@ -9,9 +9,12 @@ import {
   PopoverTrigger,
 } from "@omi/ui/popover";
 import { Text } from "@omi/ui/text";
-import { RiNotification3Fill } from "@remixicon/react";
+import {
+  RiCheckFill,
+  RiCloseFill,
+  RiNotification3Fill,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckIcon, XIcon } from "lucide-react";
 export function NotificationsPopover() {
   const { data: invitations } = useQuery(
     convexQuery(api.workspace.queries.listPendingInvitationsForUser, {})
@@ -83,7 +86,7 @@ export function NotificationsPopover() {
                     size="small"
                     variant="omi"
                   >
-                    <CheckIcon className="size-3.5" />
+                    <RiCheckFill className="size-3.5" />
                     Accept
                   </LoadingButton>
                   <LoadingButton
@@ -95,7 +98,7 @@ export function NotificationsPopover() {
                     size="small"
                     variant="secondary"
                   >
-                    <XIcon className="size-3.5" />
+                    <RiCloseFill className="size-3.5" />
                     Decline
                   </LoadingButton>
                 </div>

@@ -4,9 +4,14 @@ import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Button } from "@omi/ui/button";
 import { Input } from "@omi/ui/input";
 import { toastManager } from "@omi/ui/toast";
+import {
+  RiCheckFill,
+  RiCloseFill,
+  RiFolderAddFill,
+  RiLoader2Fill,
+} from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { CheckIcon, FolderPlusIcon, Loader2Icon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { ResourceBadge } from "./resource-badge";
 
@@ -161,7 +166,7 @@ export function ProposeCollectionCard({
               size="small"
               variant="ghost"
             >
-              <XIcon className="size-3.5" />
+              <RiCloseFill className="size-3.5" />
               Discard
             </Button>
             <Button
@@ -170,14 +175,14 @@ export function ProposeCollectionCard({
               size="small"
               variant="secondary"
             >
-              <FolderPlusIcon className="size-3.5" />
+              <RiFolderAddFill className="size-3.5" />
               Create collection
             </Button>
           </>
         )}
         {state.kind === "creating" && (
           <div className="flex items-center gap-2 text-[12px] text-ui-fg-muted">
-            <Loader2Icon className="size-3.5 animate-spin" />
+            <RiLoader2Fill className="size-3.5 animate-spin" />
             Creating...
           </div>
         )}
@@ -190,7 +195,7 @@ export function ProposeCollectionCard({
             }}
             to="/workspace/$workspaceId/library/collection/$collectionId"
           >
-            <CheckIcon className="size-3.5" />
+            <RiCheckFill className="size-3.5" />
             Created · view collection
           </Link>
         )}

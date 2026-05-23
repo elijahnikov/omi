@@ -9,6 +9,7 @@ import {
 } from "@omi/ui/dropdown-menu";
 import { Separator } from "@omi/ui/separator";
 import { Text } from "@omi/ui/text";
+import { RiMoreFill, RiStickyNoteFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -16,7 +17,6 @@ import {
   useNavigate,
   useParams,
 } from "@tanstack/react-router";
-import { EllipsisIcon } from "lucide-react";
 import { Fragment } from "react";
 import { CollectionIcon } from "~/components/common/collection-icon";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
@@ -282,22 +282,7 @@ function WebsiteIcon({ favicon }: { favicon?: string | null }) {
 }
 
 function NoteIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-3.5 w-3.5 shrink-0 text-ui-fg-muted"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <RiStickyNoteFill className="h-3.5 w-3.5 shrink-0 text-ui-fg-muted" />;
 }
 
 function ChatThreadBreadcrumbs({
@@ -433,7 +418,7 @@ function TruncatedBreadcrumbs({
       <BreadcrumbSeparator />
       <DropdownMenu>
         <DropdownMenuTrigger className="flex h-5 w-5 items-center justify-center rounded text-ui-fg-muted transition-colors hover:bg-ui-bg-subtle hover:text-ui-fg-base">
-          <EllipsisIcon className="h-3.5 w-3.5" />
+          <RiMoreFill className="h-3.5 w-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4}>
           {hidden.map((crumb) => (

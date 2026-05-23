@@ -1,7 +1,6 @@
 import { Card } from "@omi/ui/card";
 import { FlickeringGrid } from "@omi/ui/flickering-grid";
 import { File as PierreFile } from "@pierre/diffs/react";
-import { FileCodeIcon, GlobeIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   lazy,
@@ -15,6 +14,7 @@ import { PageContent } from "~/components/common/page-content";
 
 const NoteEditor = lazy(() => import("./note-editor"));
 
+import { RiFileCodeFill, RiGlobeFill } from "@remixicon/react";
 import { Tweet } from "react-tweet";
 import type { GetResourceData } from "~/lib/convex-types";
 import { RelatedResources } from "../related-resources";
@@ -46,7 +46,7 @@ function OgImageEmpty() {
   return (
     <div className="mt-4 flex h-[200px] w-full items-center justify-center rounded-xl border border-ui-border-base bg-ui-bg-subtle">
       <div className="flex flex-col items-center gap-2 text-ui-fg-muted">
-        <GlobeIcon className="h-8 w-8" />
+        <RiGlobeFill className="h-8 w-8" />
         <span className="text-xs">Preview unavailable</span>
       </div>
     </div>
@@ -460,7 +460,7 @@ function GistEmbed({ id }: { id: string }) {
           key={file.filename}
         >
           <div className="flex items-center gap-2 border-ui-border-base border-b bg-ui-bg-subtle px-3 py-2">
-            <FileCodeIcon className="h-3.5 w-3.5 text-ui-fg-muted" />
+            <RiFileCodeFill className="h-3.5 w-3.5 text-ui-fg-muted" />
             <span className="font-mono text-ui-fg-subtle text-xs">
               {file.filename}
             </span>

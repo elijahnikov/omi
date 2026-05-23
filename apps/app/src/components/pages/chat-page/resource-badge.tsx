@@ -3,6 +3,7 @@ import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Badge } from "@omi/ui/badge";
 import { Skeleton } from "@omi/ui/skeleton";
+import { RiStickyNoteFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
@@ -44,20 +45,7 @@ function WebsiteIcon({ favicon }: { favicon?: string | null }) {
 
 function NoteIcon() {
   return (
-    <svg
-      aria-hidden="true"
-      className="size-3.5 shrink-0 text-muted-foreground"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <RiStickyNoteFill className="size-3.5 shrink-0 text-muted-foreground" />
   );
 }
 

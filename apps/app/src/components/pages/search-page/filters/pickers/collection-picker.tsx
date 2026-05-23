@@ -1,8 +1,8 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
+import { RiFolderFill, RiFolderReduceFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
-import { FolderIcon, FolderMinusIcon } from "lucide-react";
 import { useMemo } from "react";
 import {
   NO_COLLECTION_SENTINEL,
@@ -27,7 +27,7 @@ export function CollectionPicker({
       {
         id: NO_COLLECTION_SENTINEL,
         label: "No collection",
-        icon: <FolderMinusIcon className="size-3.5" />,
+        icon: <RiFolderReduceFill className="size-3.5" />,
       },
     ];
     for (const c of collections ?? []) {
@@ -37,7 +37,7 @@ export function CollectionPicker({
         icon: c.icon ? (
           <span className="text-xs">{c.icon}</span>
         ) : (
-          <FolderIcon className="size-3.5" />
+          <RiFolderFill className="size-3.5" />
         ),
       });
     }

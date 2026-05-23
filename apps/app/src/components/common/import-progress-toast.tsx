@@ -2,9 +2,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Doc, Id } from "@omi/backend/_generated/dataModel.js";
 import { Text } from "@omi/ui/text";
-import { RiDownload2Fill } from "@remixicon/react";
+import { RiCheckFill, RiCloseFill, RiDownload2Fill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DotGridLoader } from "~/components/common/dot-grid-loader";
 import { INTEGRATION_LOGO } from "~/components/pages/settings-page/import-tab/integration-logos";
@@ -235,9 +234,9 @@ function FinishedCard({
         }`}
       >
         {isFailed ? (
-          <XIcon className="h-3 w-3" />
+          <RiCloseFill className="h-3 w-3" />
         ) : (
-          <CheckIcon className="h-3 w-3" />
+          <RiCheckFill className="h-3 w-3" />
         )}
       </div>
     </div>

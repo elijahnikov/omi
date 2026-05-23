@@ -2,7 +2,7 @@
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { cn } from "@omi/ui";
-import { ChevronRightIcon } from "lucide-react";
+import { RiArrowRightSFill } from "@remixicon/react";
 import type * as React from "react";
 
 const MenuCreateHandle = MenuPrimitive.createHandle;
@@ -251,7 +251,7 @@ function MenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto opacity-80" />
+      <RiArrowRightSFill className="ml-auto opacity-80" />
     </MenuPrimitive.SubmenuTrigger>
   );
 }

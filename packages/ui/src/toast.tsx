@@ -4,23 +4,23 @@ import { Toast } from "@base-ui/react/toast";
 import { cn } from "@omi/ui";
 import { buttonVariants } from "@omi/ui/button";
 import {
-  CircleAlertIcon,
-  CircleCheckIcon,
-  InfoIcon,
-  LoaderCircleIcon,
-  TriangleAlertIcon,
-  XIcon,
-} from "lucide-react";
+  RiAlertFill,
+  RiCheckboxCircleFill,
+  RiCloseFill,
+  RiErrorWarningFill,
+  RiInformationFill,
+  RiLoader4Fill,
+} from "@remixicon/react";
 
 const toastManager = Toast.createToastManager();
 const anchoredToastManager = Toast.createToastManager();
 
 const TOAST_ICONS = {
-  error: CircleAlertIcon,
-  info: InfoIcon,
-  loading: LoaderCircleIcon,
-  success: CircleCheckIcon,
-  warning: TriangleAlertIcon,
+  error: RiErrorWarningFill,
+  info: RiInformationFill,
+  loading: RiLoader4Fill,
+  success: RiCheckboxCircleFill,
+  warning: RiAlertFill,
 } as const;
 
 type ToastPosition =
@@ -164,7 +164,7 @@ function Toasts({ position = "bottom-right" }: { position: ToastPosition }) {
                       className="flex size-6 shrink-0 items-center justify-center rounded-md text-ui-fg-muted hover:bg-ui-bg-component-hover hover:text-ui-fg-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       data-slot="toast-close"
                     >
-                      <XIcon className="size-3.5" />
+                      <RiCloseFill className="size-3.5" />
                     </Toast.Close>
                   )}
                 </div>

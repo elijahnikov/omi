@@ -11,9 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
 import { Separator } from "@omi/ui/separator";
+import { RiMoreFill } from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { EllipsisIcon } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { CollectionIcon } from "~/components/common/collection-icon";
 import { EditableText } from "~/components/common/editable-text";
@@ -187,7 +187,7 @@ function HeaderBreadcrumbs({
       <Separator className="mx-2 h-3 rotate-30" orientation="vertical" />
       <DropdownMenu>
         <DropdownMenuTrigger className="flex h-5 w-5 items-center justify-center rounded text-ui-fg-muted transition-colors hover:bg-ui-bg-subtle hover:text-ui-fg-base">
-          <EllipsisIcon className="h-3.5 w-3.5" />
+          <RiMoreFill className="h-3.5 w-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4}>
           {hidden.map((crumb) => (

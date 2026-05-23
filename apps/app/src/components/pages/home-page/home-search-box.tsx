@@ -1,7 +1,7 @@
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Input } from "@omi/ui/input";
+import { RiCloseFill, RiSearchFill } from "@remixicon/react";
 import { useNavigate } from "@tanstack/react-router";
-import { SearchIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
 export function HomeSearchBox({
@@ -29,7 +29,7 @@ export function HomeSearchBox({
     <form className="mx-auto mb-8 flex w-full" onSubmit={handleSubmit}>
       <div className="relative mx-auto w-full">
         <div className="pointer-events-none absolute top-0 bottom-0 left-0 flex size-8 items-center justify-center text-ui-fg-muted">
-          <SearchIcon className="size-4" />
+          <RiSearchFill className="size-4" />
         </div>
         <Input
           className="rounded-md bg-ui-bg-field-component-hover pr-8 pl-8 shadow-xs hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:shadow-sm dark:hover:bg-ui-bg-field-component-hover"
@@ -45,7 +45,7 @@ export function HomeSearchBox({
             onClick={() => setValue("")}
             type="button"
           >
-            <XIcon className="size-3.5" />
+            <RiCloseFill className="size-3.5" />
           </button>
         ) : null}
       </div>

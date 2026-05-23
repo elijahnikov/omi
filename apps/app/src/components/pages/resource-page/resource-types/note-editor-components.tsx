@@ -15,8 +15,12 @@ import { Slot } from "@radix-ui/react-slot";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import {
+  RiArrowDownSFill,
+  RiArrowRightSFill,
+  RiCheckFill,
+} from "@remixicon/react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { CheckIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import type * as React from "react";
 
 // ---------------------------------------------------------------------------
@@ -154,7 +158,7 @@ function DropdownMenuCheckboxItem({
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
         <DropdownMenuPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
+          <RiCheckFill className="size-4" />
         </DropdownMenuPrimitive.ItemIndicator>
       </span>
       {children}
@@ -220,7 +224,7 @@ function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRightIcon className="ml-auto size-4 opacity-80" />
+      <RiArrowRightSFill className="ml-auto size-4 opacity-80" />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }
@@ -315,7 +319,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        <RiArrowDownSFill className="size-4 opacity-50" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -369,7 +373,7 @@ function SelectItem({
     >
       <span className="absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-4" />
+          <RiCheckFill className="size-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

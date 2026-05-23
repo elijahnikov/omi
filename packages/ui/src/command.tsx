@@ -13,7 +13,7 @@ import {
   AutocompleteList,
   AutocompleteSeparator,
 } from "@omi/ui/autocomplete";
-import { SearchIcon } from "lucide-react";
+import { RiSearchFill } from "@remixicon/react";
 import type * as React from "react";
 
 const CommandDialog = CommandDialogPrimitive.Root;
@@ -122,7 +122,7 @@ function CommandInput({
         )}
         placeholder={placeholder}
         size="lg"
-        startAddon={<SearchIcon className="size-3.5 shrink-0" />}
+        startAddon={<RiSearchFill className="size-3.5 shrink-0" />}
         {...props}
       />
     </div>

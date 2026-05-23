@@ -1,5 +1,5 @@
 import type { Id } from "@omi/backend/_generated/dataModel.js";
-import { FolderIcon } from "lucide-react";
+import { RiFolderFill } from "@remixicon/react";
 import { motion } from "motion/react";
 import { CollectionIcon } from "~/components/common/collection-icon";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
@@ -102,5 +102,5 @@ function OverlayIcon({ data }: { data: ActiveDragItem["data"] }) {
       />
     );
   }
-  return <FolderIcon className="h-4 w-4 text-ui-fg-muted" />;
+  return <RiFolderFill className="h-4 w-4 text-ui-fg-muted" />;
 }

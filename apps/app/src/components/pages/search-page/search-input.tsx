@@ -1,6 +1,6 @@
 import { Input } from "@omi/ui/input";
+import { RiCloseFill, RiSearchFill } from "@remixicon/react";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { SearchIcon, XIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { DotGridLoader } from "~/components/common/dot-grid-loader";
 
@@ -42,7 +42,7 @@ export function SearchInput({
   return (
     <div className="relative w-48 md:w-72">
       <div className="pointer-events-none absolute top-0 bottom-0 left-0 flex size-8 items-center justify-center text-ui-fg-muted">
-        {isPending ? <DotGridLoader /> : <SearchIcon className="size-4" />}
+        {isPending ? <DotGridLoader /> : <RiSearchFill className="size-4" />}
       </div>
       <Input
         className="rounded-md bg-ui-bg-field-component-hover pr-8 pl-8 shadow-xs hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:shadow-sm dark:hover:bg-ui-bg-field-component-hover"
@@ -59,7 +59,7 @@ export function SearchInput({
           onClick={() => onChange("")}
           type="button"
         >
-          <XIcon className="size-3.5" />
+          <RiCloseFill className="size-3.5" />
         </button>
       ) : null}
     </div>

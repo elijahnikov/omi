@@ -31,15 +31,15 @@ import {
 } from "@omi/ui/select";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
+import {
+  RiCloseFill,
+  RiMoreFill,
+  RiSendPlaneFill,
+  RiShieldFill,
+  RiUserFill,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ConvexError } from "convex/values";
-import {
-  MoreHorizontalIcon,
-  SendIcon,
-  ShieldIcon,
-  UserIcon,
-  XIcon,
-} from "lucide-react";
 import { useCallback, useState } from "react";
 import { UserAvatar } from "~/components/common/user-avatar";
 
@@ -167,7 +167,7 @@ function InviteForm({ workspaceId }: { workspaceId: Id<"workspace"> }) {
           type="submit"
           variant={"omi"}
         >
-          <SendIcon className="size-3 shrink-0" />
+          <RiSendPlaneFill className="size-3 shrink-0" />
           Invite
         </LoadingButton>
       </form>
@@ -206,7 +206,7 @@ function PendingInvitations({ workspaceId }: { workspaceId: Id<"workspace"> }) {
         >
           <div className="flex items-center gap-3">
             <div className="flex size-8 items-center justify-center rounded-full bg-ui-bg-subtle">
-              <SendIcon className="size-3.5 text-ui-fg-muted" />
+              <RiSendPlaneFill className="size-3.5 text-ui-fg-muted" />
             </div>
             <div>
               <Text>{invite.invitedEmail}</Text>
@@ -228,7 +228,7 @@ function PendingInvitations({ workspaceId }: { workspaceId: Id<"workspace"> }) {
               size="small"
               variant="ghost"
             >
-              <XIcon className="size-3.5 shrink-0" />
+              <RiCloseFill className="size-3.5 shrink-0" />
             </Button>
           </div>
         </div>
@@ -323,7 +323,7 @@ function MembersList({
                     className="flex size-7 items-center justify-center rounded-md hover:bg-ui-bg-subtle-hover"
                     render={<button type="button" />}
                   >
-                    <MoreHorizontalIcon className="size-4 text-ui-fg-muted" />
+                    <RiMoreFill className="size-4 text-ui-fg-muted" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" sideOffset={4}>
                     {member.role === "member" && (
@@ -336,7 +336,7 @@ function MembersList({
                           })
                         }
                       >
-                        <ShieldIcon className="size-4" />
+                        <RiShieldFill className="size-4" />
                         Make admin
                       </DropdownMenuItem>
                     )}
@@ -350,7 +350,7 @@ function MembersList({
                           })
                         }
                       >
-                        <UserIcon className="size-4" />
+                        <RiUserFill className="size-4" />
                         Make member
                       </DropdownMenuItem>
                     )}
@@ -364,7 +364,7 @@ function MembersList({
                         })
                       }
                     >
-                      <XIcon className="size-4" />
+                      <RiCloseFill className="size-4" />
                       Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -376,7 +376,7 @@ function MembersList({
                     className="flex size-7 items-center justify-center rounded-md hover:bg-ui-bg-subtle-hover"
                     render={<button type="button" />}
                   >
-                    <MoreHorizontalIcon className="size-4 text-ui-fg-muted" />
+                    <RiMoreFill className="size-4 text-ui-fg-muted" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" sideOffset={4}>
                     <DropdownMenuItem
@@ -388,7 +388,7 @@ function MembersList({
                         })
                       }
                     >
-                      <XIcon className="size-4" />
+                      <RiCloseFill className="size-4" />
                       Remove
                     </DropdownMenuItem>
                   </DropdownMenuContent>

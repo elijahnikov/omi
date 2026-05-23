@@ -4,7 +4,7 @@ import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox";
 import { cn } from "@omi/ui";
 import { Input } from "@omi/ui/input";
 import { ScrollArea } from "@omi/ui/scroll-area";
-import { ChevronsUpDownIcon, XIcon } from "lucide-react";
+import { RiCloseFill, RiExpandVerticalFill } from "@remixicon/react";
 import * as React from "react";
 
 const ComboboxContext = React.createContext<{
@@ -99,7 +99,7 @@ function ComboboxInput({
             sizeValue === "small" ? "end-0" : "end-0.5"
           )}
         >
-          <ChevronsUpDownIcon />
+          <RiExpandVerticalFill />
         </ComboboxTrigger>
       )}
       {showClear && (
@@ -109,7 +109,7 @@ function ComboboxInput({
             sizeValue === "small" ? "end-0" : "end-0.5"
           )}
         >
-          <XIcon />
+          <RiCloseFill />
         </ComboboxClear>
       )}
     </div>
@@ -382,7 +382,7 @@ function ComboboxChipRemove(props: ComboboxPrimitive.ChipRemove.Props) {
       data-slot="combobox-chip-remove"
       {...props}
     >
-      <XIcon />
+      <RiCloseFill />
     </ComboboxPrimitive.ChipRemove>
   );
 }

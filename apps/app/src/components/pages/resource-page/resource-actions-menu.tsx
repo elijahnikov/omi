@@ -11,16 +11,16 @@ import {
 } from "@omi/ui/dropdown-menu";
 import { toastManager } from "@omi/ui/toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@omi/ui/tooltip";
-import { RiMoreFill } from "@remixicon/react";
+import {
+  RiDeleteBinFill,
+  RiFileCopyFill,
+  RiLinksFill,
+  RiMoreFill,
+  RiPushpinFill,
+  RiUnpinFill,
+} from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  CopyIcon,
-  Link2Icon,
-  PinIcon,
-  PinOffIcon,
-  TrashIcon,
-} from "lucide-react";
 import { useRef, useState } from "react";
 import type { GetResourceData } from "~/lib/convex-types";
 import { ResourceSharePopover } from "./resource-share-popover";
@@ -117,26 +117,26 @@ export function ResourceActionsMenu({
               setTimeout(() => setShareOpen(true), 0);
             }}
           >
-            <Link2Icon className="size-4" />
+            <RiLinksFill className="size-4" />
             Share
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCopyLink}>
-            <CopyIcon className="size-4" />
+            <RiFileCopyFill className="size-4" />
             Copy link
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => togglePin({ workspaceId, resourceId: resource._id })}
           >
             {resource.isPinned ? (
-              <PinOffIcon className="size-4" />
+              <RiUnpinFill className="size-4" />
             ) : (
-              <PinIcon className="size-4" />
+              <RiPushpinFill className="size-4" />
             )}
             {resource.isPinned ? "Unpin" : "Pin"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem className="text-ui-fg-error" onClick={handleDelete}>
-            <TrashIcon className="size-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+            <RiDeleteBinFill className="size-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
             Delete
           </DropdownMenuItem>
           {resource.type === "note" && (

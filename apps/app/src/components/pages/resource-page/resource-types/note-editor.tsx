@@ -30,10 +30,9 @@ import {
 } from "@omi/ui/dropdown-menu";
 import { useTheme } from "@omi/ui/theme";
 import { toastManager } from "@omi/ui/toast";
-import { RiSparkling2Fill } from "@remixicon/react";
+import { RiArrowDownSFill, RiSparkling2Fill } from "@remixicon/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useConvex, useMutation } from "convex/react";
-import { ChevronDownIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MAX_FILE_SIZE } from "~/lib/upload-file";
 import {
@@ -467,7 +466,7 @@ function AIToolbarMenu({ workspaceId }: { workspaceId: Id<"workspace"> }) {
           >
             <RiSparkling2Fill className="size-3.5 text-blue-500" />
             AI
-            <ChevronDownIcon className="size-3 text-ui-fg-muted" />
+            <RiArrowDownSFill className="size-3 text-ui-fg-muted" />
           </button>
         }
       />

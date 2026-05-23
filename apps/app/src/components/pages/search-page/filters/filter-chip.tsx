@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
-import { CheckIcon, XIcon } from "lucide-react";
+import { RiCheckFill, RiCloseFill } from "@remixicon/react";
 import { useEffect, useState } from "react";
 import {
   FILTER_CONFIGS,
@@ -117,7 +117,7 @@ function FilterChipInner({
                 <OtherIcon className="size-3.5! shrink-0 text-ui-fg-muted" />
                 <span className="flex-1">{otherName}</span>
                 {isCurrent ? (
-                  <CheckIcon className="size-3.5! shrink-0 text-ui-fg-muted" />
+                  <RiCheckFill className="size-3.5! shrink-0 text-ui-fg-muted" />
                 ) : null}
               </DropdownMenuItem>
             );
@@ -138,7 +138,7 @@ function FilterChipInner({
               >
                 <span className="flex size-4 shrink-0 items-center justify-center">
                   {chip.operator === op ? (
-                    <CheckIcon className="size-3.5" />
+                    <RiCheckFill className="size-3.5" />
                   ) : null}
                 </span>
                 <span className="flex-1">{chip.operatorLabels[op] ?? op}</span>
@@ -170,7 +170,7 @@ function FilterChipInner({
         onClick={handleClear}
         type="button"
       >
-        <XIcon className="size-3" />
+        <RiCloseFill className="size-3" />
       </button>
     </Badge>
   );

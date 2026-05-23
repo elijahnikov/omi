@@ -8,11 +8,11 @@ import {
   DialogTrigger,
 } from "@omi/ui/dialog";
 import { FlickeringGrid } from "@omi/ui/flickering-grid";
-import { DownloadIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import { RiCloseFill, RiDownloadFill } from "@remixicon/react";
 import { downloadFile } from "~/lib/download";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -46,7 +46,7 @@ export function ImagePreviewDialog({
               onClick={() => downloadFile(src, fileName)}
               type="button"
             >
-              <DownloadIcon className="h-4 w-4" />
+              <RiDownloadFill className="h-4 w-4" />
             </button>
             <DialogPrimitive.Close
               className={cn(
@@ -54,7 +54,7 @@ export function ImagePreviewDialog({
                 buttonVariants({ variant: "default" })
               )}
             >
-              <XIcon className="h-4 w-4 shrink-0" />
+              <RiCloseFill className="h-4 w-4 shrink-0" />
             </DialogPrimitive.Close>
           </div>
           <img
@@ -96,7 +96,7 @@ export function PdfPreviewDialog({
               onClick={() => downloadFile(url, fileName)}
               type="button"
             >
-              <DownloadIcon className="h-4 w-4" />
+              <RiDownloadFill className="h-4 w-4" />
             </button>
             <DialogPrimitive.Close
               className={cn(
@@ -104,7 +104,7 @@ export function PdfPreviewDialog({
                 buttonVariants({ variant: "default" })
               )}
             >
-              <XIcon className="h-4 w-4 shrink-0" />
+              <RiCloseFill className="h-4 w-4 shrink-0" />
             </DialogPrimitive.Close>
           </div>
           <div className="pointer-events-none relative z-10 flex-1 overflow-y-auto">

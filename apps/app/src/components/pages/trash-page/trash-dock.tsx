@@ -14,9 +14,12 @@ import {
 import { Separator } from "@omi/ui/separator";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { RiCloseFill, RiDeleteBin6Line } from "@remixicon/react";
+import {
+  RiCloseFill,
+  RiDeleteBin6Line,
+  RiResetLeftFill,
+} from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
-import { RotateCcwIcon } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useLibrarySelection } from "~/lib/selection/library-selection";
@@ -123,7 +126,7 @@ function RestoreButton({
       size="small"
       variant="ghost"
     >
-      <RotateCcwIcon className="size-3.5 shrink-0" />
+      <RiResetLeftFill className="size-3.5 shrink-0" />
       Restore
     </Button>
   );

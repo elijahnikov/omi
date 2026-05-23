@@ -4,7 +4,7 @@ import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
 import { cn } from "@omi/ui";
 import { Button } from "@omi/ui/button";
 import { ScrollArea } from "@omi/ui/scroll-area";
-import { XIcon } from "lucide-react";
+import { RiCloseFill } from "@remixicon/react";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -99,7 +99,7 @@ function SheetPopup({
                 <Button className="size-6" size="small" variant="ghost" />
               }
             >
-              <XIcon className="size-4 shrink-0" />
+              <RiCloseFill className="size-4 shrink-0" />
             </SheetPrimitive.Close>
           )}
         </SheetPrimitive.Popup>

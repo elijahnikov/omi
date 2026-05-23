@@ -1,5 +1,5 @@
 import { cn } from "@omi/ui";
-import { CheckIcon } from "lucide-react";
+import { RiCheckFill } from "@remixicon/react";
 import { useSearchFilters } from "../../use-search-filters";
 
 type BooleanKey = "isPinned" | "isFavorite";
@@ -60,7 +60,7 @@ function Option({
       type="button"
     >
       <span className="flex size-4 shrink-0 items-center justify-center">
-        {active ? <CheckIcon className="size-3.5" /> : null}
+        {active ? <RiCheckFill className="size-3.5" /> : null}
       </span>
       <span className="flex-1 truncate">{label}</span>
     </button>

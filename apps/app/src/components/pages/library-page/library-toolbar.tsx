@@ -6,16 +6,16 @@ import {
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
 import { Input } from "@omi/ui/input";
-import { RiFilter3Fill } from "@remixicon/react";
 import {
-  ArrowDownAZIcon,
-  ArrowUpDownIcon,
-  ClockIcon,
-  FileIcon,
-  FolderPlusIcon,
-  GlobeIcon,
-  StickyNoteIcon,
-} from "lucide-react";
+  RiArrowDownFill,
+  RiArrowUpDownFill,
+  RiFileFill,
+  RiFilter3Fill,
+  RiFolderAddFill,
+  RiGlobeFill,
+  RiStickyNoteFill,
+  RiTimeFill,
+} from "@remixicon/react";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 
 const TYPE_VALUES = ["website", "note", "file"] as const;
@@ -23,18 +23,18 @@ const ORDER_VALUES = ["newest", "oldest", "alphabetical"] as const;
 
 const TYPE_OPTIONS = [
   { value: null, label: "All types", icon: null },
-  { value: "website" as const, label: "Websites", icon: GlobeIcon },
-  { value: "note" as const, label: "Notes", icon: StickyNoteIcon },
-  { value: "file" as const, label: "Files", icon: FileIcon },
+  { value: "website" as const, label: "Websites", icon: RiGlobeFill },
+  { value: "note" as const, label: "Notes", icon: RiStickyNoteFill },
+  { value: "file" as const, label: "Files", icon: RiFileFill },
 ] as const;
 
 const ORDER_OPTIONS = [
-  { value: null, label: "Newest", icon: ClockIcon },
-  { value: "oldest" as const, label: "Oldest", icon: ClockIcon },
+  { value: null, label: "Newest", icon: RiTimeFill },
+  { value: "oldest" as const, label: "Oldest", icon: RiTimeFill },
   {
     value: "alphabetical" as const,
     label: "Alphabetical",
-    icon: ArrowDownAZIcon,
+    icon: RiArrowDownFill,
   },
 ] as const;
 
@@ -84,7 +84,7 @@ export function LibraryToolbar({
             onClick={onCreateCollection}
             variant="secondary"
           >
-            <FolderPlusIcon className="size-4 shrink-0" />
+            <RiFolderAddFill className="size-4 shrink-0" />
           </Button>
         )}
         <DropdownMenu>
@@ -120,7 +120,7 @@ export function LibraryToolbar({
               />
             }
           >
-            <ArrowUpDownIcon className="size-3.5 shrink-0" />
+            <RiArrowUpDownFill className="size-3.5 shrink-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {ORDER_OPTIONS.map((option) => (

@@ -10,10 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
 import { toastManager } from "@omi/ui/toast";
+import { RiDeleteBinFill, RiMoreFill } from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
-import { MoreHorizontalIcon, TrashIcon } from "lucide-react";
 import { type Ref, useCallback } from "react";
 import { CollectionIcon } from "~/components/common/collection-icon";
 import { EditableText } from "~/components/common/editable-text";
@@ -147,7 +147,7 @@ export function CollectionRow({
       <div className="relative z-20 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
         <DropdownMenu>
           <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-            <MoreHorizontalIcon className="h-3.5 w-3.5" />
+            <RiMoreFill className="h-3.5 w-3.5" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={4}>
             <DropdownMenuItem
@@ -156,7 +156,7 @@ export function CollectionRow({
                 remove({ workspaceId, collectionId: collection._id })
               }
             >
-              <TrashIcon className="h-4 w-4" />
+              <RiDeleteBinFill className="h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>

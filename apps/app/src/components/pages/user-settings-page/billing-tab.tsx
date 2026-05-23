@@ -8,9 +8,9 @@ import { LoadingButton } from "@omi/ui/loading-button";
 import { Tabs, TabsList, TabsTrigger } from "@omi/ui/tabs";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
+import { RiCheckFill } from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConvexError } from "convex/values";
-import { CheckIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { TabSkeleton } from "./tab-skeleton";
 
@@ -340,7 +340,7 @@ function PlanCard({
       <ul className="flex flex-col gap-2">
         {info.features.map((feature) => (
           <li className="flex items-start gap-2" key={feature}>
-            <CheckIcon className="mt-0.5 size-3.5 shrink-0 text-ui-fg-muted" />
+            <RiCheckFill className="mt-0.5 size-3.5 shrink-0 text-ui-fg-muted" />
             <Text className="text-ui-fg-subtle" size="xsmall">
               {feature}
             </Text>

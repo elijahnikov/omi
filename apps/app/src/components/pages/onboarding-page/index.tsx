@@ -11,10 +11,14 @@ import { Input } from "@omi/ui/input";
 import { LoadingButton } from "@omi/ui/loading-button";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
+import {
+  RiArrowLeftFill,
+  RiArrowRightFill,
+  RiCheckFill,
+} from "@remixicon/react";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Notion,
@@ -200,7 +204,7 @@ function StepNav({
       <div>
         {onBack && (
           <Button onClick={onBack} size="small" variant="secondary">
-            <ArrowLeftIcon className="size-3" />
+            <RiArrowLeftFill className="size-3" />
             Back
           </Button>
         )}
@@ -229,7 +233,7 @@ function WelcomeStep({ onAdvance }: StepProps) {
         primary={
           <Button onClick={onAdvance} size="small" variant="omi">
             Get started
-            <ArrowRightIcon className="size-3" />
+            <RiArrowRightFill className="size-3" />
           </Button>
         }
       />
@@ -306,7 +310,7 @@ function ConnectStep({ onAdvance, onBack }: StepProps) {
               {connected ? (
                 <>
                   {p.label} connected
-                  <CheckIcon className="size-3 text-ui-fg-success" />
+                  <RiCheckFill className="size-3 text-ui-fg-success" />
                 </>
               ) : (
                 <>Connect {p.label}</>
@@ -320,7 +324,7 @@ function ConnectStep({ onAdvance, onBack }: StepProps) {
         primary={
           <Button onClick={onAdvance} size="small" variant="omi">
             {connectedProviders.size > 0 ? "Continue" : "Skip for now"}
-            <ArrowRightIcon className="size-3" />
+            <RiArrowRightFill className="size-3" />
           </Button>
         }
       />
@@ -367,7 +371,7 @@ function UploadStep({ onAdvance, onBack, workspace }: StepProps) {
         primary={
           <Button onClick={onAdvance} size="small" variant="omi">
             Continue
-            <ArrowRightIcon className="size-3" />
+            <RiArrowRightFill className="size-3" />
           </Button>
         }
       />
@@ -442,7 +446,7 @@ function SaveFirstResourceStep({ onAdvance, onBack, workspace }: StepProps) {
             variant="omi"
           >
             Save
-            <ArrowRightIcon className="size-3" />
+            <RiArrowRightFill className="size-3" />
           </LoadingButton>
         }
         secondary={
@@ -470,7 +474,7 @@ function DoneStep({ onBack, onFinish }: StepProps) {
         primary={
           <Button onClick={onFinish} size="small" variant="omi">
             Go to your workspace
-            <ArrowRightIcon className="size-3" />
+            <RiArrowRightFill className="size-3" />
           </Button>
         }
       />

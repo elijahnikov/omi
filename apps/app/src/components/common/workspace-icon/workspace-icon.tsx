@@ -1,5 +1,5 @@
 import { cn } from "@omi/ui";
-import { BoxIcon } from "lucide-react";
+import { RiBox1Fill } from "@remixicon/react";
 import { getWorkspaceIcon } from "~/lib/workspace-icons";
 
 const sizeConfig = {
@@ -41,7 +41,7 @@ export function WorkspaceIcon({
     );
   }
 
-  const IconComponent = icon ? getWorkspaceIcon(icon) : BoxIcon;
+  const IconComponent = icon ? getWorkspaceIcon(icon) : RiBox1Fill;
 
   return (
     <span

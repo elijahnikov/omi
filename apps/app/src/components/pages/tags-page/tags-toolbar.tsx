@@ -7,11 +7,11 @@ import {
 } from "@omi/ui/dropdown-menu";
 import { Input } from "@omi/ui/input";
 import {
-  ArrowDownAZIcon,
-  ArrowUpDownIcon,
-  ClockIcon,
-  LayersIcon,
-} from "lucide-react";
+  RiArrowDownFill,
+  RiArrowUpDownFill,
+  RiStackFill,
+  RiTimeFill,
+} from "@remixicon/react";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 
 const ORDER_VALUES = [
@@ -22,13 +22,13 @@ const ORDER_VALUES = [
 ] as const;
 
 const ORDER_OPTIONS = [
-  { value: null, label: "Alphabetical", icon: ArrowDownAZIcon },
-  { value: "newest" as const, label: "Newest", icon: ClockIcon },
-  { value: "oldest" as const, label: "Oldest", icon: ClockIcon },
+  { value: null, label: "Alphabetical", icon: RiArrowDownFill },
+  { value: "newest" as const, label: "Newest", icon: RiTimeFill },
+  { value: "oldest" as const, label: "Oldest", icon: RiTimeFill },
   {
     value: "most_resources" as const,
     label: "Most resources",
-    icon: LayersIcon,
+    icon: RiStackFill,
   },
 ] as const;
 
@@ -70,7 +70,7 @@ export function TagsToolbar() {
               />
             }
           >
-            <ArrowUpDownIcon className="size-3.5 shrink-0" />
+            <RiArrowUpDownFill className="size-3.5 shrink-0" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             {ORDER_OPTIONS.map((option) => (

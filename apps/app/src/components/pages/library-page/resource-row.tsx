@@ -9,19 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
+import {
+  RiDeleteBinFill,
+  RiDownloadFill,
+  RiExternalLinkFill,
+  RiFileCopyFill,
+  RiMoreFill,
+  RiPushpinFill,
+  RiResetLeftFill,
+  RiStarFill,
+  RiStickyNoteFill,
+  RiUnpinFill,
+} from "@remixicon/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
-import {
-  CopyIcon,
-  DownloadIcon,
-  ExternalLinkIcon,
-  MoreHorizontalIcon,
-  PinIcon,
-  PinOffIcon,
-  RotateCcwIcon,
-  StarIcon,
-  TrashIcon,
-} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { DotGridLoader } from "~/components/common/dot-grid-loader";
 import { EditableText } from "~/components/common/editable-text";
@@ -242,7 +243,7 @@ function WebsiteRow({
             rel="noopener noreferrer"
             target="_blank"
           >
-            <ExternalLinkIcon className="h-3.5 w-3.5" />
+            <RiExternalLinkFill className="h-3.5 w-3.5" />
           </a>
         )}
         <RowDropdownMenu
@@ -416,7 +417,7 @@ function FileRow({
             download={file?.fileName}
             href={fileUrl}
           >
-            <DownloadIcon className="h-3.5 w-3.5" />
+            <RiDownloadFill className="h-3.5 w-3.5" />
           </a>
         )}
         <RowDropdownMenu
@@ -458,11 +459,11 @@ function RowDropdownMenu({
     return (
       <DropdownMenu>
         <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-          <MoreHorizontalIcon className="h-3.5 w-3.5" />
+          <RiMoreFill className="h-3.5 w-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={4}>
           <DropdownMenuItem onClick={() => onRestore?.(resource._id)}>
-            <RotateCcwIcon className="h-4 w-4" />
+            <RiResetLeftFill className="h-4 w-4" />
             Restore
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -470,7 +471,7 @@ function RowDropdownMenu({
             className="text-ui-fg-error"
             onClick={() => onPurge?.(resource._id)}
           >
-            <TrashIcon className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+            <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
             Delete permanently
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -481,18 +482,18 @@ function RowDropdownMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-        <MoreHorizontalIcon className="h-3.5 w-3.5" />
+        <RiMoreFill className="h-3.5 w-3.5" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={4}>
         <DropdownMenuItem>
-          <StarIcon className="h-4 w-4" />
+          <RiStarFill className="h-4 w-4" />
           Favorite
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onTogglePin(resource._id)}>
           {isPinned ? (
-            <PinOffIcon className="h-4 w-4" />
+            <RiUnpinFill className="h-4 w-4" />
           ) : (
-            <PinIcon className="h-4 w-4" />
+            <RiPushpinFill className="h-4 w-4" />
           )}
           {isPinned ? "Unpin" : "Pin"}
         </DropdownMenuItem>
@@ -502,13 +503,13 @@ function RowDropdownMenu({
             <DropdownMenuItem
               onClick={() => window.open(website.url, "_blank", "noopener")}
             >
-              <ExternalLinkIcon className="h-4 w-4" />
+              <RiExternalLinkFill className="h-4 w-4" />
               Open in browser
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => navigator.clipboard.writeText(website.url)}
             >
-              <CopyIcon className="h-4 w-4" />
+              <RiFileCopyFill className="h-4 w-4" />
               Copy URL
             </DropdownMenuItem>
           </>
@@ -524,7 +525,7 @@ function RowDropdownMenu({
                 a.click();
               }}
             >
-              <DownloadIcon className="h-4 w-4" />
+              <RiDownloadFill className="h-4 w-4" />
               Download
             </DropdownMenuItem>
           </>
@@ -534,7 +535,7 @@ function RowDropdownMenu({
           className="text-ui-fg-error"
           onClick={() => onDelete?.(resource._id)}
         >
-          <TrashIcon className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+          <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -592,20 +593,5 @@ function GlobeIcon() {
 }
 
 export function NoteIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      viewBox="0 0 24 24"
-    >
-      <path
-        d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+  return <RiStickyNoteFill className="h-4 w-4" />;
 }
