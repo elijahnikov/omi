@@ -25,7 +25,7 @@ import {
   RiFolderOpenFill,
   RiLogoutBoxFill,
   RiMoonFill,
-  RiSettingsFill,
+  RiSettings4Fill,
   RiSunFill,
 } from "@remixicon/react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
@@ -198,7 +198,7 @@ export function UserMenu() {
         sideOffset={6}
       >
         <DropdownMenuItem onClick={() => router.navigate({ to: "/account" })}>
-          <RiSettingsFill />
+          <RiSettings4Fill />
           Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />

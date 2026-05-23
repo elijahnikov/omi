@@ -101,6 +101,42 @@ export const move = workspaceMutation({
   },
 });
 
+export const togglePin = workspaceMutation({
+  args: {
+    collectionId: v.id("collection"),
+  },
+  handler: async (ctx, args) => {
+    const collection = await ctx.db.get(args.collectionId);
+    if (
+      !collection ||
+      collection.workspaceId !== ctx.workspace._id ||
+      collection.deletedAt
+    ) {
+      throw new ConvexError("Collection not found");
+    }
+
+    const existing = await ctx.db
+      .query("userCollectionPin")
+      .withIndex("by_user_collection", (q) =>
+        q.eq("userId", ctx.user._id).eq("collectionId", args.collectionId)
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      return { pinned: false };
+    }
+
+    await ctx.db.insert("userCollectionPin", {
+      userId: ctx.user._id,
+      collectionId: args.collectionId,
+      workspaceId: ctx.workspace._id,
+      pinnedAt: Date.now(),
+    });
+    return { pinned: true };
+  },
+});
+
 export const remove = workspaceMutation({
   args: { collectionId: v.id("collection") },
   handler: async (ctx, args) => {

@@ -111,11 +111,7 @@ function useScrollRestoration(
   pathname: string,
   isLoading: boolean
 ) {
-  // Only reset scroll once the new route has finished loading. Resetting on
-  // pathname change alone causes a brief flash where the previous page (still
-  // showing as pending UI) jumps to the top before the new content mounts.
   const lastResetRef = useRef<string | null>(null);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger
   useLayoutEffect(() => {
     if (isLoading) {
       return;

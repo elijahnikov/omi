@@ -163,13 +163,13 @@ async function getRecentConnections(
   );
   fresh.sort((a, b) => b.score - a.score);
 
-  type PivotEntry = {
+  interface PivotEntry {
     linkId: Id<"resourceLink">;
-    olderId: Id<"resource">;
     olderDoc: Doc<"resource">;
+    olderId: Id<"resource">;
     score: number;
     sharedConcepts: string[];
-  };
+  }
 
   // Group by the newer resource (pivot) → list of older counterparts.
   const groups = new Map<

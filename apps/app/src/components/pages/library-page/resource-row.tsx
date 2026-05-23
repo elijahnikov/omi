@@ -2,22 +2,14 @@ import { useDraggable } from "@dnd-kit/core";
 import type { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@omi/ui/dropdown-menu";
+import { ContextMenu } from "@omi/ui/context-menu";
 import {
   RiDeleteBinFill,
   RiDownloadFill,
   RiExternalLinkFill,
   RiFileCopyFill,
-  RiMoreFill,
   RiPushpinFill,
   RiResetLeftFill,
-  RiStarFill,
   RiStickyNoteFill,
   RiUnpinFill,
 } from "@remixicon/react";
@@ -172,7 +164,15 @@ function WebsiteRow({
   const handleNavigate = useResourceNavigate(workspaceId, resource._id);
 
   return (
-    <div className="group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component">
+    <ResourceContextMenu
+      isPinned={isPinned}
+      onDelete={onDelete}
+      onPurge={onPurge}
+      onRestore={onRestore}
+      onTogglePin={onTogglePin}
+      resource={resource}
+      variant={variant}
+    >
       <RowLink resourceId={resource._id} workspaceId={workspaceId} />
       <div
         className={cn(
@@ -235,28 +235,7 @@ function WebsiteRow({
         </AnimatePresence>
         {snippet ? <SnippetLine html={snippet} /> : null}
       </div>
-      <div className="relative z-20 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        {website?.url && (
-          <a
-            className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base"
-            href={website.url}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            <RiExternalLinkFill className="h-3.5 w-3.5" />
-          </a>
-        )}
-        <RowDropdownMenu
-          isPinned={isPinned}
-          onDelete={onDelete}
-          onPurge={onPurge}
-          onRestore={onRestore}
-          onTogglePin={onTogglePin}
-          resource={resource}
-          variant={variant}
-        />
-      </div>
-    </div>
+    </ResourceContextMenu>
   );
 }
 
@@ -280,7 +259,15 @@ function NoteRow({
   );
 
   return (
-    <div className="group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component">
+    <ResourceContextMenu
+      isPinned={isPinned}
+      onDelete={onDelete}
+      onPurge={onPurge}
+      onRestore={onRestore}
+      onTogglePin={onTogglePin}
+      resource={resource}
+      variant={variant}
+    >
       <RowLink
         dailyNoteDate={dailyNoteDate}
         resourceId={resource._id}
@@ -298,18 +285,7 @@ function NoteRow({
         />
         {snippet ? <SnippetLine html={snippet} /> : null}
       </div>
-      <div className="relative z-20 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        <RowDropdownMenu
-          isPinned={isPinned}
-          onDelete={onDelete}
-          onPurge={onPurge}
-          onRestore={onRestore}
-          onTogglePin={onTogglePin}
-          resource={resource}
-          variant={variant}
-        />
-      </div>
-    </div>
+    </ResourceContextMenu>
   );
 }
 
@@ -334,7 +310,15 @@ function FileRow({
   const handleNavigate = useResourceNavigate(workspaceId, resource._id);
 
   return (
-    <div className="group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component">
+    <ResourceContextMenu
+      isPinned={isPinned}
+      onDelete={onDelete}
+      onPurge={onPurge}
+      onRestore={onRestore}
+      onTogglePin={onTogglePin}
+      resource={resource}
+      variant={variant}
+    >
       <RowLink resourceId={resource._id} workspaceId={workspaceId} />
       <div
         className={cn(
@@ -410,31 +394,12 @@ function FileRow({
         </AnimatePresence>
         {snippet ? <SnippetLine html={snippet} /> : null}
       </div>
-      <div className="relative z-20 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-        {fileUrl && (
-          <a
-            className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base"
-            download={file?.fileName}
-            href={fileUrl}
-          >
-            <RiDownloadFill className="h-3.5 w-3.5" />
-          </a>
-        )}
-        <RowDropdownMenu
-          isPinned={isPinned}
-          onDelete={onDelete}
-          onPurge={onPurge}
-          onRestore={onRestore}
-          onTogglePin={onTogglePin}
-          resource={resource}
-          variant={variant}
-        />
-      </div>
-    </div>
+    </ResourceContextMenu>
   );
 }
 
-function RowDropdownMenu({
+function ResourceContextMenu({
+  children,
   resource,
   isPinned,
   onTogglePin,
@@ -443,6 +408,7 @@ function RowDropdownMenu({
   onRestore,
   onPurge,
 }: {
+  children: React.ReactNode;
   isPinned: boolean;
   onDelete?: (resourceId: Id<"resource">) => void;
   onPurge?: (resourceId: Id<"resource">) => void;
@@ -455,91 +421,82 @@ function RowDropdownMenu({
   const fileUrl = "fileUrl" in resource ? resource.fileUrl : null;
   const file = "file" in resource ? resource.file : null;
 
-  if (variant === "trash") {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-          <RiMoreFill className="h-3.5 w-3.5" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={4}>
-          <DropdownMenuItem onClick={() => onRestore?.(resource._id)}>
-            <RiResetLeftFill className="h-4 w-4" />
-            Restore
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            className="text-ui-fg-error"
-            onClick={() => onPurge?.(resource._id)}
-          >
-            <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
-            Delete permanently
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-        <RiMoreFill className="h-3.5 w-3.5" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={4}>
-        <DropdownMenuItem>
-          <RiStarFill className="h-4 w-4" />
-          Favorite
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onTogglePin(resource._id)}>
-          {isPinned ? (
-            <RiUnpinFill className="h-4 w-4" />
-          ) : (
-            <RiPushpinFill className="h-4 w-4" />
-          )}
-          {isPinned ? "Unpin" : "Pin"}
-        </DropdownMenuItem>
-        {resource.type === "website" && website?.url && (
+    <ContextMenu>
+      <ContextMenu.Trigger
+        render={
+          <div className="group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component" />
+        }
+      >
+        {children}
+      </ContextMenu.Trigger>
+      <ContextMenu.Content className="z-[110]!">
+        {variant === "trash" ? (
           <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => window.open(website.url, "_blank", "noopener")}
+            <ContextMenu.Item onClick={() => onRestore?.(resource._id)}>
+              <RiResetLeftFill />
+              Restore
+            </ContextMenu.Item>
+            <ContextMenu.Separator />
+            <ContextMenu.Item
+              className="text-ui-fg-error"
+              onClick={() => onPurge?.(resource._id)}
             >
-              <RiExternalLinkFill className="h-4 w-4" />
-              Open in browser
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(website.url)}
+              <RiDeleteBinFill className="text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+              Delete permanently
+            </ContextMenu.Item>
+          </>
+        ) : (
+          <>
+            <ContextMenu.Item onClick={() => onTogglePin(resource._id)}>
+              {isPinned ? <RiUnpinFill /> : <RiPushpinFill />}
+              {isPinned ? "Unpin" : "Pin"}
+            </ContextMenu.Item>
+            {resource.type === "website" && website?.url && (
+              <>
+                <ContextMenu.Separator />
+                <ContextMenu.Item
+                  onClick={() => window.open(website.url, "_blank", "noopener")}
+                >
+                  <RiExternalLinkFill />
+                  Open in browser
+                </ContextMenu.Item>
+                <ContextMenu.Item
+                  onClick={() => navigator.clipboard.writeText(website.url)}
+                >
+                  <RiFileCopyFill />
+                  Copy URL
+                </ContextMenu.Item>
+              </>
+            )}
+            {resource.type === "file" && fileUrl && (
+              <>
+                <ContextMenu.Separator />
+                <ContextMenu.Item
+                  onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = fileUrl as string;
+                    a.download = file?.fileName ?? "download";
+                    a.click();
+                  }}
+                >
+                  <RiDownloadFill />
+                  Download
+                </ContextMenu.Item>
+              </>
+            )}
+            <ContextMenu.Separator />
+            <ContextMenu.Item
+              className="text-ui-fg-error"
+              onClick={() => onDelete?.(resource._id)}
             >
-              <RiFileCopyFill className="h-4 w-4" />
-              Copy URL
-            </DropdownMenuItem>
+              <RiDeleteBinFill className="text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+              Delete
+            </ContextMenu.Item>
           </>
         )}
-        {resource.type === "file" && fileUrl && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                const a = document.createElement("a");
-                a.href = fileUrl as string;
-                a.download = file?.fileName ?? "download";
-                a.click();
-              }}
-            >
-              <RiDownloadFill className="h-4 w-4" />
-              Download
-            </DropdownMenuItem>
-          </>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          className="text-ui-fg-error"
-          onClick={() => onDelete?.(resource._id)}
-        >
-          <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </ContextMenu.Content>
+    </ContextMenu>
   );
 }
 
