@@ -65,11 +65,10 @@ function MenuSubTrigger({
   return (
     <ContextMenuPrimitive.SubmenuTrigger
       className={cn(
-        "txt-compact-small relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component px-2 py-1.5 text-ui-fg-base outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus-visible:bg-ui-bg-component-hover",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pl-2 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
+        "hover:bg-ui-bg-component-hover hover:text-ui-fg-base focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-popup-open:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base data-popup-open:text-ui-fg-base [&_svg]:text-ui-fg-subtle hover:[&_svg]:text-ui-fg-base focus:[&_svg]:text-ui-fg-base",
         "active:bg-ui-bg-component-hover",
-        "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled",
-        "data-[state=open]:bg-ui-bg-component-hover!",
+        "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled data-disabled:[&_svg]:text-ui-fg-disabled",
         className
       )}
       data-inset={inset}
@@ -77,44 +76,66 @@ function MenuSubTrigger({
       {...props}
     >
       {children}
-      <RiArrowRightSFill className="ml-auto text-ui-fg-muted" />
+      <RiArrowRightSFill className="ml-auto opacity-80" />
     </ContextMenuPrimitive.SubmenuTrigger>
-  );
-}
-
-function MenuSubContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof ContextMenuPrimitive.Popup>) {
-  return (
-    <ContextMenuPrimitive.Popup
-      className={cn(
-        "z-30 max-h-[var(--radix-popper-available-height)] min-w-[220px] overflow-hidden rounded-lg border bg-ui-bg-component p-1 text-ui-fg-base shadow-md",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in",
-        className
-      )}
-      data-slot="context-menu-sub-content"
-      {...props}
-    />
   );
 }
 
 function MenuContent({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.Popup>) {
   return (
     <ContextMenuPrimitive.Portal>
-      <ContextMenuPrimitive.Positioner className="z-50">
+      <ContextMenuPrimitive.Positioner
+        className="z-50"
+        data-slot="context-menu-positioner"
+      >
         <ContextMenuPrimitive.Popup
           className={cn(
-            "z-30 max-h-[var(--radix-popper-available-height)] min-w-[220px] overflow-hidden rounded-2xl border-[0.5px] bg-ui-bg-component p-1 text-ui-fg-base outline-none",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in",
+            "relative flex not-[class*='w-']:min-w-52 origin-(--transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
             className
           )}
           data-slot="context-menu-content"
           {...props}
-        />
+        >
+          <div className="max-h-(--available-height) w-full overflow-y-auto overflow-x-hidden p-1">
+            {children}
+          </div>
+        </ContextMenuPrimitive.Popup>
+      </ContextMenuPrimitive.Positioner>
+    </ContextMenuPrimitive.Portal>
+  );
+}
+
+function MenuSubContent({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof ContextMenuPrimitive.Popup>) {
+  return (
+    <ContextMenuPrimitive.Portal>
+      <ContextMenuPrimitive.Positioner
+        align="start"
+        alignOffset={-5}
+        className="z-50"
+        data-slot="context-menu-sub-positioner"
+        side="inline-end"
+        sideOffset={0}
+      >
+        <ContextMenuPrimitive.Popup
+          className={cn(
+            "relative flex not-[class*='w-']:min-w-52 origin-(--transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
+            className
+          )}
+          data-slot="context-menu-sub-content"
+          {...props}
+        >
+          <div className="max-h-(--available-height) w-full overflow-y-auto overflow-x-hidden p-1">
+            {children}
+          </div>
+        </ContextMenuPrimitive.Popup>
       </ContextMenuPrimitive.Positioner>
     </ContextMenuPrimitive.Portal>
   );
@@ -132,10 +153,10 @@ function MenuItem({
   return (
     <ContextMenuPrimitive.Item
       className={cn(
-        "txt-compact-small relative flex cursor-pointer select-none items-center rounded-xl bg-ui-bg-component px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
-        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover focus:[&_svg]:text-ui-fg-base!",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
+        "hover:bg-ui-bg-component-hover hover:text-ui-fg-base focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base [&_svg]:text-ui-fg-subtle hover:[&_svg]:text-ui-fg-base focus:[&_svg]:text-ui-fg-base data-highlighted:[&_svg]:text-ui-fg-base",
         "active:bg-ui-bg-component-hover",
-        "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled",
+        "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled data-disabled:[&_svg]:text-ui-fg-disabled",
         className
       )}
       data-inset={inset}
@@ -156,11 +177,11 @@ function MenuCheckboxItem({
     <ContextMenuPrimitive.CheckboxItem
       checked={checked}
       className={cn(
-        "txt-compact-small relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pr-2 pl-[31px] text-ui-fg-base outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus-visible:bg-ui-bg-component-hover",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pr-2 pl-[31px] font-medium text-ui-fg-subtle outline-none transition-colors",
+        "hover:bg-ui-bg-component-hover hover:text-ui-fg-base focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base",
         "active:bg-ui-bg-component-hover",
-        "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled",
-        "data-[state=checked]:txt-compact-small-plus",
+        "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled",
+        "data-[state=checked]:text-ui-fg-base",
         className
       )}
       data-slot="context-menu-checkbox-item"
@@ -184,11 +205,11 @@ function MenuRadioItem({
   return (
     <ContextMenuPrimitive.RadioItem
       className={cn(
-        "txt-compact-small relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pr-2 pl-[31px] outline-none transition-colors",
-        "focus:bg-ui-bg-component-hover focus-visible:bg-ui-bg-component-hover",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pr-2 pl-[31px] font-medium text-ui-fg-subtle outline-none transition-colors",
+        "hover:bg-ui-bg-component-hover hover:text-ui-fg-base focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base",
         "active:bg-ui-bg-component-hover",
-        "data-[disabled]:pointer-events-none data-[disabled]:text-ui-fg-disabled",
-        "data-[state=checked]:txt-compact-small-plus",
+        "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled",
+        "data-[state=checked]:text-ui-fg-base",
         className
       )}
       data-slot="context-menu-radio-item"
@@ -196,7 +217,7 @@ function MenuRadioItem({
     >
       <span className="absolute left-2 flex size-[15px] items-center justify-center">
         <ContextMenuPrimitive.RadioItemIndicator>
-          <RiCircleFill className="text-ui-fg-base" />
+          <RiCircleFill className="size-2 text-ui-fg-base" />
         </ContextMenuPrimitive.RadioItemIndicator>
       </span>
       {children}
@@ -213,7 +234,10 @@ function MenuLabel({
 }) {
   return (
     <ContextMenuPrimitive.GroupLabel
-      className={cn("txt-compact-xsmall-plus text-ui-fg-subtle", className)}
+      className={cn(
+        "px-2 py-1.5 font-medium text-muted-foreground text-xs data-inset:ps-9 sm:data-inset:ps-8",
+        className
+      )}
       data-inset={inset}
       data-slot="context-menu-label"
       {...props}
@@ -234,11 +258,11 @@ function MenuSeparator({
   );
 }
 
-function MenuShortcut({ className, ...props }: React.ComponentProps<"span">) {
+function MenuShortcut({ className, ...props }: React.ComponentProps<"kbd">) {
   return (
-    <span
+    <kbd
       className={cn(
-        "txt-compact-small ml-auto text-ui-fg-subtle tracking-widest",
+        "ms-auto font-medium font-sans text-muted-foreground/72 text-xs tracking-widest",
         className
       )}
       data-slot="context-menu-shortcut"

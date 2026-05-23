@@ -32,7 +32,7 @@ const badgeVariants = cva(
           "border-[0.5px] border-green-200 bg-success/8 text-success-foreground dark:border-green-700 dark:bg-success/16",
         warning:
           "border-[0.5px] border-orange-200 bg-warning/8 text-warning-foreground dark:border-yellow-700/50 dark:bg-warning/16",
-        mono: "border-[0.5px] bg-secondary px-1.5 py-0.25 font-mono text-sm [button,a&]:hover:bg-secondary/90",
+        mono: "border-0 bg-secondary px-1.5 py-0.25 font-mono text-sm shadow-buttons-neutral [button,a&]:hover:bg-secondary/90",
       },
     },
   }

@@ -85,7 +85,7 @@ export function ResourceCommentsPanel({
       {open && (
         <motion.div
           animate={{ y: 0, opacity: 1, right }}
-          className="fixed bottom-4 z-50 flex h-[600px] max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-xl border-[0.5px] bg-ui-bg-subtle shadow-lg"
+          className="fixed bottom-4 z-50 flex h-[600px] max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-xl bg-ui-bg-subtle not-dark:bg-clip-padding shadow-elevation-flyout"
           exit={{ y: 700, opacity: 0 }}
           initial={{ y: 700, opacity: 0, right }}
           onFocusCapture={() => setActive("comments")}

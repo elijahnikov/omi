@@ -8,6 +8,7 @@ export interface WorkspaceTab {
   entityId: string;
   id: string;
   kind: TabKind;
+  pinned?: boolean;
   title: string;
   url: string;
 }
@@ -29,11 +30,19 @@ interface TabsState {
     anchorId: string
   ) => { nextUrl: string | null };
 
+  duplicateTab: (workspaceId: string, id: string) => { newId: string } | null;
   openOrActivate: (workspaceId: string, tab: WorkspaceTab) => void;
+  pinTab: (workspaceId: string, id: string) => void;
   reorder: (workspaceId: string, fromIdx: number, toIdx: number) => void;
   setActive: (workspaceId: string, id: string) => void;
   tabsByWorkspace: Record<string, WorkspaceTab[]>;
   updateTitle: (workspaceId: string, id: string, title: string) => void;
+}
+
+function sortPinnedFirst(tabs: WorkspaceTab[]): WorkspaceTab[] {
+  const pinned = tabs.filter((t) => t.pinned);
+  const rest = tabs.filter((t) => !t.pinned);
+  return [...pinned, ...rest];
 }
 
 export const useWorkspaceTabs = create<TabsState>()(
@@ -45,8 +54,23 @@ export const useWorkspaceTabs = create<TabsState>()(
       openOrActivate: (workspaceId, tab) => {
         const state = get();
         const existing = state.tabsByWorkspace[workspaceId] ?? [];
+        const currentActiveId = state.activeByWorkspace[workspaceId];
+        const currentActiveTab = existing.find((t) => t.id === currentActiveId);
+
+        // If the active tab is a duplicate of this entity (same entityId/url
+        // but a synthetic id), keep it active instead of bouncing to the
+        // canonical tab.
+        if (
+          currentActiveTab &&
+          currentActiveTab.id !== tab.id &&
+          currentActiveTab.entityId === tab.entityId &&
+          currentActiveTab.url === tab.url
+        ) {
+          return;
+        }
+
         const match = existing.find((t) => t.id === tab.id);
-        const alreadyActive = state.activeByWorkspace[workspaceId] === tab.id;
+        const alreadyActive = currentActiveId === tab.id;
 
         // Existing tab: only toggle active; never overwrite title/url
         // (titles are managed by updateTitle from resolved queries).
@@ -63,11 +87,11 @@ export const useWorkspaceTabs = create<TabsState>()(
           return;
         }
 
-        // New tab: append and activate.
+        // New tab: append within its pin group and activate.
         set({
           tabsByWorkspace: {
             ...state.tabsByWorkspace,
-            [workspaceId]: [...existing, tab],
+            [workspaceId]: sortPinnedFirst([...existing, tab]),
           },
           activeByWorkspace: {
             ...state.activeByWorkspace,
@@ -114,10 +138,14 @@ export const useWorkspaceTabs = create<TabsState>()(
           return { nextUrl: null };
         }
         const wasActive = state.activeByWorkspace[workspaceId] === keepId;
+        // Keep pinned tabs in addition to the explicit keep.
+        const survivors = sortPinnedFirst(
+          tabs.filter((t) => t.id === keepId || t.pinned)
+        );
         set({
           tabsByWorkspace: {
             ...state.tabsByWorkspace,
-            [workspaceId]: [keep],
+            [workspaceId]: survivors,
           },
           activeByWorkspace: {
             ...state.activeByWorkspace,
@@ -158,17 +186,30 @@ export const useWorkspaceTabs = create<TabsState>()(
 
       closeAll: (workspaceId) => {
         const state = get();
-        const hadActive = state.activeByWorkspace[workspaceId] !== undefined;
+        const tabs = state.tabsByWorkspace[workspaceId] ?? [];
+        const pinned = tabs.filter((t) => t.pinned);
+        const currentActive = state.activeByWorkspace[workspaceId];
+        const activeSurvives =
+          !!currentActive && pinned.some((t) => t.id === currentActive);
+        const nextActive = activeSurvives ? currentActive : pinned[0]?.id;
+        const hadActive = currentActive !== undefined;
         set({
           tabsByWorkspace: {
             ...state.tabsByWorkspace,
-            [workspaceId]: [],
+            [workspaceId]: pinned,
           },
           activeByWorkspace: {
             ...state.activeByWorkspace,
-            [workspaceId]: undefined,
+            [workspaceId]: nextActive,
           },
         });
+        if (activeSurvives) {
+          return { nextUrl: null };
+        }
+        if (nextActive) {
+          const tab = pinned.find((t) => t.id === nextActive);
+          return { nextUrl: tab?.url ?? `/workspace/${workspaceId}` };
+        }
         return { nextUrl: hadActive ? `/workspace/${workspaceId}` : null };
       },
 
@@ -221,6 +262,53 @@ export const useWorkspaceTabs = create<TabsState>()(
             [workspaceId]: tabs.map((t) => (t.id === id ? { ...t, title } : t)),
           },
         });
+      },
+
+      pinTab: (workspaceId, id) => {
+        const state = get();
+        const tabs = state.tabsByWorkspace[workspaceId] ?? [];
+        const idx = tabs.findIndex((t) => t.id === id);
+        if (idx === -1) {
+          return;
+        }
+        const next = tabs.map((t) =>
+          t.id === id ? { ...t, pinned: !t.pinned } : t
+        );
+        set({
+          tabsByWorkspace: {
+            ...state.tabsByWorkspace,
+            [workspaceId]: sortPinnedFirst(next),
+          },
+        });
+      },
+
+      duplicateTab: (workspaceId, id) => {
+        const state = get();
+        const tabs = state.tabsByWorkspace[workspaceId] ?? [];
+        const idx = tabs.findIndex((t) => t.id === id);
+        const source = tabs[idx];
+        if (!source) {
+          return null;
+        }
+        const newId = `${source.id}#dup-${Date.now().toString(36)}`;
+        const duplicate: WorkspaceTab = {
+          ...source,
+          id: newId,
+          pinned: false,
+        };
+        const next = [...tabs];
+        next.splice(idx + 1, 0, duplicate);
+        set({
+          tabsByWorkspace: {
+            ...state.tabsByWorkspace,
+            [workspaceId]: sortPinnedFirst(next),
+          },
+          activeByWorkspace: {
+            ...state.activeByWorkspace,
+            [workspaceId]: newId,
+          },
+        });
+        return { newId };
       },
 
       clearActive: (workspaceId) => {

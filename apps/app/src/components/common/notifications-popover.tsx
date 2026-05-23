@@ -45,11 +45,11 @@ export function NotificationsPopover() {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="relative z-110! w-80 rounded-2xl bg-ui-bg-component p-0"
+        className="relative z-110! w-80 p-0!"
         side="right"
         sideOffset={6}
       >
-        <div className="border-b px-3 py-2.5">
+        <div className="border-b px-3 py-2">
           <PopoverTitle className="font-medium text-sm">
             Notifications
           </PopoverTitle>

@@ -164,7 +164,7 @@ export function SearchSuggestions({
 
       {topConcepts && topConcepts.length > 0 ? (
         <CollapsibleSection title="Top concepts in your workspace">
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5 p-1">
             {topConcepts.map((concept) => (
               <button
                 className="group"

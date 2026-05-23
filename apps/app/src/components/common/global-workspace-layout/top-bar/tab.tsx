@@ -1,6 +1,15 @@
 import { cn } from "@omi/ui";
 import { ContextMenu } from "@omi/ui/context-menu";
-import { RiCloseLine } from "@remixicon/react";
+import { toastManager } from "@omi/ui/toast";
+import {
+  RiArrowRightUpLine,
+  RiCloseLine,
+  RiDeleteBin6Line,
+  RiFileCopyLine,
+  RiLinkM,
+  RiPushpinFill,
+  RiUnpinLine,
+} from "@remixicon/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, memo, useCallback } from "react";
 import { TabIcon } from "~/components/common/global-workspace-layout/top-bar/tab-icon";
@@ -20,6 +29,8 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
   const closeOthers = useWorkspaceTabs((s) => s.closeOthers);
   const closeToRight = useWorkspaceTabs((s) => s.closeToRight);
   const closeAll = useWorkspaceTabs((s) => s.closeAll);
+  const pinTab = useWorkspaceTabs((s) => s.pinTab);
+  const duplicateTab = useWorkspaceTabs((s) => s.duplicateTab);
   const navigate = useNavigate();
 
   const handleClose = useCallback(
@@ -76,6 +87,30 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
     }
   }, [closeAll, navigate, workspaceId]);
 
+  const handleTogglePin = useCallback(() => {
+    pinTab(workspaceId, tab.id);
+  }, [pinTab, tab.id, workspaceId]);
+
+  const handleDuplicate = useCallback(() => {
+    const result = duplicateTab(workspaceId, tab.id);
+    if (result) {
+      navigate({ to: tab.url });
+    }
+  }, [duplicateTab, navigate, tab.id, tab.url, workspaceId]);
+
+  const handleCopyUrl = useCallback(() => {
+    const origin = typeof window === "undefined" ? "" : window.location.origin;
+    const fullUrl = `${origin}${tab.url}`;
+    navigator.clipboard
+      .writeText(fullUrl)
+      .then(() => {
+        toastManager.add({ type: "success", title: "URL copied to clipboard" });
+      })
+      .catch(() => {
+        toastManager.add({ type: "error", title: "Failed to copy URL" });
+      });
+  }, [tab.url]);
+
   return (
     <ContextMenu>
       <ContextMenu.Trigger
@@ -101,6 +136,9 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
           preloadDelay={100}
           to={tab.url}
         >
+          {tab.pinned && (
+            <RiPushpinFill className="size-3 shrink-0 text-ui-fg-muted" />
+          )}
           <span className="flex shrink-0 items-center justify-center text-ui-fg-muted">
             <TabIcon tab={tab} workspaceId={workspaceId} />
           </span>
@@ -116,45 +154,43 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
         </Link>
       </ContextMenu.Trigger>
       <ContextMenu.Content className="z-[110]!">
-        <ContextMenu.Item onClick={handleOpen}>Open</ContextMenu.Item>
+        <ContextMenu.Item onClick={handleOpen}>
+          <RiArrowRightUpLine />
+          Open
+        </ContextMenu.Item>
+        <ContextMenu.Item onClick={handleDuplicate}>
+          <RiFileCopyLine />
+          Duplicate tab
+        </ContextMenu.Item>
+        <ContextMenu.Item onClick={handleTogglePin}>
+          {tab.pinned ? <RiUnpinLine /> : <RiPushpinFill />}
+          {tab.pinned ? "Unpin tab" : "Pin tab"}
+        </ContextMenu.Item>
+        <ContextMenu.Item onClick={handleCopyUrl}>
+          <RiLinkM />
+          Copy URL
+        </ContextMenu.Item>
         <ContextMenu.Separator />
-        <ContextMenu.Item onClick={handleCloseFromMenu}>Close</ContextMenu.Item>
+        <ContextMenu.Item onClick={handleCloseFromMenu}>
+          <RiCloseLine />
+          Close
+        </ContextMenu.Item>
         <ContextMenu.Item onClick={handleCloseOthers}>
+          <RiCloseLine />
           Close others
         </ContextMenu.Item>
         <ContextMenu.Item onClick={handleCloseToRight}>
+          <RiCloseLine />
           Close to the right
         </ContextMenu.Item>
         <ContextMenu.Separator />
         <ContextMenu.Item onClick={handleCloseAll} variant="destructive">
+          <RiDeleteBin6Line />
           Close all
         </ContextMenu.Item>
       </ContextMenu.Content>
     </ContextMenu>
   );
 }
-
-// function TabCorners() {
-//   return (
-//     <>
-//       <span
-//         aria-hidden
-//         className="pointer-events-none absolute bottom-0 left-[-12px] z-[100] size-[12px]"
-//         style={{
-//           backgroundImage:
-//             "radial-gradient(circle at top left, transparent 11.25px, var(--border-base) 11.5px, var(--border-base) 11.5px, var(--bg-base) 12px)",
-//         }}
-//       />
-//       <span
-//         aria-hidden
-//         className="pointer-events-none absolute right-[-12px] bottom-0 z-[100] size-[12px]"
-//         style={{
-//           backgroundImage:
-//             "radial-gradient(circle at top right, transparent 11.25px, var(--border-base) 11.5px, var(--border-base) 11.5px, var(--bg-base) 12px)",
-//         }}
-//       />
-//     </>
-//   );
-// }
 
 export const Tab = memo(TabComponent);

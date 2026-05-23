@@ -18,6 +18,7 @@ function PopoverContent({
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
+  children,
   ...props
 }: PopoverPrimitive.Popup.Props &
   Pick<
@@ -35,13 +36,17 @@ function PopoverContent({
       >
         <PopoverPrimitive.Popup
           className={cn(
-            "max-h-[var(--radix-popper-available-height)] overflow-hidden rounded-2xl border bg-ui-bg-base p-1 text-ui-fg-base",
+            "relative origin-(--transform-origin) rounded-lg bg-ui-bg-component not-dark:bg-clip-padding text-ui-fg-base shadow-elevation-flyout outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] focus:outline-none",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=open]:animate-in",
             className
           )}
           data-slot="popover-content"
           {...props}
-        />
+        >
+          <div className="max-h-(--available-height) w-full overflow-y-auto overflow-x-hidden rounded-[inherit] p-1">
+            {children}
+          </div>
+        </PopoverPrimitive.Popup>
       </PopoverPrimitive.Positioner>
     </PopoverPrimitive.Portal>
   );
