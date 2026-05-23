@@ -21,10 +21,7 @@ export default function WorkspaceSidebarFooter() {
 
   return (
     <SidebarFooter
-      className={cn(
-        sidebarOpen ? "px-2" : "pl-2",
-        "relative bottom-2 w-full! pr-0"
-      )}
+      className={cn(sidebarOpen ? "px-2" : "pl-2", "relative bottom-2")}
     >
       <TooltipProvider>
         <div className="flex w-full flex-col gap-1">

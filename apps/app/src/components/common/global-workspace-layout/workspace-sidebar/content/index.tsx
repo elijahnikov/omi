@@ -72,7 +72,9 @@ export default function WorkspaceSidebarContent() {
   }, [pathname, params?.workspaceId]);
 
   return (
-    <SidebarContent className={cn(sidebarOpen ? "px-2" : "pl-2", "w-full")}>
+    <SidebarContent
+      className={cn(sidebarOpen ? "px-2" : "pl-2", "w-full pt-1")}
+    >
       <TooltipProvider>
         <div className="flex w-full flex-col gap-1">
           {navigationItems.map((item) => (

@@ -170,7 +170,7 @@ export function SearchSuggestions({
                 type="button"
               >
                 <Badge
-                  className="flex h-7 cursor-pointer items-center rounded-full px-3 font-medium text-xs transition-colors hover:bg-ui-bg-component"
+                  className="flex h-7 cursor-pointer items-center rounded-sm px-3 font-medium text-xs transition-colors hover:bg-ui-bg-component"
                   variant="mono"
                 >
                   {concept.name}

@@ -87,7 +87,7 @@ export function TabStrip({ workspaceId }: TabStripProps) {
 
   return (
     <div
-      className="relative mr-4 mb-[3.7px] flex h-10 min-w-0 flex-1 pt-1"
+      className="relative mr-4 mb-[3.7px] flex h-10 min-w-0 flex-1 pt-1.25"
       ref={rootRef}
     >
       <ScrollArea className="h-10 min-w-0 flex-1 **:data-[slot=scroll-area-scrollbar]:hidden">

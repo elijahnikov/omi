@@ -83,7 +83,7 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
           <div
             className={cn(
               "group/tab relative flex shrink-0 items-end",
-              isActive ? "sticky right-4.5 left-6 z-[2] h-8" : "mb-1.5 h-7"
+              "mb-1.5 h-7"
             )}
             data-active={isActive || undefined}
           />
@@ -93,7 +93,7 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
           className={cn(
             "relative flex min-w-[120px] max-w-[220px] items-center gap-1.5 px-2 font-medium! outline-none transition-colors",
             isActive
-              ? "z-[100] h-8.5 rounded-t-lg rounded-b-0 bg-ui-bg-base pb-[5.5px] text-ui-fg-base ring-[0.5px] ring-ui-border-base"
+              ? "z-[100] mb-0.5 h-6 rounded-md bg-ui-bg-base text-ui-fg-base ring-1 ring-ui-border-base"
               : "mb-0.5 h-6 rounded-md text-ui-fg-muted hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base dark:hover:bg-[rgba(255,255,255,0.070)]"
           )}
           onMouseDown={handleMouseDown}
@@ -114,7 +114,6 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
             <RiCloseLine className="size-3" />
           </button>
         </Link>
-        {isActive && <TabCorners />}
       </ContextMenu.Trigger>
       <ContextMenu.Content className="z-[110]!">
         <ContextMenu.Item onClick={handleOpen}>Open</ContextMenu.Item>
@@ -135,27 +134,27 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
   );
 }
 
-function TabCorners() {
-  return (
-    <>
-      <span
-        aria-hidden
-        className="pointer-events-none absolute bottom-0 left-[-12px] z-[100] size-[12px]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at top left, transparent 11.25px, var(--border-base) 11.5px, var(--border-base) 11.5px, var(--bg-base) 12px)",
-        }}
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute right-[-12px] bottom-0 z-[100] size-[12px]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at top right, transparent 11.25px, var(--border-base) 11.5px, var(--border-base) 11.5px, var(--bg-base) 12px)",
-        }}
-      />
-    </>
-  );
-}
+// function TabCorners() {
+//   return (
+//     <>
+//       <span
+//         aria-hidden
+//         className="pointer-events-none absolute bottom-0 left-[-12px] z-[100] size-[12px]"
+//         style={{
+//           backgroundImage:
+//             "radial-gradient(circle at top left, transparent 11.25px, var(--border-base) 11.5px, var(--border-base) 11.5px, var(--bg-base) 12px)",
+//         }}
+//       />
+//       <span
+//         aria-hidden
+//         className="pointer-events-none absolute right-[-12px] bottom-0 z-[100] size-[12px]"
+//         style={{
+//           backgroundImage:
+//             "radial-gradient(circle at top right, transparent 11.25px, var(--border-base) 11.5px, var(--border-base) 11.5px, var(--bg-base) 12px)",
+//         }}
+//       />
+//     </>
+//   );
+// }
 
 export const Tab = memo(TabComponent);

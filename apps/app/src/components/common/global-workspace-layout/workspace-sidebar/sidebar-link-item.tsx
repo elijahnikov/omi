@@ -31,9 +31,11 @@ function SidebarLinkItem({
   const Icon = icon as React.ComponentType<{ className?: string }>;
 
   const buttonClassName = cn(
-    "group/menu flex h-7.5 gap-x-2 overflow-hidden rounded-md px-2 text-left font-sans text-[13px] focus-visible:bg-transparent! focus-visible:shadow-borders-interactive-with-active!",
+    "group/menu flex h-7 gap-x-2 overflow-hidden rounded-md px-2 text-left font-sans text-[13px] focus-visible:bg-transparent! focus-visible:shadow-borders-interactive-with-active!",
     isActive
-      ? cn("border-[0.5px] bg-ui-bg-base text-ui-fg-base")
+      ? cn(
+          "bg-ui-bg-base text-ui-fg-base shadow-buttons-neutral! hover:bg-ui-bg-base active:bg-ui-bg-base"
+        )
       : "text-ui-fg-muted/70 transition-colors duration-200 hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base dark:hover:bg-[rgba(255,255,255,0.070)]",
     sidebarOpen
       ? "w-full items-center justify-start"
