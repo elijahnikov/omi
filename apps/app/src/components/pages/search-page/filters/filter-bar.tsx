@@ -57,7 +57,7 @@ export function FilterBar({
         <DropdownMenuTrigger
           render={
             <Button
-              className="size-8! h-8 gap-x-1.5 whitespace-nowrap rounded-full border-[0.5px] px-3 text-xs"
+              className="size-8! h-8 gap-x-1.5 whitespace-nowrap px-3 text-xs"
               size="small"
               variant="secondary"
             />
@@ -81,7 +81,7 @@ export function FilterBar({
       </DropdownMenu>
       {hasActiveFilters ? (
         <Button
-          className="h-8 whitespace-nowrap rounded-full px-3 text-ui-fg-muted text-xs"
+          className="h-8 whitespace-nowrap px-3 text-ui-fg-muted text-xs"
           onClick={onReset}
           size="small"
           variant="ghost"

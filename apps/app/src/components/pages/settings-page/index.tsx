@@ -1,6 +1,7 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
+import { cn } from "@omi/ui";
 import { Badge } from "@omi/ui/badge";
 import {
   Dialog,
@@ -44,6 +45,31 @@ import { ImportTab } from "./import-tab";
 import { MembersTab } from "./members-tab";
 import { MemoryTab } from "./memory-tab";
 
+function SettingsTabLink({
+  value,
+  label,
+  icon: Icon,
+}: {
+  value: SettingsTab;
+  label: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <TabsTrigger
+      className={cn(
+        "group/menu flex h-7! w-full items-center justify-start gap-x-2 overflow-hidden rounded-md border-transparent px-2 text-left font-sans text-[13px] outline-none transition-colors duration-200 focus-visible:bg-transparent! focus-visible:shadow-borders-interactive-with-active! sm:h-7!",
+        "text-ui-fg-muted/70 hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base data-[active]:bg-ui-bg-base data-[active]:text-ui-fg-base data-[active]:shadow-buttons-neutral! dark:hover:bg-[rgba(255,255,255,0.070)]"
+      )}
+      value={value}
+    >
+      <Icon className="size-3.5! shrink-0" />
+      <Text className="whitespace-nowrap" size="small" weight="plus">
+        {label}
+      </Text>
+    </TabsTrigger>
+  );
+}
+
 export type SettingsTab =
   | "general"
   | "members"
@@ -72,48 +98,34 @@ export function SettingsPageComponent({
       orientation="vertical"
       value={tab}
     >
-      <div className="sticky top-0 flex h-screen w-52 shrink-0 flex-col gap-3 self-start border-r-[0.5px] py-8 pr-4 pl-6">
-        <TabsList className="w-full items-start justify-start">
-          <TabsTrigger className="grow-0 pl-3" value="general">
-            <RiSettings3Fill className="size-4" />
-            <Text className="ml-1 font-medium" size="small">
-              General
-            </Text>
-          </TabsTrigger>
-          <TabsTrigger className="grow-0 pl-3" value="members">
-            <RiGroupFill className="size-4" />
-            <Text className="ml-1 font-medium" size="small">
-              Members
-            </Text>
-          </TabsTrigger>
-          <TabsTrigger className="grow-0 pl-3" value="memory">
-            <RiBrain2Fill className="size-4" />
-            <Text className="ml-1 font-medium" size="small">
-              Memory
-            </Text>
-          </TabsTrigger>
-          <TabsTrigger className="grow-0 pl-3" value="ai-provider">
-            <RiKey2Fill className="size-4" />
-            <Text className="ml-1 font-medium" size="small">
-              AI provider
-            </Text>
-          </TabsTrigger>
-          <TabsTrigger className="grow-0 pl-3" value="import">
-            <RiDownload2Fill className="size-4" />
-            <Text className="ml-1 font-medium" size="small">
-              Import
-            </Text>
-          </TabsTrigger>
-          <TabsTrigger className="grow-0 pl-3" value="advanced">
-            <RiShieldKeyholeFill className="size-4" />
-            <Text className="ml-1 font-medium" size="small">
-              Advanced
-            </Text>
-          </TabsTrigger>
+      <div className="sticky top-0 flex h-screen w-52 shrink-0 flex-col gap-3 self-start border-r-[0.5px] px-3 pt-3 pb-8">
+        <TabsList className="w-full flex-col items-stretch justify-start gap-1 bg-transparent p-0">
+          <SettingsTabLink
+            icon={RiSettings3Fill}
+            label="General"
+            value="general"
+          />
+          <SettingsTabLink icon={RiGroupFill} label="Members" value="members" />
+          <SettingsTabLink icon={RiBrain2Fill} label="Memory" value="memory" />
+          <SettingsTabLink
+            icon={RiKey2Fill}
+            label="AI provider"
+            value="ai-provider"
+          />
+          <SettingsTabLink
+            icon={RiDownload2Fill}
+            label="Import"
+            value="import"
+          />
+          <SettingsTabLink
+            icon={RiShieldKeyholeFill}
+            label="Advanced"
+            value="advanced"
+          />
         </TabsList>
       </div>
       <div className="flex min-w-0 flex-1 justify-center">
-        <div className="mt-8 min-h-[calc(100vh-140px)] w-full max-w-[640px] px-4 py-8 md:px-0">
+        <div className="mt-3 min-h-[calc(100vh-140px)] w-full max-w-[640px] px-4 pt-3 pb-8 md:px-0">
           <TabsContent value="general">
             <GeneralTab
               isAdminOrOwner={

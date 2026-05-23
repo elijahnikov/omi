@@ -71,7 +71,7 @@ export function LibraryToolbar({
   return (
     <div className="fixed inset-x-0 top-11 z-30 flex w-full items-center gap-x-2 bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:rounded-t-lg">
       <Input
-        className="w-48 rounded-md bg-ui-bg-field-component-hover shadow-xs hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:shadow-sm dark:hover:bg-ui-bg-field-component-hover"
+        className="w-48 rounded-md bg-ui-bg-field-component-hover hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:hover:bg-ui-bg-field-component-hover"
         onChange={(e) => setSearch(e.target.value || null)}
         placeholder="Search"
         type="search"
@@ -80,7 +80,7 @@ export function LibraryToolbar({
       <div className="ml-auto flex items-center gap-x-2">
         {onCreateCollection && (
           <Button
-            className="size-8! shrink-0 rounded-full border-[0.5px]"
+            className="size-8! shrink-0"
             onClick={onCreateCollection}
             variant="secondary"
           >
@@ -91,7 +91,7 @@ export function LibraryToolbar({
           <DropdownMenuTrigger
             render={
               <Button
-                className="size-8 h-8 gap-x-1.5 rounded-full border-[0.5px] px-3 text-xs"
+                className="size-8 h-8 gap-x-1.5 px-3 text-xs"
                 variant="secondary"
               />
             }
@@ -115,7 +115,7 @@ export function LibraryToolbar({
           <DropdownMenuTrigger
             render={
               <Button
-                className="size-8! h-8 gap-x-1.5 whitespace-nowrap rounded-full border-[0.5px] px-3 text-xs"
+                className="size-8! h-8 gap-x-1.5 whitespace-nowrap px-3 text-xs"
                 variant="secondary"
               />
             }

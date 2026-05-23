@@ -228,10 +228,10 @@ export function ChatInput({
     <div className={cn(fullWidth ? "" : "px-4 pt-0 pb-3")}>
       <div
         className={cn(
-          "relative shadow-xs dark:shadow-sm",
+          "relative",
           fullWidth ? "mx-auto w-full!" : "mx-auto max-w-2xl",
           [
-            "txt-compact-small w-full rounded-md border-[0.5px] bg-ui-bg-field-component-hover text-ui-fg-base placeholder-ui-fg-muted caret-ui-fg-base outline-none transition-fg hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:hover:bg-ui-bg-field-component-hover",
+            "txt-compact-small w-full rounded-md bg-ui-bg-field-component-hover text-ui-fg-base placeholder-ui-fg-muted caret-ui-fg-base shadow-borders-base outline-none transition-fg hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:hover:bg-ui-bg-field-component-hover",
             "focus-visible:shadow-borders-interactive-with-active",
             "disabled:cursor-not-allowed disabled:bg-ui-bg-disabled! disabled:text-ui-fg-disabled disabled:placeholder-ui-fg-disabled",
             "invalid:shadow-borders-error! aria-invalid:shadow-borders-error!",

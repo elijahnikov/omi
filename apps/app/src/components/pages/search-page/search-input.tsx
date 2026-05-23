@@ -45,7 +45,7 @@ export function SearchInput({
         {isPending ? <DotGridLoader /> : <RiSearchFill className="size-4" />}
       </div>
       <Input
-        className="rounded-md bg-ui-bg-field-component-hover pr-8 pl-8 shadow-xs hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:shadow-sm dark:hover:bg-ui-bg-field-component-hover"
+        className="rounded-md bg-ui-bg-field-component-hover pr-8 pl-8 hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:hover:bg-ui-bg-field-component-hover"
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search your library…"
         ref={inputRef}
@@ -55,7 +55,7 @@ export function SearchInput({
       {value ? (
         <button
           aria-label="Clear search"
-          className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 items-center justify-center rounded-full text-ui-fg-muted transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base"
+          className="absolute top-1/2 right-2 flex size-5 -translate-y-1/2 items-center justify-center text-ui-fg-muted transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base"
           onClick={() => onChange("")}
           type="button"
         >

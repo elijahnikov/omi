@@ -25,7 +25,7 @@ export function AddFilterMenu({
       <DropdownMenuTrigger
         render={
           <Button
-            className="size-8 h-8 gap-x-1.5 rounded-full border-[0.5px] px-3 text-xs"
+            className="size-8 h-8 gap-x-1.5 px-3 text-xs"
             size="small"
             variant="secondary"
           >

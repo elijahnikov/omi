@@ -54,7 +54,7 @@ export function TagsToolbar() {
   return (
     <div className="fixed inset-x-0 top-11 z-30 flex w-full items-center gap-x-2 bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:rounded-t-lg">
       <Input
-        className="w-48 rounded-md border-[0.5px] bg-ui-bg-base-hover shadow-xs dark:shadow-sm"
+        className="w-48 rounded-md border-[0.5px]"
         onChange={(e) => setSearch(e.target.value || null)}
         placeholder="Search tags"
         type="search"
@@ -65,7 +65,7 @@ export function TagsToolbar() {
           <DropdownMenuTrigger
             render={
               <Button
-                className="size-8! h-8 gap-x-1.5 whitespace-nowrap rounded-full border-[0.5px] px-3 text-xs"
+                className="size-8! h-8 gap-x-1.5 whitespace-nowrap px-3 text-xs"
                 variant="secondary"
               />
             }
