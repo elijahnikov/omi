@@ -93,15 +93,15 @@ function RecentConnectionsSection({
 }) {
   return (
     <CollapsibleSection title="Recent connections">
-      <div className="mt-3">
+      <div className="mt-3 p-1">
         {connections.length === 0 ? (
           <EmptyAICard message="When new saves connect to older items in your library, they'll appear here." />
         ) : (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="flex flex-col gap-y-3">
             {connections.map((c) => (
               <RecentConnectionCard
                 connection={c}
-                key={c.linkId}
+                key={c.pivotId}
                 workspaceId={workspaceId}
               />
             ))}

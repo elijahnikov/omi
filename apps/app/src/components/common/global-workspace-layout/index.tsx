@@ -69,10 +69,15 @@ function GlobalHotkeys({ workspaceId }: { workspaceId: Id<"workspace"> }) {
 
 function DropZoneInset({ children }: { children: React.ReactNode }) {
   const { isDragging } = useFileDrop();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { pathname, isLoading } = useRouterState({
+    select: (s) => ({
+      pathname: s.location.pathname,
+      isLoading: s.isLoading,
+    }),
+  });
   const mainRef = useRef<HTMLElement>(null);
 
-  useScrollRestoration(mainRef, pathname);
+  useScrollRestoration(mainRef, pathname, isLoading);
 
   return (
     <SidebarInset className="relative mx-2 mt-1 rounded-t-2xl shadow-borders-base transition-[background-color,box-shadow] duration-200 md:h-[calc(100vh-48px)]">
@@ -103,14 +108,26 @@ function useTransitionsEnabledAfterMount() {
 
 function useScrollRestoration(
   ref: React.RefObject<HTMLElement | null>,
-  pathname: string
+  pathname: string,
+  isLoading: boolean
 ) {
+  // Only reset scroll once the new route has finished loading. Resetting on
+  // pathname change alone causes a brief flash where the previous page (still
+  // showing as pending UI) jumps to the top before the new content mounts.
+  const lastResetRef = useRef<string | null>(null);
   // biome-ignore lint/correctness/useExhaustiveDependencies: pathname is the trigger
   useLayoutEffect(() => {
+    if (isLoading) {
+      return;
+    }
+    if (lastResetRef.current === pathname) {
+      return;
+    }
+    lastResetRef.current = pathname;
     const el = ref.current;
     if (!el) {
       return;
     }
     el.scrollTop = 0;
-  }, [ref, pathname]);
+  }, [ref, pathname, isLoading]);
 }

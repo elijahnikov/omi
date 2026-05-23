@@ -142,7 +142,7 @@ export function SearchSuggestions({
           }
           title="Recent searches"
         >
-          <div className="mt-3 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5 p-1">
             {recent.map((item) => (
               <button
                 className="group"
@@ -151,7 +151,7 @@ export function SearchSuggestions({
                 type="button"
               >
                 <Badge
-                  className="h-7 cursor-pointer rounded-full px-3 text-xs transition-colors hover:bg-ui-bg-component"
+                  className="h-6 cursor-pointer rounded-sm px-3 text-xs transition-colors hover:bg-ui-bg-component"
                   variant="mono"
                 >
                   {item.q}
@@ -164,7 +164,7 @@ export function SearchSuggestions({
 
       {topConcepts && topConcepts.length > 0 ? (
         <CollapsibleSection title="Top concepts in your workspace">
-          <div className="mt-3 flex flex-wrap gap-1.5 p-1">
+          <div className="mt-3 flex flex-wrap gap-2 p-1">
             {topConcepts.map((concept) => (
               <button
                 className="group"
@@ -173,7 +173,7 @@ export function SearchSuggestions({
                 type="button"
               >
                 <Badge
-                  className="flex h-7 cursor-pointer items-center rounded-sm px-3 font-medium text-xs transition-colors hover:bg-ui-bg-component"
+                  className="flex h-6 cursor-pointer items-center rounded-sm px-3 font-medium text-xs transition-colors hover:bg-ui-bg-component"
                   variant="mono"
                 >
                   {concept.name}

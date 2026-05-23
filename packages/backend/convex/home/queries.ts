@@ -163,23 +163,24 @@ async function getRecentConnections(
   );
   fresh.sort((a, b) => b.score - a.score);
 
-  const results: Array<{
+  type PivotEntry = {
     linkId: Id<"resourceLink">;
+    olderId: Id<"resource">;
+    olderDoc: Doc<"resource">;
     score: number;
     sharedConcepts: string[];
-    newer: { _id: Id<"resource">; title: string; type: string };
-    older: {
-      _id: Id<"resource">;
-      title: string;
-      type: string;
-      updatedAt: number;
-    };
-  }> = [];
+  };
+
+  // Group by the newer resource (pivot) → list of older counterparts.
+  const groups = new Map<
+    Id<"resource">,
+    {
+      newerDoc: Doc<"resource">;
+      entries: PivotEntry[];
+    }
+  >();
 
   for (const link of fresh) {
-    if (results.length >= RECENT_CONNECTION_LIMIT) {
-      break;
-    }
     const source = await ctx.db.get(link.sourceResourceId);
     const target = await ctx.db.get(link.targetResourceId);
     if (!(source && target) || source.deletedAt || target.deletedAt) {
@@ -194,21 +195,56 @@ async function getRecentConnections(
       continue;
     }
 
-    results.push({
+    const existing = groups.get(newer._id);
+    const entry: PivotEntry = {
       linkId: link._id,
+      olderId: older._id,
+      olderDoc: older,
       score: link.score,
       sharedConcepts: link.sharedConcepts.slice(0, 4),
-      newer: { _id: newer._id, title: newer.title, type: newer.type },
-      older: {
-        _id: older._id,
-        title: older.title,
-        type: older.type,
-        updatedAt: older.updatedAt,
-      },
-    });
+    };
+    if (existing) {
+      // Skip if this older already appears under the pivot (links can be
+      // duplicated in either direction).
+      if (existing.entries.some((e) => e.olderId === older._id)) {
+        continue;
+      }
+      existing.entries.push(entry);
+    } else {
+      groups.set(newer._id, { newerDoc: newer, entries: [entry] });
+    }
   }
 
-  return results;
+  // Order groups by their best (highest-score) entry, then trim.
+  const ordered = [...groups.values()]
+    .map((g) => ({
+      ...g,
+      entries: g.entries.sort((a, b) => b.score - a.score),
+    }))
+    .sort((a, b) => (b.entries[0]?.score ?? 0) - (a.entries[0]?.score ?? 0))
+    .slice(0, RECENT_CONNECTION_LIMIT);
+
+  // Enrich pivots and counterparts.
+  return Promise.all(
+    ordered.map(async (g) => {
+      const [newer, others] = await Promise.all([
+        enrichResource(ctx, g.newerDoc),
+        Promise.all(
+          g.entries.map(async (e) => ({
+            linkId: e.linkId,
+            score: e.score,
+            sharedConcepts: e.sharedConcepts,
+            resource: await enrichResource(ctx, e.olderDoc),
+          }))
+        ),
+      ]);
+      return {
+        pivotId: g.newerDoc._id,
+        newer,
+        others,
+      };
+    })
+  );
 }
 
 function hashString(s: string): number {

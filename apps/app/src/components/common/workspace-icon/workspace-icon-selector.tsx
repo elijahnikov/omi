@@ -45,6 +45,13 @@ export function WorkspaceIconSelector({
     setOpen(false);
   };
 
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    if (currentIcon && !currentEmoji) {
+      onSelect({ type: "icon", name: currentIcon, color });
+    }
+  };
+
   const handleEmojiSelect = (emoji: string) => {
     onSelect({ type: "emoji", emoji });
     setOpen(false);
@@ -61,12 +68,16 @@ export function WorkspaceIconSelector({
         sideOffset={8}
       >
         <Tabs defaultValue={currentEmoji ? "emojis" : "icons"}>
-          <TabsList className="mb-0 h-10 w-full rounded-b-none border-b px-1.25 pb-0.5">
+          <TabsList className="-mt-1 mb-0 h-10 w-full rounded-b-none border-b px-1.25 pb-0.5">
             <TabsTrigger className="h-7! grow" value="icons">
-              <Text size="small">Icons</Text>
+              <Text className="font-medium" size="small">
+                Icons
+              </Text>
             </TabsTrigger>
             <TabsTrigger className="h-7! grow" value="emojis">
-              <Text size="small">Emojis</Text>
+              <Text className="font-medium" size="small">
+                Emojis
+              </Text>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="icons">
@@ -76,7 +87,7 @@ export function WorkspaceIconSelector({
                   <button
                     className="mx-auto flex size-7 items-center justify-center rounded-full transition-transform hover:scale-110"
                     key={color.name}
-                    onClick={() => setSelectedColor(color.value)}
+                    onClick={() => handleColorSelect(color.value)}
                     style={{
                       outline:
                         selectedColor === color.value

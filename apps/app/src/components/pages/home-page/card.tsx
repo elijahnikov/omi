@@ -10,7 +10,7 @@ export function HomeCard({
   return (
     <div
       className={cn(
-        "relative flex flex-col gap-2 rounded-lg bg-ui-bg-component p-4",
+        "relative flex flex-col gap-2 rounded-lg p-2",
         interactive &&
           "transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component",
         className

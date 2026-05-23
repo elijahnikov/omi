@@ -97,7 +97,7 @@ export function ResourceCommentsPanel({
             <div className="flex min-w-0 flex-1 items-center gap-2">
               <RiDiscussFill className="size-4 shrink-0 text-ui-fg-muted" />
               <Text className="truncate font-medium" size="small">
-                Comments — {resource.title}
+                Comments - {resource.title}
               </Text>
             </div>
             <Button
