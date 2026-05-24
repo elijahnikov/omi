@@ -1,5 +1,6 @@
 import { ConvexQueryClient } from "@convex-dev/react-query";
 import { toastManager } from "@omi/ui/toast";
+import * as Sentry from "@sentry/tanstackstart-react";
 import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
@@ -111,6 +112,23 @@ export function getRouter() {
     router,
     queryClient,
   });
+
+  if (!router.isServer) {
+    Sentry.init({
+      dsn: "https://99fa688b748190ad4189d2ff367dc40e@o4511441117642752.ingest.us.sentry.io/4511441136058368",
+      environment: import.meta.env.DEV ? "development" : "production",
+      sendDefaultPii: true,
+      integrations: [
+        Sentry.tanstackRouterBrowserTracingIntegration(router),
+        Sentry.browserProfilingIntegration(),
+      ],
+      tracesSampleRate: 1.0,
+      profileSessionSampleRate: 1.0,
+      profileLifecycle: "trace",
+      enableLogs: true,
+      tunnel: "/api/sentry-tunnel",
+    });
+  }
 
   return router;
 }

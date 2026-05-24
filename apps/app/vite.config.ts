@@ -1,3 +1,4 @@
+import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
@@ -8,6 +9,9 @@ import tsConfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
   server: {
     port: 3000,
+    headers: {
+      "Document-Policy": "js-profiling",
+    },
   },
   plugins: [
     tsConfigPaths({
@@ -17,6 +21,11 @@ export default defineConfig({
     tanstackStart(),
     viteReact(),
     tailwindcss(),
+    sentryTanstackStart({
+      org: "omi-0b",
+      project: "omi-app",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+    }),
   ],
   ssr: {
     noExternal: ["@convex-dev/better-auth", /react-tweet.*/],

@@ -1,6 +1,8 @@
 import { Button } from "@omi/ui/button";
 import { RiErrorWarningFill } from "@remixicon/react";
+import * as Sentry from "@sentry/tanstackstart-react";
 import { useRouter } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { EmptyState } from "./empty-state";
 
 export function ErrorState({
@@ -15,6 +17,10 @@ export function ErrorState({
     error instanceof Error
       ? error.message
       : "Something went wrong. Please try again.";
+
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
 
   const handleRetry = () => {
     if (reset) {

@@ -19,6 +19,7 @@ import { Route as R404RouteImport } from './routes/404'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShareSlugRouteImport } from './routes/share/$slug'
+import { Route as ApiSentryTunnelRouteImport } from './routes/api/sentry-tunnel'
 import { Route as ApiInlineAiRouteImport } from './routes/api/inline-ai'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
@@ -89,6 +90,11 @@ const IndexRoute = IndexRouteImport.update({
 const ShareSlugRoute = ShareSlugRouteImport.update({
   id: '/share/$slug',
   path: '/share/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSentryTunnelRoute = ApiSentryTunnelRouteImport.update({
+  id: '/api/sentry-tunnel',
+  path: '/api/sentry-tunnel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiInlineAiRoute = ApiInlineAiRouteImport.update({
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof AuthVerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/api/inline-ai': typeof ApiInlineAiRoute
+  '/api/sentry-tunnel': typeof ApiSentryTunnelRoute
   '/share/$slug': typeof ShareSlugRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceWorkspaceIdRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -275,6 +282,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof AuthVerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/api/inline-ai': typeof ApiInlineAiRoute
+  '/api/sentry-tunnel': typeof ApiSentryTunnelRoute
   '/share/$slug': typeof ShareSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/workspace/$workspaceId/search': typeof WorkspaceWorkspaceWorkspaceIdSearchRoute
@@ -308,6 +316,7 @@ export interface FileRoutesById {
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/api/inline-ai': typeof ApiInlineAiRoute
+  '/api/sentry-tunnel': typeof ApiSentryTunnelRoute
   '/share/$slug': typeof ShareSlugRoute
   '/_workspace/workspace/$workspaceId': typeof WorkspaceWorkspaceWorkspaceIdRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/api/chat'
     | '/api/inline-ai'
+    | '/api/sentry-tunnel'
     | '/share/$slug'
     | '/workspace/$workspaceId'
     | '/api/auth/$'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/api/chat'
     | '/api/inline-ai'
+    | '/api/sentry-tunnel'
     | '/share/$slug'
     | '/api/auth/$'
     | '/workspace/$workspaceId/search'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/_auth/verify-email'
     | '/api/chat'
     | '/api/inline-ai'
+    | '/api/sentry-tunnel'
     | '/share/$slug'
     | '/_workspace/workspace/$workspaceId'
     | '/api/auth/$'
@@ -441,6 +453,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiInlineAiRoute: typeof ApiInlineAiRoute
+  ApiSentryTunnelRoute: typeof ApiSentryTunnelRoute
   ShareSlugRoute: typeof ShareSlugRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -515,6 +528,13 @@ declare module '@tanstack/react-router' {
       path: '/share/$slug'
       fullPath: '/share/$slug'
       preLoaderRoute: typeof ShareSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/sentry-tunnel': {
+      id: '/api/sentry-tunnel'
+      path: '/api/sentry-tunnel'
+      fullPath: '/api/sentry-tunnel'
+      preLoaderRoute: typeof ApiSentryTunnelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/inline-ai': {
@@ -833,6 +853,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ApiChatRoute: ApiChatRoute,
   ApiInlineAiRoute: ApiInlineAiRoute,
+  ApiSentryTunnelRoute: ApiSentryTunnelRoute,
   ShareSlugRoute: ShareSlugRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
@@ -841,10 +862,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

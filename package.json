@@ -98,5 +98,9 @@
         "@react-email/render": "^2.0.7"
       }
     }
-  }
+  },
+  "trustedDependencies": [
+    "@sentry-internal/node-cpu-profiler",
+    "@sentry/cli"
+  ]
 }
