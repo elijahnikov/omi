@@ -62,6 +62,7 @@
     "VERCEL",
     "VERCEL_ENV",
     "VERCEL_URL",
+    "SENTRY_AUTH_TOKEN",
     "npm_lifecycle_event"
   ]
 }
