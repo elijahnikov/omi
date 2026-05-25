@@ -87,11 +87,17 @@ export function TabStrip({ workspaceId }: TabStripProps) {
 
   return (
     <div
-      className="relative mr-4 mb-[3.7px] flex h-10 min-w-0 flex-1 pt-1.25"
+      className="relative mr-1 mb-[3.7px] flex h-10 min-w-0 flex-1 pt-1.25"
       ref={rootRef}
     >
       <ScrollArea className="h-10 min-w-0 flex-1 **:data-[slot=scroll-area-scrollbar]:hidden">
         <div className="flex h-10 w-max items-end gap-x-2 pr-4 pl-7">
+          <span
+            aria-hidden
+            className="pointer-events-none sticky left-0 z-[1] -mr-2 flex h-full w-0 shrink-0 self-stretch"
+          >
+            <span className="debug absolute top-0 bottom-0 left-0 h-[99%] w-12 bg-linear-to-r from-50% from-ui-bg-subtle to-transparent" />
+          </span>
           {tabs.map((tab) => (
             <Tab
               isActive={tab.id === activeId}
@@ -100,16 +106,14 @@ export function TabStrip({ workspaceId }: TabStripProps) {
               workspaceId={workspaceId}
             />
           ))}
+          <span
+            aria-hidden
+            className="pointer-events-none sticky right-0 z-[1] -ml-2 flex h-full w-0 shrink-0 self-stretch"
+          >
+            <span className="absolute top-0 -right-4 bottom-0 h-[99%] w-12 bg-linear-to-l from-50% from-ui-bg-subtle to-transparent" />
+          </span>
         </div>
       </ScrollArea>
-      <span
-        aria-hidden
-        className="pointer-events-none absolute top-0 bottom-0 left-0 z-[1] w-12 bg-linear-to-r from-50% from-ui-bg-subtle to-transparent"
-      />
-      <span
-        aria-hidden
-        className="pointer-events-none absolute top-0 right-0 bottom-0 z-[1] w-12 bg-linear-to-l from-50% from-ui-bg-subtle to-transparent"
-      />
     </div>
   );
 }

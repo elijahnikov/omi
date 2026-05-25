@@ -117,8 +117,8 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
         render={
           <div
             className={cn(
-              "group/tab relative flex shrink-0 items-end",
-              "mb-1.5 h-7"
+              "group/tab relative mb-1.5 flex h-7 shrink-0 items-end",
+              isActive && "sticky right-1 left-1 z-[2]"
             )}
             data-active={isActive || undefined}
           />
