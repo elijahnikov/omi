@@ -38,6 +38,7 @@
     "@tanstack/react-router-ssr-query": "catalog:tanstack",
     "@tanstack/react-router-with-query": "catalog:tanstack",
     "@tanstack/react-start": "catalog:tanstack",
+    "@tanstack/react-virtual": "^3.13.0",
     "ai": "^6.0.154",
     "better-auth": "catalog:better-auth",
     "boring-avatars": "^2.0.4",

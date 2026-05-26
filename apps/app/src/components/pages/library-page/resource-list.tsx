@@ -13,10 +13,23 @@ import { Separator } from "@omi/ui/separator";
 import { Skeleton } from "@omi/ui/skeleton";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { RiPushpinFill, RiStackFill } from "@remixicon/react";
+import {
+  RiArrowRightSFill,
+  RiPushpinFill,
+  RiStackFill,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { memo, type ReactNode, useCallback, useEffect, useMemo } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  memo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useInView } from "react-intersection-observer";
 import { EmptyState } from "~/components/common/empty-state";
 import { SelectionDock } from "~/components/common/selection-dock";
@@ -24,12 +37,16 @@ import {
   type ListNavItem,
   useListNavigation,
 } from "~/lib/hotkeys/use-list-navigation";
+import { useVirtualizedNavScroll } from "~/lib/hotkeys/use-virtualized-nav-scroll";
+import { useResourceSections } from "~/lib/resource-sections-store";
 import {
   LibrarySelectionProvider,
   type SelectionItem,
   useSelectAllHotkey,
 } from "~/lib/selection/library-selection";
 import { useCachedPaginatedQuery } from "~/lib/use-cached-paginated-query";
+import { useElementOffset } from "~/lib/use-element-offset";
+import { useScrollAncestor } from "~/lib/use-scroll-ancestor";
 import { closeResourceTabs } from "~/lib/workspace-tabs-store";
 import { CollectionRow } from "./collection-row";
 import { LibraryDragOverlay } from "./drag-overlay";
@@ -39,6 +56,7 @@ import { SelectableRow } from "./selectable-resource-row";
 import { useLibraryDnd } from "./use-library-dnd";
 
 const PAGE_SIZE = 20;
+const ROW_HEIGHT = 52;
 
 const snapCenterToCursor: Modifier = ({
   activatorEvent,
@@ -368,6 +386,15 @@ function ResourceListContent({
   }, [unpinnedResults, filteredCollections, order]);
 
   const hasPinned = showPinned && serverPinned && serverPinned.length > 0;
+
+  const pinnedSectionId = "library-pinned";
+  const explicitPinnedCollapsed = useResourceSections(
+    (s) => s.collapsedSections[pinnedSectionId]
+  );
+  const togglePinnedSection = useResourceSections((s) => s.toggle);
+  const pinnedCollapsed =
+    explicitPinnedCollapsed ?? (hasPinned && (serverPinned?.length ?? 0) > 5);
+  const showPinnedItems = hasPinned && !pinnedCollapsed;
   const isFirstLoad =
     (status === "LoadingFirstPage" && results.length === 0) ||
     (collectionsLoading && !childCollections);
@@ -376,7 +403,7 @@ function ResourceListContent({
 
   const navItems = useMemo<ListNavItem[]>(() => {
     const items: ListNavItem[] = [];
-    if (hasPinned) {
+    if (showPinnedItems && serverPinned) {
       for (const resource of serverPinned) {
         items.push({
           id: `pinned-${resource._id}`,
@@ -410,13 +437,13 @@ function ResourceListContent({
       }
     }
     return items;
-  }, [hasPinned, serverPinned, mergedList, navigate, workspaceId]);
+  }, [showPinnedItems, serverPinned, mergedList, navigate, workspaceId]);
 
   const { activeId } = useListNavigation(navItems);
 
   const orderedItems = useMemo<SelectionItem[]>(() => {
     const items: SelectionItem[] = [];
-    if (hasPinned) {
+    if (showPinnedItems && serverPinned) {
       for (const r of serverPinned) {
         items.push({ kind: "resource", id: r._id });
       }
@@ -429,7 +456,53 @@ function ResourceListContent({
       }
     }
     return items;
-  }, [hasPinned, serverPinned, mergedList]);
+  }, [showPinnedItems, serverPinned, mergedList]);
+
+  const [virtualParentEl, setVirtualParentEl] = useState<HTMLDivElement | null>(
+    null
+  );
+  const scrollEl = useScrollAncestor(virtualParentEl);
+  const scrollMargin = useElementOffset(virtualParentEl, scrollEl);
+
+  const virtualizer = useVirtualizer({
+    count: mergedList.length,
+    getScrollElement: () => scrollEl,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 20,
+    scrollMargin,
+    measureElement: (el) => el.getBoundingClientRect().height,
+  });
+
+  const mergedIdIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (let i = 0; i < mergedList.length; i++) {
+      const item = mergedList[i];
+      if (!item) {
+        continue;
+      }
+      const id =
+        item.kind === "collection"
+          ? `col-${item.collection._id}`
+          : `res-${item.resource._id}`;
+      map.set(id, i);
+    }
+    return map;
+  }, [mergedList]);
+
+  const getIndexForId = useCallback(
+    (id: string) => {
+      const idx = mergedIdIndexMap.get(id);
+      return idx === undefined ? null : idx;
+    },
+    [mergedIdIndexMap]
+  );
+
+  useVirtualizedNavScroll({
+    virtualizer,
+    activeId,
+    getIndexForId,
+    fallbackScrollEl: scrollEl,
+  });
 
   const renderBody = () => {
     if (isFirstLoad) {
@@ -485,45 +558,70 @@ function ResourceListContent({
       >
         {header}
         {bodyOverride ?? (
-          <div className="flex flex-col gap-y-1">
-            {hasPinned && (
-              <>
-                <div className="ml-4 flex items-center gap-x-1">
+          <div className="flex flex-col">
+            {hasPinned && serverPinned && (
+              <div className="flex flex-col">
+                <button
+                  className="ml-4 flex items-center gap-x-1 self-start py-1"
+                  onClick={() => togglePinnedSection(pinnedSectionId)}
+                  type="button"
+                >
+                  <motion.div
+                    animate={{ rotate: pinnedCollapsed ? 0 : 90 }}
+                    initial={false}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    <RiArrowRightSFill className="size-3.5 text-ui-fg-muted" />
+                  </motion.div>
                   <RiPushpinFill className="size-4 shrink-0 text-ui-fg-muted" />
                   <Text className="font-medium text-sm text-ui-fg-muted">
-                    Pinned
+                    Pinned ({serverPinned.length})
                   </Text>
-                </div>
-                {serverPinned.map((resource) => {
-                  const navId = `pinned-${resource._id}`;
-                  return (
-                    <SelectableRow
-                      item={{ kind: "resource", id: resource._id }}
-                      key={resource._id}
-                      orderedItems={orderedItems}
+                </button>
+                <AnimatePresence initial={false}>
+                  {!pinnedCollapsed && (
+                    <motion.div
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      initial={{ height: 0, opacity: 0 }}
+                      style={{ overflow: "hidden" }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
                     >
-                      <div
-                        className={cn(
-                          "rounded-lg",
-                          activeId === navId &&
-                            "ring-2 ring-ui-fg-interactive ring-inset"
-                        )}
-                        data-nav-active={activeId === navId}
-                      >
-                        <MemoizedResourceItem
-                          handleDelete={handleDelete}
-                          handleTogglePin={handleTogglePin}
-                          handleUpdateTitle={handleUpdateTitle}
-                          isPinned
-                          resource={resource}
-                          workspaceId={workspaceId}
-                        />
+                      <div className="flex flex-col gap-y-1 pt-1">
+                        {serverPinned.map((resource) => {
+                          const navId = `pinned-${resource._id}`;
+                          return (
+                            <SelectableRow
+                              item={{ kind: "resource", id: resource._id }}
+                              key={resource._id}
+                              orderedItems={orderedItems}
+                            >
+                              <div
+                                className={cn(
+                                  "rounded-lg",
+                                  activeId === navId &&
+                                    "ring-2 ring-ui-fg-interactive ring-inset"
+                                )}
+                                data-nav-active={activeId === navId}
+                              >
+                                <MemoizedResourceItem
+                                  handleDelete={handleDelete}
+                                  handleTogglePin={handleTogglePin}
+                                  handleUpdateTitle={handleUpdateTitle}
+                                  isPinned
+                                  resource={resource}
+                                  workspaceId={workspaceId}
+                                />
+                              </div>
+                            </SelectableRow>
+                          );
+                        })}
                       </div>
-                    </SelectableRow>
-                  );
-                })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <Separator className="my-1 h-[0.5px]!" />
-              </>
+              </div>
             )}
             {pendingCollection && (
               <CollectionRow
@@ -539,58 +637,96 @@ function ResourceListContent({
             {uploadingFiles.map((file) => (
               <UploadingFileRow fileName={file.name} key={file.id} />
             ))}
-            {mergedList.map((item) => {
-              const navId =
-                item.kind === "collection"
-                  ? `col-${item.collection._id}`
-                  : `res-${item.resource._id}`;
-              const isActive = activeId === navId;
-              return item.kind === "collection" ? (
-                <SelectableRow
-                  item={{ kind: "collection", id: item.collection._id }}
-                  key={`col-${item.collection._id}`}
-                  orderedItems={orderedItems}
-                >
+            <div
+              ref={setVirtualParentEl}
+              style={{
+                position: "relative",
+                height: virtualizer.getTotalSize(),
+                width: "100%",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const item = mergedList[virtualRow.index];
+                if (!item) {
+                  return null;
+                }
+                const navId =
+                  item.kind === "collection"
+                    ? `col-${item.collection._id}`
+                    : `res-${item.resource._id}`;
+                const isActive = activeId === navId;
+                const key =
+                  item.kind === "collection"
+                    ? `col-${item.collection._id}`
+                    : item.resource._id;
+                return (
                   <div
-                    className={cn(
-                      "rounded-lg",
-                      isActive && "ring-2 ring-ui-fg-interactive ring-inset"
-                    )}
-                    data-nav-active={isActive}
+                    data-index={virtualRow.index}
+                    key={key}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                      paddingBottom: 4,
+                    }}
                   >
-                    <CollectionRow
-                      autoEdit={justCreatedCollectionId === item.collection._id}
-                      collection={item.collection}
-                      onEdited={onClearJustCreatedCollection}
-                      workspaceId={workspaceId}
-                    />
-                  </div>
-                </SelectableRow>
-              ) : (
-                <SelectableRow
-                  item={{ kind: "resource", id: item.resource._id }}
-                  key={item.resource._id}
-                  orderedItems={orderedItems}
-                >
-                  <div
-                    className={cn(
-                      "rounded-lg",
-                      isActive && "ring-2 ring-ui-fg-interactive ring-inset"
+                    {item.kind === "collection" ? (
+                      <SelectableRow
+                        item={{
+                          kind: "collection",
+                          id: item.collection._id,
+                        }}
+                        orderedItems={orderedItems}
+                      >
+                        <div
+                          className={cn(
+                            "rounded-lg",
+                            isActive &&
+                              "ring-2 ring-ui-fg-interactive ring-inset"
+                          )}
+                          data-nav-active={isActive}
+                        >
+                          <CollectionRow
+                            autoEdit={
+                              justCreatedCollectionId === item.collection._id
+                            }
+                            collection={item.collection}
+                            onEdited={onClearJustCreatedCollection}
+                            workspaceId={workspaceId}
+                          />
+                        </div>
+                      </SelectableRow>
+                    ) : (
+                      <SelectableRow
+                        item={{ kind: "resource", id: item.resource._id }}
+                        orderedItems={orderedItems}
+                      >
+                        <div
+                          className={cn(
+                            "rounded-lg",
+                            isActive &&
+                              "ring-2 ring-ui-fg-interactive ring-inset"
+                          )}
+                          data-nav-active={isActive}
+                        >
+                          <MemoizedResourceItem
+                            handleDelete={handleDelete}
+                            handleTogglePin={handleTogglePin}
+                            handleUpdateTitle={handleUpdateTitle}
+                            isPinned={false}
+                            resource={item.resource}
+                            workspaceId={workspaceId}
+                          />
+                        </div>
+                      </SelectableRow>
                     )}
-                    data-nav-active={isActive}
-                  >
-                    <MemoizedResourceItem
-                      handleDelete={handleDelete}
-                      handleTogglePin={handleTogglePin}
-                      handleUpdateTitle={handleUpdateTitle}
-                      isPinned={false}
-                      resource={item.resource}
-                      workspaceId={workspaceId}
-                    />
                   </div>
-                </SelectableRow>
-              );
-            })}
+                );
+              })}
+            </div>
             <div className="h-px" ref={loadMoreRef} />
             {status === "LoadingMore" && <LoadingMoreSkeleton />}
           </div>

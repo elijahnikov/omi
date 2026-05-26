@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { DotMatrixPhase } from "src//dotmatrix-core";
+import type { DotMatrixPhase } from "./dotmatrix-core";
 
 export function usePrefersReducedMotion(): boolean {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -77,6 +77,7 @@ const listeners = new Set<FrameListener>();
 let rafId: number | null = null;
 
 function emit(now: number) {
+  // biome-ignore lint/complexity/noForEach: <>
   listeners.forEach((listener) => {
     listener(now);
   });
@@ -177,7 +178,9 @@ export function useDotMatrixPhases({
   const hoverGen = useRef(0);
 
   const clearTimers = useCallback(() => {
+    // biome-ignore lint/style/useForOf: <>
     for (let i = 0; i < timeouts.current.length; i += 1) {
+      // biome-ignore lint/style/noNonNullAssertion: <>
       window.clearTimeout(timeouts.current[i]!);
     }
     timeouts.current = [];
@@ -187,7 +190,7 @@ export function useDotMatrixPhases({
     hoverGen.current += 1;
     clearTimers();
     return clearTimers;
-  }, [autoRun, hoverAnimated, clearTimers]);
+  }, [clearTimers]);
 
   const onMouseEnter = useCallback(() => {
     if (!hoverAnimated || autoRun) {
