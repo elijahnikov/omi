@@ -147,6 +147,7 @@ export default function WorkspaceSidebarContent() {
             />
           ))}
         </div>
+
         {params?.workspaceId && hasPinned && (
           <PinnedSection
             activeCollectionId={params.collectionId}
