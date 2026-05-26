@@ -13,11 +13,15 @@ import { Separator } from "@omi/ui/separator";
 import { Skeleton } from "@omi/ui/skeleton";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { RiArrowRightSFill, RiPushpinFill, RiStackFill } from "@remixicon/react";
-import { AnimatePresence, motion } from "motion/react";
+import {
+  RiArrowRightSFill,
+  RiPushpinFill,
+  RiStackFill,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { AnimatePresence, motion } from "motion/react";
 import {
   memo,
   type ReactNode,
@@ -34,12 +38,12 @@ import {
   useListNavigation,
 } from "~/lib/hotkeys/use-list-navigation";
 import { useVirtualizedNavScroll } from "~/lib/hotkeys/use-virtualized-nav-scroll";
+import { useResourceSections } from "~/lib/resource-sections-store";
 import {
   LibrarySelectionProvider,
   type SelectionItem,
   useSelectAllHotkey,
 } from "~/lib/selection/library-selection";
-import { useResourceSections } from "~/lib/resource-sections-store";
 import { useCachedPaginatedQuery } from "~/lib/use-cached-paginated-query";
 import { useElementOffset } from "~/lib/use-element-offset";
 import { useScrollAncestor } from "~/lib/use-scroll-ancestor";
@@ -389,8 +393,7 @@ function ResourceListContent({
   );
   const togglePinnedSection = useResourceSections((s) => s.toggle);
   const pinnedCollapsed =
-    explicitPinnedCollapsed ??
-    (hasPinned && (serverPinned?.length ?? 0) > 5);
+    explicitPinnedCollapsed ?? (hasPinned && (serverPinned?.length ?? 0) > 5);
   const showPinnedItems = hasPinned && !pinnedCollapsed;
   const isFirstLoad =
     (status === "LoadingFirstPage" && results.length === 0) ||
@@ -455,8 +458,9 @@ function ResourceListContent({
     return items;
   }, [showPinnedItems, serverPinned, mergedList]);
 
-  const [virtualParentEl, setVirtualParentEl] =
-    useState<HTMLDivElement | null>(null);
+  const [virtualParentEl, setVirtualParentEl] = useState<HTMLDivElement | null>(
+    null
+  );
   const scrollEl = useScrollAncestor(virtualParentEl);
   const scrollMargin = useElementOffset(virtualParentEl, scrollEl);
 

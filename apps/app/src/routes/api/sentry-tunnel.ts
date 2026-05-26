@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const SENTRY_HOST = "o4511441117642752.ingest.us.sentry.io";
 const SENTRY_PROJECT_IDS = new Set(["4511441136058368"]);
+const dsnRegex = /^\//;
 
 export const Route = createFileRoute("/api/sentry-tunnel")({
   server: {
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/api/sentry-tunnel")({
         }
 
         const dsn = new URL(header.dsn);
-        const projectId = dsn.pathname.replace(/^\//, "");
+        const projectId = dsn.pathname.replace(dsnRegex, "");
 
         if (dsn.hostname !== SENTRY_HOST) {
           return new Response("Invalid Sentry host", { status: 400 });

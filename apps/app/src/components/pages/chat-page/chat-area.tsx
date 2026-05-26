@@ -149,8 +149,9 @@ export function ChatArea({
   }, [thread?.messages, setMessages]);
 
   const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
-  const [virtualParentEl, setVirtualParentEl] =
-    useState<HTMLDivElement | null>(null);
+  const [virtualParentEl, setVirtualParentEl] = useState<HTMLDivElement | null>(
+    null
+  );
   const scrollMargin = useElementOffset(virtualParentEl, scrollEl);
 
   const virtualizer = useVirtualizer({
