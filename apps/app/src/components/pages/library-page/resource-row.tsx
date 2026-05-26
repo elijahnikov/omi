@@ -181,7 +181,7 @@ function WebsiteRow({
             "bg-ui-bg-subtle text-ui-fg-muted"
         )}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="wait">
           {isMetadataPending ? (
             <motion.div
               animate={{ opacity: 1 }}
@@ -205,7 +205,7 @@ function WebsiteRow({
         </AnimatePresence>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="wait">
           {isMetadataPending ? (
             <motion.div
               className="w-full"
@@ -326,7 +326,7 @@ function FileRow({
           !isProcessing && "bg-ui-bg-subtle"
         )}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="wait">
           {isProcessing ? (
             <motion.div
               animate={{ opacity: 1 }}
@@ -364,7 +364,7 @@ function FileRow({
         </AnimatePresence>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <AnimatePresence mode="wait">
+        <AnimatePresence initial={false} mode="wait">
           {isProcessing ? (
             <motion.div
               className="w-full"

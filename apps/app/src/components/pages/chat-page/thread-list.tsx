@@ -26,12 +26,16 @@ import {
 } from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ConvexError } from "convex/values";
-import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { EditableText } from "~/components/common/editable-text";
 import { EmptyState } from "~/components/common/empty-state";
 import { TextShimmer } from "~/components/common/text-shimmer";
+import { useElementOffset } from "~/lib/use-element-offset";
+import { useScrollAncestor } from "~/lib/use-scroll-ancestor";
+
+const ROW_HEIGHT = 36;
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ConvexError) {
@@ -107,15 +111,20 @@ export function ThreadList({
     [deleteThread, workspaceId, activeThreadId, onNewChat]
   );
 
-  const initialLoadDone = useRef(false);
-
-  useEffect(() => {
-    if (threads.length > 0 && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-    }
-  }, [threads.length]);
-
   const isFirstLoad = status === "LoadingFirstPage" && threads.length === 0;
+
+  const [parentEl, setParentEl] = useState<HTMLDivElement | null>(null);
+  const scrollEl = useScrollAncestor(parentEl);
+  const scrollMargin = useElementOffset(parentEl, scrollEl);
+
+  const virtualizer = useVirtualizer({
+    count: threads.length,
+    getScrollElement: () => scrollEl,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 8,
+    scrollMargin,
+    measureElement: (el) => el.getBoundingClientRect().height,
+  });
 
   return (
     <div className="relative flex h-full w-64 shrink-0 flex-col border-r-[0.5px]">
@@ -133,30 +142,53 @@ export function ThreadList({
       <ScrollArea className="[&>div>div[style]]:overflow-y-auto! flex-1 [&_::-webkit-scrollbar]:hidden">
         {isFirstLoad ? (
           <ThreadListSkeleton />
+        ) : threads.length === 0 ? (
+          <EmptyState
+            className="px-3 py-8"
+            description="Start a new chat to see it here."
+            Icon={RiChatSmile2Fill}
+            title="No conversations yet"
+          />
         ) : (
-          <div className="flex flex-col gap-1.5 p-2">
-            <AnimatePresence>
-              {threads.map((thread, i) => (
-                <ThreadItem
-                  activeThreadId={activeThreadId}
-                  i={i}
-                  initialLoadDone={initialLoadDone.current}
-                  key={thread._id}
-                  onDelete={handleDelete}
-                  onUpdateTitle={handleUpdateTitle}
-                  thread={thread}
-                  workspaceId={workspaceId}
-                />
-              ))}
-            </AnimatePresence>
-            {threads.length === 0 && (
-              <EmptyState
-                className="px-3 py-8"
-                description="Start a new chat to see it here."
-                Icon={RiChatSmile2Fill}
-                title="No conversations yet"
-              />
-            )}
+          <div className="p-2">
+            <div
+              ref={setParentEl}
+              style={{
+                position: "relative",
+                height: virtualizer.getTotalSize(),
+                width: "100%",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const thread = threads[virtualRow.index];
+                if (!thread) {
+                  return null;
+                }
+                return (
+                  <div
+                    data-index={virtualRow.index}
+                    key={thread._id}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    <ThreadItem
+                      activeThreadId={activeThreadId}
+                      onDelete={handleDelete}
+                      onUpdateTitle={handleUpdateTitle}
+                      thread={thread}
+                      workspaceId={workspaceId}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </ScrollArea>
@@ -170,16 +202,12 @@ function ThreadItem({
   workspaceId,
   onUpdateTitle,
   onDelete,
-  initialLoadDone,
-  i,
 }: {
   thread: { _id: Id<"chatThread">; title?: string; lastMessageAt: number };
   activeThreadId?: Id<"chatThread">;
   workspaceId: Id<"workspace">;
   onUpdateTitle: (threadId: Id<"chatThread">, title: string) => void;
   onDelete: (threadId: Id<"chatThread">) => void;
-  initialLoadDone: boolean;
-  i: number;
 }) {
   const [isRenaming, setIsRenaming] = useState(false);
 
@@ -193,20 +221,11 @@ function ThreadItem({
       preload="intent"
       to="/workspace/$workspaceId/chat/$threadId"
     >
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className={cn(
           "group relative flex items-center rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
           activeThreadId === thread._id && "bg-muted"
         )}
-        exit={{ opacity: 0, height: 0 }}
-        initial={initialLoadDone ? false : { opacity: 0, y: 8 }}
-        transition={{
-          type: "spring",
-          stiffness: 500,
-          damping: 35,
-          delay: initialLoadDone ? 0 : i * 0.03,
-        }}
       >
         <div className="min-w-0 flex-1">
           {thread.title ? (
@@ -265,7 +284,7 @@ function ThreadItem({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </motion.div>
+      </div>
     </Link>
   );
 }

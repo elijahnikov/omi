@@ -12,7 +12,6 @@ import {
 } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useAction } from "convex/react";
-import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NotFoundState } from "~/components/common/not-found-state";
 import { PageContent } from "~/components/common/page-content";
@@ -185,30 +184,19 @@ export function TagPageComponent() {
           >
             {allResources.direct.length > 0 ? (
               <div className="mt-2 flex flex-col">
-                {allResources.direct.map((resource, i) => (
+                {allResources.direct.map((resource) => (
                   <SelectableRow
                     item={{ kind: "resource", id: resource._id }}
                     key={resource._id}
                     orderedItems={orderedItems}
                   >
-                    <motion.div
-                      animate={{ opacity: 1, y: 0 }}
-                      initial={{ opacity: 0, y: 8 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 35,
-                        delay: i * 0.03,
-                      }}
-                    >
-                      <ResourceRow
-                        isPinned={pinnedIdSet.has(resource._id)}
-                        onTogglePin={handleTogglePin}
-                        onUpdateTitle={handleUpdateTitle}
-                        resource={resource}
-                        workspaceId={workspaceId as Id<"workspace">}
-                      />
-                    </motion.div>
+                    <ResourceRow
+                      isPinned={pinnedIdSet.has(resource._id)}
+                      onTogglePin={handleTogglePin}
+                      onUpdateTitle={handleUpdateTitle}
+                      resource={resource}
+                      workspaceId={workspaceId as Id<"workspace">}
+                    />
                   </SelectableRow>
                 ))}
               </div>
@@ -231,69 +219,40 @@ export function TagPageComponent() {
             }
             title="Related"
           >
-            <AnimatePresence mode="wait">
-              {semanticLoaded ? (
-                allResources.semantic.length > 0 ? (
-                  <motion.div
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-2 flex flex-col"
-                    initial={{ opacity: 0, y: 4 }}
-                    key="semantic-results"
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  >
-                    {allResources.semantic.map((resource, i) => (
-                      <SelectableRow
-                        item={{ kind: "resource", id: resource._id }}
-                        key={resource._id}
-                        orderedItems={orderedItems}
-                      >
-                        <motion.div
-                          animate={{ opacity: 1, y: 0 }}
-                          initial={{ opacity: 0, y: 8 }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 500,
-                            damping: 35,
-                            delay: i * 0.03,
-                          }}
-                        >
-                          <ResourceRow
-                            isPinned={pinnedIdSet.has(resource._id)}
-                            onTogglePin={handleTogglePin}
-                            onUpdateTitle={handleUpdateTitle}
-                            resource={resource}
-                            workspaceId={workspaceId as Id<"workspace">}
-                          />
-                        </motion.div>
-                      </SelectableRow>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.p
-                    animate={{ opacity: 1 }}
-                    className="mt-2 text-ui-fg-muted text-xs"
-                    initial={{ opacity: 0 }}
-                    key="semantic-empty"
-                  >
-                    No semantically related resources found.
-                  </motion.p>
-                )
-              ) : (
-                <motion.div
-                  className="mt-2 flex flex-col gap-y-2"
-                  exit={{ opacity: 0 }}
-                  key="semantic-loading"
-                  transition={{ duration: 0.15 }}
-                >
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton
-                      className="h-11 w-full"
-                      key={`skeleton-${i.toString()}`}
-                    />
+            {semanticLoaded ? (
+              allResources.semantic.length > 0 ? (
+                <div className="mt-2 flex flex-col">
+                  {allResources.semantic.map((resource) => (
+                    <SelectableRow
+                      item={{ kind: "resource", id: resource._id }}
+                      key={resource._id}
+                      orderedItems={orderedItems}
+                    >
+                      <ResourceRow
+                        isPinned={pinnedIdSet.has(resource._id)}
+                        onTogglePin={handleTogglePin}
+                        onUpdateTitle={handleUpdateTitle}
+                        resource={resource}
+                        workspaceId={workspaceId as Id<"workspace">}
+                      />
+                    </SelectableRow>
                   ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+              ) : (
+                <p className="mt-2 text-ui-fg-muted text-xs">
+                  No semantically related resources found.
+                </p>
+              )
+            ) : (
+              <div className="mt-2 flex flex-col gap-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton
+                    className="h-11 w-full"
+                    key={`skeleton-${i.toString()}`}
+                  />
+                ))}
+              </div>
+            )}
           </CollapsibleSection>
         </div>
       </PageContent>

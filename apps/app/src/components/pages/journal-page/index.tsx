@@ -6,6 +6,7 @@ import { toastManager } from "@omi/ui/toast";
 import { RiAddLine, RiCalendarLine } from "@remixicon/react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useCallback, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { EmptyState } from "~/components/common/empty-state";
@@ -13,9 +14,12 @@ import { PageContent } from "~/components/common/page-content";
 import { ResourceListSkeleton } from "~/components/pages/library-page/resource-list";
 import { ResourceRow } from "~/components/pages/library-page/resource-row";
 import { useCachedPaginatedQuery } from "~/lib/use-cached-paginated-query";
+import { useElementOffset } from "~/lib/use-element-offset";
+import { useScrollAncestor } from "~/lib/use-scroll-ancestor";
 import { closeResourceTabs } from "~/lib/workspace-tabs-store";
 
 const PAGE_SIZE = 20;
+const ROW_HEIGHT = 52;
 
 export function JournalPageComponent({
   workspaceId,
@@ -121,6 +125,19 @@ export function JournalPageComponent({
     ? results.filter((r) => r.dailyNoteDate !== creatingDate)
     : results;
 
+  const [parentEl, setParentEl] = useState<HTMLDivElement | null>(null);
+  const scrollEl = useScrollAncestor(parentEl);
+  const scrollMargin = useElementOffset(parentEl, scrollEl);
+
+  const virtualizer = useVirtualizer({
+    count: visibleResults.length,
+    getScrollElement: () => scrollEl,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 5,
+    scrollMargin,
+    measureElement: (el) => el.getBoundingClientRect().height,
+  });
+
   return (
     <PageContent className="pt-14 pb-4 md:pt-16" width="xl:w-2/3">
       <div className="flex flex-col gap-y-6">
@@ -139,18 +156,46 @@ export function JournalPageComponent({
                 {createLabel}
               </Button>
             </div>
-            <div className="-mx-3 flex flex-col gap-y-1">
-              {visibleResults.map((entry) => (
-                <ResourceRow
-                  isPinned={entry.isPinned}
-                  key={entry._id}
-                  onDelete={handleDelete}
-                  onTogglePin={handleTogglePin}
-                  onUpdateTitle={handleUpdateTitle}
-                  resource={entry}
-                  workspaceId={workspaceId}
-                />
-              ))}
+            <div className="-mx-3 flex flex-col">
+              <div
+                ref={setParentEl}
+                style={{
+                  position: "relative",
+                  height: virtualizer.getTotalSize(),
+                  width: "100%",
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const entry = visibleResults[virtualRow.index];
+                  if (!entry) {
+                    return null;
+                  }
+                  return (
+                    <div
+                      data-index={virtualRow.index}
+                      key={entry._id}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                        paddingBottom: 4,
+                      }}
+                    >
+                      <ResourceRow
+                        isPinned={entry.isPinned}
+                        onDelete={handleDelete}
+                        onTogglePin={handleTogglePin}
+                        onUpdateTitle={handleUpdateTitle}
+                        resource={entry}
+                        workspaceId={workspaceId}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
               <div className="h-px" ref={loadMoreRef} />
               {status === "LoadingMore" && <ResourceListSkeleton count={3} />}
             </div>

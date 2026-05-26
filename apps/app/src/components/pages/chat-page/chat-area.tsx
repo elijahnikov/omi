@@ -5,13 +5,15 @@ import { Skeleton } from "@omi/ui/skeleton";
 import { toastManager } from "@omi/ui/toast";
 import { RiChatSmile2Fill } from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import type { UIMessage } from "ai";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DotGridLoader } from "~/components/common/dot-grid-loader";
 import { EmptyState } from "~/components/common/empty-state";
 import { NotFoundState } from "~/components/common/not-found-state";
 import { TextShimmer } from "~/components/common/text-shimmer";
 import { useLibraryChat } from "~/hooks/use-library-chat";
+import { useElementOffset } from "~/lib/use-element-offset";
 import { ChatInput } from "./chat-input";
 import { MessageBubble } from "./message-bubble";
 
@@ -24,7 +26,6 @@ const TOOL_LABELS: Record<string, string> = {
 function StreamingIndicator({ messages }: { messages: UIMessage[] }) {
   const lastMessage = messages.at(-1);
 
-  // Check if the last assistant message has an in-progress tool invocation
   if (lastMessage?.role === "assistant") {
     const toolPart = lastMessage.parts.find(
       (p) =>
@@ -33,7 +34,6 @@ function StreamingIndicator({ messages }: { messages: UIMessage[] }) {
         p.state !== "output-available"
     );
     if (toolPart && "toolCallId" in toolPart) {
-      // Extract tool name from the type field (e.g. "tool-invocation" parts have type like "tool-searchLibrary")
       const toolName = toolPart.type.replace("tool-", "");
       const label = TOOL_LABELS[toolName] ?? "Using tool...";
       return (
@@ -44,7 +44,6 @@ function StreamingIndicator({ messages }: { messages: UIMessage[] }) {
       );
     }
 
-    // Assistant message exists with text content — model is streaming text, no indicator needed
     const hasText = lastMessage.parts.some(
       (p) => p.type === "text" && "text" in p && (p.text as string).length > 0
     );
@@ -53,7 +52,6 @@ function StreamingIndicator({ messages }: { messages: UIMessage[] }) {
     }
   }
 
-  // Default: waiting for first response
   return (
     <div className="ml-4 flex items-center gap-2">
       <DotGridLoader />
@@ -72,9 +70,6 @@ function convertToUIMessages(
   }>
 ): UIMessage[] {
   return messages.map((m) => {
-    // Persisted tool parts are already shaped like UIMessage tool parts
-    // (`{ type: "tool-${name}", state, toolCallId, input, output }`), so they
-    // can be appended directly with no per-tool synthesis logic.
     const persistedToolParts = (m.toolParts ?? []) as UIMessage["parts"];
     const parts: UIMessage["parts"] = [
       { type: "text" as const, text: m.content },
@@ -141,7 +136,6 @@ export function ChatArea({
   const hasSyncedRef = useRef(false);
   const prevThreadIdRef = useRef(threadId);
 
-  // Reset sync flag when threadId changes (switching threads)
   if (prevThreadIdRef.current !== threadId) {
     prevThreadIdRef.current = threadId;
     hasSyncedRef.current = false;
@@ -154,22 +148,22 @@ export function ChatArea({
     }
   }, [thread?.messages, setMessages]);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
+  const [virtualParentEl, setVirtualParentEl] =
+    useState<HTMLDivElement | null>(null);
+  const scrollMargin = useElementOffset(virtualParentEl, scrollEl);
 
-  const lastMessageContent = messages
-    .at(-1)
-    ?.parts?.filter(
-      (p): p is Extract<typeof p, { type: "text" }> => p.type === "text"
-    )
-    .map((p) => p.text)
-    .join("");
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on new messages and streaming content
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages.length, lastMessageContent]);
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => scrollEl,
+    estimateSize: () => 80,
+    overscan: 5,
+    anchorTo: "end",
+    followOnAppend: true,
+    scrollEndThreshold: 100,
+    scrollMargin,
+    measureElement: (el) => el.getBoundingClientRect().height,
+  });
 
   const isStreaming = status === "streaming" || status === "submitted";
 
@@ -209,12 +203,10 @@ export function ChatArea({
       <div className="flex flex-1 flex-col">
         <div className="flex-1 overflow-y-auto">
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-8">
-            {/* User message skeleton */}
             <div className="flex flex-row-reverse gap-3">
               <Skeleton className="size-7 shrink-0 rounded-full" />
               <Skeleton className="h-10 w-48 rounded-xl" />
             </div>
-            {/* Assistant message skeleton */}
             <div className="flex gap-3">
               <Skeleton className="size-7 shrink-0 rounded-full" />
               <div className="flex flex-col gap-2">
@@ -223,12 +215,10 @@ export function ChatArea({
                 <Skeleton className="h-4 w-64 rounded-xl" />
               </div>
             </div>
-            {/* User message skeleton */}
             <div className="flex flex-row-reverse gap-3">
               <Skeleton className="size-7 shrink-0 rounded-full" />
               <Skeleton className="h-10 w-36 rounded-xl" />
             </div>
-            {/* Assistant message skeleton */}
             <div className="flex gap-3">
               <Skeleton className="size-7 shrink-0 rounded-full" />
               <div className="flex flex-col gap-2">
@@ -250,8 +240,8 @@ export function ChatArea({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto" ref={scrollRef}>
-        <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-4 px-4 py-8">
+      <div className="min-h-0 flex-1 overflow-y-auto" ref={setScrollEl}>
+        <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 py-8">
           {messages.length === 0 && (
             <EmptyState
               description="Ask questions about your saved resources."
@@ -259,35 +249,60 @@ export function ChatArea({
               title="Ask your library"
             />
           )}
-          {messages.map((message, idx) => {
-            const isLast = idx === messages.length - 1;
-            // Skip rendering an assistant bubble with no text yet (e.g.
-            // while tool calls are in flight). The StreamingIndicator below
-            // covers that state to avoid showing two loaders at once.
-            const hasText = message.parts.some(
-              (p) =>
-                p.type === "text" &&
-                "text" in p &&
-                (p.text as string).length > 0
-            );
-            if (
-              isLast &&
-              isStreaming &&
-              message.role === "assistant" &&
-              !hasText
-            ) {
-              return null;
-            }
-            return (
-              <MessageBubble
-                isStreaming={isStreaming && isLast}
-                key={message.id}
-                message={message}
-                threadId={threadId}
-                workspaceId={workspaceId}
-              />
-            );
-          })}
+          {messages.length > 0 && (
+            <div
+              ref={setVirtualParentEl}
+              style={{
+                position: "relative",
+                height: virtualizer.getTotalSize(),
+                width: "100%",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const message = messages[virtualRow.index];
+                if (!message) {
+                  return null;
+                }
+                const isLast = virtualRow.index === messages.length - 1;
+                const hasText = message.parts.some(
+                  (p) =>
+                    p.type === "text" &&
+                    "text" in p &&
+                    (p.text as string).length > 0
+                );
+                if (
+                  isLast &&
+                  isStreaming &&
+                  message.role === "assistant" &&
+                  !hasText
+                ) {
+                  return null;
+                }
+                return (
+                  <div
+                    data-index={virtualRow.index}
+                    key={message.id}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      transform: `translateY(${virtualRow.start - scrollMargin}px)`,
+                      paddingBottom: 16,
+                    }}
+                  >
+                    <MessageBubble
+                      isStreaming={isStreaming && isLast}
+                      message={message}
+                      threadId={threadId}
+                      workspaceId={workspaceId}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {isStreaming && <StreamingIndicator messages={messages} />}
         </div>
       </div>
