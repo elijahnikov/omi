@@ -14,7 +14,7 @@ export function ErrorState({
 }) {
   const router = useRouter();
   const message =
-    error instanceof Error
+    import.meta.env.DEV && error instanceof Error
       ? error.message
       : "Something went wrong. Please try again.";
 
