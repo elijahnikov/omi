@@ -4,6 +4,7 @@ import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { NotFoundState } from "~/components/common/not-found-state";
+import { PageContent } from "~/components/common/page-content";
 import { useFileDropHandler } from "~/hooks/use-file-drop";
 import { usePasteHandler } from "~/hooks/use-paste-handler";
 import { LibraryToolbar } from "../../pages/library-page/library-toolbar";
@@ -141,7 +142,7 @@ export function CollectionPageComponent({
   return (
     <div>
       <LibraryToolbar onCreateCollection={handleCreateCollection} />
-      <div className="mx-auto w-2/3 max-w-[1000px] px-6 pt-4 pb-4">
+      <PageContent className="pt-14 pb-4 md:pt-4" width="xl:w-2/3">
         <ResourceList
           collectionId={collectionId}
           header={
@@ -156,7 +157,7 @@ export function CollectionPageComponent({
           uploadingFiles={uploadingFiles}
           workspaceId={workspaceId}
         />
-      </div>
+      </PageContent>
     </div>
   );
 }

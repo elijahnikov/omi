@@ -57,7 +57,7 @@ function SettingsTabLink({
   return (
     <TabsTrigger
       className={cn(
-        "group/menu flex h-7! w-full items-center justify-start gap-x-2 overflow-hidden rounded-md border-transparent px-2 text-left font-sans text-[13px] outline-none transition-colors duration-200 focus-visible:bg-transparent! focus-visible:shadow-borders-interactive-with-active! sm:h-7!",
+        "group/menu flex h-7! w-auto! shrink-0 grow-0 items-center justify-start gap-x-2 overflow-hidden rounded-md border-transparent px-2 text-left font-sans text-[13px] outline-none transition-colors duration-200 focus-visible:bg-transparent! focus-visible:shadow-borders-interactive-with-active! sm:h-7! md:w-full!",
         "text-ui-fg-muted/70 hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base data-[active]:bg-ui-bg-base data-[active]:text-ui-fg-base data-[active]:shadow-buttons-neutral! dark:hover:bg-[rgba(255,255,255,0.070)]"
       )}
       value={value}
@@ -93,13 +93,13 @@ export function SettingsPageComponent({
 
   return (
     <Tabs
-      className="h-full"
+      className="h-full flex-col! md:flex-row!"
       onValueChange={(next) => onTabChange(next as SettingsTab)}
       orientation="vertical"
       value={tab}
     >
-      <div className="sticky top-0 flex h-screen w-52 shrink-0 flex-col gap-3 self-start border-r-[0.5px] px-3 pt-3 pb-8">
-        <TabsList className="w-full flex-col items-stretch justify-start gap-1 bg-transparent p-0">
+      <div className="sticky top-0 z-10 flex w-full shrink-0 flex-col items-start gap-3 self-start overflow-x-auto border-b-[0.5px] bg-ui-bg-base px-2 py-2 md:h-screen md:w-52 md:items-stretch md:border-r-[0.5px] md:border-b-0 md:bg-transparent md:px-3 md:pt-3 md:pb-8">
+        <TabsList className="w-max flex-row! items-stretch justify-start gap-1 bg-transparent p-0 md:w-full md:flex-col!">
           <SettingsTabLink
             icon={RiSettings3Fill}
             label="General"
@@ -159,7 +159,7 @@ export function SettingsPageComponent({
           </TabsContent>
         </div>
       </div>
-      <div aria-hidden className="w-52 shrink-0" />
+      <div aria-hidden className="hidden w-52 shrink-0 md:block" />
     </Tabs>
   );
 }

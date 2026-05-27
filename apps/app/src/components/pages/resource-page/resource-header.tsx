@@ -169,7 +169,7 @@ export function ResourceHeader({ resource }: { resource: GetResourceData }) {
         </Tooltip>
         <ResourceActionsMenu resource={resource} workspaceId={workspaceId} />
       </div>
-      <div className="flex w-full min-w-0 items-center gap-x-2">
+      <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-2">
         <TypeBadge resource={resource} />
         {resource.type !== "note" && (
           <Separator className="h-4 shrink-0" orientation="vertical" />

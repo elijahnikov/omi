@@ -2,6 +2,8 @@ import { convexQuery } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Button } from "@omi/ui/button";
+import { useIsMobile } from "@omi/ui/hooks/use-mobile";
+import { Sheet, SheetPopup } from "@omi/ui/sheet";
 import { Text } from "@omi/ui/text";
 import { RiArrowRightUpLine, RiChat3Line, RiCloseLine } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +25,7 @@ export function ResourceChatPanel({
   resource: { _id: Id<"resource">; title: string; type: string };
 }) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const open = useFloatingPanelOpen("chat");
   const closePanel = useFloatingPanelsStore((s) => s.closePanel);
   const setActive = useFloatingPanelsStore((s) => s.setActive);
@@ -53,6 +56,66 @@ export function ResourceChatPanel({
     closePanel("chat");
   };
 
+  const header = (
+    <div className="flex items-center justify-between border-b-[0.5px] px-3 py-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <RiChat3Line className="size-4 shrink-0 text-ui-fg-muted" />
+        <Text className="truncate font-medium" size="small">
+          {resource.title}
+        </Text>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
+          aria-label="Open in chat page"
+          className="size-6"
+          onClick={handleExpand}
+          size="xsmall"
+          variant="ghost"
+        >
+          <RiArrowRightUpLine className="size-4 shrink-0" />
+        </Button>
+        <Button
+          aria-label="Close chat"
+          className="size-6"
+          onClick={() => closePanel("chat")}
+          size="xsmall"
+          variant="ghost"
+        >
+          <RiCloseLine className="size-4 shrink-0" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  const body = (
+    <div className="flex min-h-0 flex-1 flex-col">
+      {isLoading ? null : (
+        <ChatArea
+          resourceId={resource._id}
+          threadId={
+            (latestThread?._id as Id<"chatThread"> | undefined) ?? undefined
+          }
+          workspaceId={workspaceId}
+        />
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet onOpenChange={(o) => !o && closePanel("chat")} open={open}>
+        <SheetPopup
+          className="h-[90svh] bg-ui-bg-subtle"
+          showCloseButton={false}
+          side="bottom"
+        >
+          {header}
+          {body}
+        </SheetPopup>
+      </Sheet>
+    );
+  }
+
   return (
     <AnimatePresence>
       {open && (
@@ -66,46 +129,8 @@ export function ResourceChatPanel({
           style={{ width: FLOATING_PANEL_WIDTH }}
           transition={{ type: "spring", stiffness: 400, damping: 35 }}
         >
-          <div className="flex items-center justify-between border-b-[0.5px] px-3 py-2">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <RiChat3Line className="size-4 shrink-0 text-ui-fg-muted" />
-              <Text className="truncate font-medium" size="small">
-                {resource.title}
-              </Text>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              <Button
-                aria-label="Open in chat page"
-                className="size-6"
-                onClick={handleExpand}
-                size="xsmall"
-                variant="ghost"
-              >
-                <RiArrowRightUpLine className="size-4 shrink-0" />
-              </Button>
-              <Button
-                aria-label="Close chat"
-                className="size-6"
-                onClick={() => closePanel("chat")}
-                size="xsmall"
-                variant="ghost"
-              >
-                <RiCloseLine className="size-4 shrink-0" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-            {isLoading ? null : (
-              <ChatArea
-                resourceId={resource._id}
-                threadId={
-                  (latestThread?._id as Id<"chatThread"> | undefined) ??
-                  undefined
-                }
-                workspaceId={workspaceId}
-              />
-            )}
-          </div>
+          {header}
+          {body}
         </motion.div>
       )}
     </AnimatePresence>
