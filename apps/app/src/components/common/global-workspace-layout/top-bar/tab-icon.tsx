@@ -125,7 +125,7 @@ function CollectionTabIcon({
   );
   return (
     <CollectionIcon
-      className="-mr-1"
+      className="md:-mr-1"
       icon={collection?.icon ?? undefined}
       iconColor={collection?.iconColor ?? undefined}
       size="md"

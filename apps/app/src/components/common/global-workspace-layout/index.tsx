@@ -80,14 +80,11 @@ function DropZoneInset({ children }: { children: React.ReactNode }) {
   useScrollRestoration(mainRef, pathname, isLoading);
 
   return (
-    <SidebarInset className="relative mx-2 mt-1 rounded-t-2xl shadow-borders-base transition-[background-color,box-shadow] duration-200 md:h-[calc(100vh-48px)]">
+    <SidebarInset className="relative mx-2 mt-10 h-[calc(100svh-40px)] rounded-t-2xl shadow-borders-base transition-[background-color,box-shadow] duration-200 md:mt-1 md:h-[calc(100vh-48px)]">
       {isDragging && (
         <div className="pointer-events-none absolute inset-0 z-50 rounded-[inherit] bg-blue-50 ring-2 ring-blue-400 ring-inset dark:bg-blue-950/30 dark:ring-blue-500" />
       )}
-      <main
-        className="h-full flex-1 overflow-y-auto pt-11 md:pt-0"
-        ref={mainRef}
-      >
+      <main className="h-full flex-1 overflow-y-auto" ref={mainRef}>
         <CatchBoundary errorComponent={ErrorState} getResetKey={() => pathname}>
           <DevCrashTrigger scope="page" />
           {children}

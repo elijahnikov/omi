@@ -126,7 +126,7 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
       >
         <Link
           className={cn(
-            "relative mb-0.25 flex h-6.5 min-w-[120px] max-w-[220px] items-center gap-1.5 rounded-sm px-2 font-medium! outline-none transition-colors",
+            "relative mb-0.25 flex h-6.5 items-center justify-center gap-1.5 rounded-sm px-2 font-medium! outline-none transition-colors md:min-w-[120px] md:max-w-[220px] md:justify-start",
             isActive
               ? "z-[100] bg-ui-bg-base text-ui-fg-base shadow-borders-base"
               : "text-ui-fg-muted hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base dark:hover:bg-[rgba(255,255,255,0.070)]"
@@ -139,13 +139,15 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
           {tab.pinned && (
             <RiPushpinFill className="size-3 shrink-0 text-ui-fg-muted" />
           )}
-          <span className="flex shrink-0 items-center justify-center text-ui-fg-muted">
+          <span className="flex size-3.5 shrink-0 items-center justify-center text-ui-fg-muted [&>*]:shrink-0">
             <TabIcon tab={tab} workspaceId={workspaceId} />
           </span>
-          <span className="truncate text-xs!">{tab.title}</span>
+          <span className="hidden truncate text-xs! md:inline">
+            {tab.title}
+          </span>
           <button
             aria-label={`Close ${tab.title}`}
-            className="ml-auto flex size-3 shrink-0 items-center justify-center rounded-full text-ui-fg-muted hover:bg-black/8 hover:text-ui-fg-base dark:hover:bg-white/10"
+            className="ml-auto hidden size-3 shrink-0 items-center justify-center rounded-full text-ui-fg-muted hover:bg-black/8 hover:text-ui-fg-base md:flex dark:hover:bg-white/10"
             onClick={handleClose}
             type="button"
           >
