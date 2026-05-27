@@ -61,10 +61,12 @@ export function ThreadList({
   workspaceId,
   activeThreadId,
   onNewChat,
+  className,
 }: {
   workspaceId: Id<"workspace">;
   activeThreadId?: Id<"chatThread">;
   onNewChat: () => void;
+  className?: string;
 }) {
   const { results: threads, status } = useConvexPaginatedQuery(
     api.chat.queries.listThreads,
@@ -127,7 +129,12 @@ export function ThreadList({
   });
 
   return (
-    <div className="relative flex h-full w-64 shrink-0 flex-col border-r-[0.5px]">
+    <div
+      className={cn(
+        "relative flex h-full w-full flex-col border-r-[0.5px] md:w-64 md:shrink-0",
+        className
+      )}
+    >
       <div className="flex items-center justify-between py-2 pl-2">
         <Button
           className="mr-2"

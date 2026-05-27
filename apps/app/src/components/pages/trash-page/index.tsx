@@ -35,7 +35,7 @@ export function TrashPageComponent({
 
   return (
     <LibrarySelectionProvider>
-      <PageContent className="pt-14 pb-4 md:pt-4" width="xl:w-2/3">
+      <PageContent className="pt-0! pb-4" width="xl:w-2/3">
         <div className="flex items-center justify-between py-4">
           <Heading>Trash</Heading>
           <DeleteAllButton disabled={!hasAny} workspaceId={workspaceId} />
