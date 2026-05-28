@@ -91,7 +91,7 @@ export function ResourceHeader({ resource }: { resource: GetResourceData }) {
 
   return (
     <div className="flex flex-col gap-y-1">
-      <div className="relative flex w-full items-center">
+      <div className="relative flex w-full items-center pr-28 md:pr-0">
         <AnimatePresence>
           {isAiProcessing && (
             <motion.div
