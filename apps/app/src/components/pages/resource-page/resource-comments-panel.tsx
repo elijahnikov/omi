@@ -9,6 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
+import { useIsMobile } from "@omi/ui/hooks/use-mobile";
+import { Sheet, SheetPopup } from "@omi/ui/sheet";
 import { Text } from "@omi/ui/text";
 import {
   RiCloseLine,
@@ -56,6 +58,7 @@ export function ResourceCommentsPanel({
   workspaceId: Id<"workspace">;
   resource: { _id: Id<"resource">; title: string };
 }) {
+  const isMobile = useIsMobile();
   const open = useFloatingPanelOpen("comments");
   const closePanel = useFloatingPanelsStore((s) => s.closePanel);
   const setActive = useFloatingPanelsStore((s) => s.setActive);
@@ -80,6 +83,48 @@ export function ResourceCommentsPanel({
     markRead({ workspaceId, resourceId: resource._id });
   }, [open, latestAt, workspaceId, resource._id, markRead]);
 
+  const header = (
+    <div className="flex items-center justify-between border-b-[0.5px] px-3 py-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <RiDiscussFill className="size-4 shrink-0 text-ui-fg-muted" />
+        <Text className="truncate font-medium" size="small">
+          Comments - {resource.title}
+        </Text>
+      </div>
+      <Button
+        aria-label="Close comments"
+        className="size-6"
+        onClick={() => closePanel("comments")}
+        size="xsmall"
+        variant="ghost"
+      >
+        <RiCloseLine className="size-4 shrink-0" />
+      </Button>
+    </div>
+  );
+
+  const body = (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <CommentList comments={comments ?? []} workspaceId={workspaceId} />
+      <CommentComposer resourceId={resource._id} workspaceId={workspaceId} />
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet onOpenChange={(o) => !o && closePanel("comments")} open={open}>
+        <SheetPopup
+          className="h-[90svh] bg-ui-bg-subtle"
+          showCloseButton={false}
+          side="bottom"
+        >
+          {header}
+          {body}
+        </SheetPopup>
+      </Sheet>
+    );
+  }
+
   return (
     <AnimatePresence>
       {open && (
@@ -93,30 +138,8 @@ export function ResourceCommentsPanel({
           style={{ width: FLOATING_PANEL_WIDTH }}
           transition={{ type: "spring", stiffness: 400, damping: 35 }}
         >
-          <div className="flex items-center justify-between border-b-[0.5px] px-3 py-2">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <RiDiscussFill className="size-4 shrink-0 text-ui-fg-muted" />
-              <Text className="truncate font-medium" size="small">
-                Comments - {resource.title}
-              </Text>
-            </div>
-            <Button
-              aria-label="Close comments"
-              className="size-6"
-              onClick={() => closePanel("comments")}
-              size="xsmall"
-              variant="ghost"
-            >
-              <RiCloseLine className="size-4 shrink-0" />
-            </Button>
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <CommentList comments={comments ?? []} workspaceId={workspaceId} />
-            <CommentComposer
-              resourceId={resource._id}
-              workspaceId={workspaceId}
-            />
-          </div>
+          {header}
+          {body}
         </motion.div>
       )}
     </AnimatePresence>

@@ -31,14 +31,14 @@ export function SharePage() {
   }
 
   return (
-    <div className="min-h-screen bg-ui-bg-base">
-      <div className="mx-auto h-full px-3 pt-8">
+    <div className="flex min-h-screen flex-col bg-ui-bg-base">
+      <div className="mx-auto w-full flex-1 px-3 pt-8">
         {data.type === "website" && <ShareWebsiteResource resource={data} />}
         {data.type === "note" && <ShareNoteResource resource={data} />}
         {data.type === "file" && <ShareFileResource resource={data} />}
       </div>
-      <div className="mx-auto w-full pb-6">
-        <div className="mt-16 flex items-center justify-center border-t-[0.5px] pt-6">
+      <div className="mx-auto w-full pb-2">
+        <div className="mt-6 flex items-center justify-center gap-2 border-t-[0.5px] pt-2">
           <img
             alt="omi"
             className="hidden rounded-lg dark:block"

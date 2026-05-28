@@ -52,7 +52,7 @@ export function TagsToolbar() {
     ORDER_OPTIONS.find((o) => o.value === order)?.label ?? "Alphabetical";
 
   return (
-    <div className="fixed inset-x-0 top-11 z-30 flex w-full items-center gap-x-2 bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:rounded-t-lg">
+    <div className="fixed inset-x-2 top-10 z-30 flex items-center gap-x-2 rounded-t-2xl bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:w-full md:rounded-t-lg">
       <Input
         className="w-48 rounded-md border-[0.5px]"
         onChange={(e) => setSearch(e.target.value || null)}

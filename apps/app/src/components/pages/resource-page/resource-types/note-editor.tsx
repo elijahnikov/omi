@@ -284,10 +284,6 @@ export default function NoteEditor({
     },
   });
 
-  // Snapshot blocks parsed from the HTML/markdown fallback into resourceContent
-  // so the editor reads jsonContent on subsequent loads. Must only fire ONCE
-  // per mount — re-firing would write the editor's stale in-memory state back
-  // over a fresh sync that just cleared jsonContent.
   const hasSnapshottedFallbackRef = useRef(false);
   useEffect(() => {
     if (!fallbackBlocksAreFromImport || hasSnapshottedFallbackRef.current) {
@@ -304,8 +300,6 @@ export default function NoteEditor({
     updateContent,
   ]);
 
-  // If we recovered unsaved local content on mount, push it to the server
-  // so the DB catches up. Clear local only after the server accepts it.
   useEffect(() => {
     const pendingLocal = readPendingLocal(resourceId);
     if (!pendingLocal || pendingLocal === initialContent) {
@@ -337,8 +331,6 @@ export default function NoteEditor({
     };
 
     const unsubscribe = editor.onChange(() => {
-      // Skip autosave while an AI draft block is in flight — the user must
-      // accept or discard before progress is committed to the DB.
       if (hasAIDraftBlocks(editor.document as { type: string }[])) {
         return;
       }

@@ -29,7 +29,10 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayoutComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isAccountRoute = pathname.startsWith("/settings");
+  const resolvedPathname = useRouterState({
+    select: (s) => s.resolvedLocation?.pathname ?? s.location.pathname,
+  });
+  const isAccountRoute = resolvedPathname.startsWith("/settings");
 
   return (
     <Authenticated>

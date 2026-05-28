@@ -1,9 +1,11 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
+import { cn } from "@omi/ui";
+import { Button } from "@omi/ui/button";
 import { Skeleton } from "@omi/ui/skeleton";
 import { toastManager } from "@omi/ui/toast";
-import { RiChatSmile2Fill } from "@remixicon/react";
+import { RiArrowLeftLine, RiChatSmile2Fill } from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { UIMessage } from "ai";
@@ -92,6 +94,8 @@ export function ChatArea({
   onThreadCreated,
   initialValue,
   autoSend,
+  className,
+  onBack,
 }: {
   workspaceId: Id<"workspace">;
   threadId?: Id<"chatThread">;
@@ -99,6 +103,8 @@ export function ChatArea({
   onThreadCreated?: (threadId: Id<"chatThread">) => void;
   initialValue?: string;
   autoSend?: boolean;
+  className?: string;
+  onBack?: () => void;
 }) {
   const { mutateAsync: createThread } = useMutation({
     mutationFn: useConvexMutation(api.chat.mutations.createThread),
@@ -240,7 +246,19 @@ export function ChatArea({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", className)}>
+      {onBack && (
+        <div className="flex items-center gap-2 border-b-[0.5px] px-2 py-1.5 md:hidden">
+          <Button
+            aria-label="Back to chats"
+            onClick={onBack}
+            size="small"
+            variant="ghost"
+          >
+            <RiArrowLeftLine className="size-4" />
+          </Button>
+        </div>
+      )}
       <div className="min-h-0 flex-1 overflow-y-auto" ref={setScrollEl}>
         <div className="mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 py-8">
           {messages.length === 0 && (

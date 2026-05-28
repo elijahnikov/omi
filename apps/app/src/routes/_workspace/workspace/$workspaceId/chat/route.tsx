@@ -48,6 +48,7 @@ function ChatLayout() {
   );
 
   const [chatKey, setChatKey] = useState(() => routeThreadId ?? "new");
+  const [showListOnMobile, setShowListOnMobile] = useState(!routeThreadId);
   const justCreatedRef = useRef(false);
 
   useEffect(() => {
@@ -57,16 +58,24 @@ function ChatLayout() {
     }
     setActiveThreadId(routeThreadId);
     setChatKey(routeThreadId ?? "new");
+    if (routeThreadId) {
+      setShowListOnMobile(false);
+    }
   }, [routeThreadId]);
 
   const handleNewChat = useCallback(() => {
     setActiveThreadId(undefined);
     setChatKey("new");
+    setShowListOnMobile(false);
     navigate({
       to: "/workspace/$workspaceId/chat",
       params: { workspaceId },
     });
   }, [navigate, workspaceId]);
+
+  const handleBackToList = useCallback(() => {
+    setShowListOnMobile(true);
+  }, []);
 
   const handleThreadCreated = useCallback(
     (newThreadId: Id<"chatThread">) => {
@@ -85,13 +94,16 @@ function ChatLayout() {
     <div className="flex h-full">
       <ThreadList
         activeThreadId={activeThreadId as Id<"chatThread"> | undefined}
+        className={showListOnMobile ? "flex md:flex" : "hidden md:flex"}
         onNewChat={handleNewChat}
         workspaceId={workspaceId as Id<"workspace">}
       />
       <ChatArea
         autoSend={!activeThreadId && seededSubmit === 1}
+        className={showListOnMobile ? "hidden md:flex" : "flex md:flex"}
         initialValue={activeThreadId ? undefined : seededQuery}
         key={chatKey}
+        onBack={handleBackToList}
         onThreadCreated={handleThreadCreated}
         threadId={activeThreadId as Id<"chatThread"> | undefined}
         workspaceId={workspaceId as Id<"workspace">}

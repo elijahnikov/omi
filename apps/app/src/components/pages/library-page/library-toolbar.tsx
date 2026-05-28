@@ -69,7 +69,7 @@ export function LibraryToolbar({
     ORDER_OPTIONS.find((o) => o.value === order)?.label ?? "Newest";
 
   return (
-    <div className="fixed inset-x-0 top-11 z-30 flex w-full items-center gap-x-2 bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:rounded-t-lg">
+    <div className="fixed inset-x-2 top-10 z-30 flex items-center gap-x-2 rounded-t-2xl bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:w-full md:rounded-t-lg">
       <Input
         className="w-48 rounded-md bg-ui-bg-field-component-hover hover:bg-ui-bg-component-hover dark:bg-ui-bg-field-component dark:hover:bg-ui-bg-field-component-hover"
         onChange={(e) => setSearch(e.target.value || null)}

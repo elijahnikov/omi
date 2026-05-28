@@ -1,3 +1,11 @@
+/* On narrow viewports the drag/plus handles overflow the page on the left.
+   Hide them on mobile — slash menu and toolbar still work via tap. */
+@media (max-width: 767px) {
+  .bn-side-menu {
+    display: none !important;
+  }
+}
+
 /* Map BlockNote CSS variables to omi design tokens.
    Use !important to beat the [data-color-scheme="dark"] selector
    which BlockNote applies based on prefers-color-scheme (not our .dark class). */

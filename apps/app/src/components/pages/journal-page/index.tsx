@@ -139,7 +139,7 @@ export function JournalPageComponent({
   });
 
   return (
-    <PageContent className="pt-14 pb-4 md:pt-16" width="xl:w-2/3">
+    <PageContent className="pt-4! pb-4 md:pt-16" width="xl:w-2/3">
       <div className="flex flex-col gap-y-6">
         {isLoadingFirstPage ? (
           <ResourceListSkeleton />
