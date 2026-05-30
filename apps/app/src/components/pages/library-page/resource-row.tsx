@@ -63,7 +63,7 @@ export function ResourceRow(props: ResourceRowProps) {
   );
 }
 
-export function ResourceRowInner(props: ResourceRowProps) {
+function ResourceRowInner(props: ResourceRowProps) {
   switch (props.resource.type) {
     case "website":
       return <WebsiteRow {...props} />;

@@ -15,7 +15,7 @@ export interface StaticShortcut {
   section: ShortcutSection;
 }
 
-export function workspaceBase(workspaceId: Id<"workspace">) {
+function workspaceBase(workspaceId: Id<"workspace">) {
   return `/workspace/${workspaceId}`;
 }
 

@@ -37,10 +37,6 @@ export interface RAGContext {
   } | null;
 }
 
-export function createOpenAIModel() {
-  return openai("gpt-4o-mini");
-}
-
 type ResolvedChatProvider =
   | { provider: "platform"; model: null; apiKey: null }
   | {
