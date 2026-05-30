@@ -42,11 +42,11 @@ export function ImagePreviewDialog({
           <DialogPrimitive.Close className="absolute inset-0" />
           <div className="absolute top-15 right-4 z-[101] flex items-center gap-2">
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-t from-blue-500 to-blue-400 text-white outline-none transition-colors hover:from-blue-600 hover:to-blue-500"
+              className="flex size-8 items-center justify-center rounded-full bg-linear-to-t from-blue-500 to-blue-400 text-white outline-none transition-colors hover:from-blue-600 hover:to-blue-500"
               onClick={() => downloadFile(src, fileName)}
               type="button"
             >
-              <RiDownloadFill className="h-4 w-4" />
+              <RiDownloadFill className="size-4" />
             </button>
             <DialogPrimitive.Close
               className={cn(
@@ -54,7 +54,7 @@ export function ImagePreviewDialog({
                 buttonVariants({ variant: "default" })
               )}
             >
-              <RiCloseFill className="h-4 w-4 shrink-0" />
+              <RiCloseFill className="size-4 shrink-0" />
             </DialogPrimitive.Close>
           </div>
           <img
@@ -92,11 +92,11 @@ export function PdfPreviewDialog({
           <DialogPrimitive.Close className="absolute inset-0" />
           <div className="relative top-11 z-10 flex items-center justify-end gap-2 p-4">
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-t from-blue-500 to-blue-400 text-white outline-none transition-colors hover:from-blue-600 hover:to-blue-500"
+              className="flex size-8 items-center justify-center rounded-full bg-gradient-to-t from-blue-500 to-blue-400 text-white outline-none transition-colors hover:from-blue-600 hover:to-blue-500"
               onClick={() => downloadFile(url, fileName)}
               type="button"
             >
-              <RiDownloadFill className="h-4 w-4" />
+              <RiDownloadFill className="size-4" />
             </button>
             <DialogPrimitive.Close
               className={cn(
@@ -104,7 +104,7 @@ export function PdfPreviewDialog({
                 buttonVariants({ variant: "default" })
               )}
             >
-              <RiCloseFill className="h-4 w-4 shrink-0" />
+              <RiCloseFill className="size-4 shrink-0" />
             </DialogPrimitive.Close>
           </div>
           <div className="pointer-events-none relative z-10 flex-1 overflow-y-auto">

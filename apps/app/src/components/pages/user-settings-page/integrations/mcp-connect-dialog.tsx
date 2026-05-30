@@ -49,8 +49,6 @@ export function McpConnectDialog({
   if (!target) {
     return null;
   }
-  // Key by target identity so switching targets remounts the form and
-  // re-initializes its fields, instead of syncing state from props in an effect.
   return (
     <McpConnectDialogForm
       key={target.catalogId ?? target.defaultName ?? "custom"}
@@ -199,7 +197,7 @@ function McpConnectDialogForm({
         <div className="flex flex-col gap-4 px-4 py-5">
           {isCatalog && target.logoKey ? (
             <div className="flex items-center gap-3 rounded-lg border bg-ui-bg-subtle p-3">
-              <McpLogo className="h-6 w-6 shrink-0" logoKey={target.logoKey} />
+              <McpLogo className="size-6 shrink-0" logoKey={target.logoKey} />
               <div className="min-w-0">
                 <Text className="font-medium" size="small">
                   {target.defaultName}

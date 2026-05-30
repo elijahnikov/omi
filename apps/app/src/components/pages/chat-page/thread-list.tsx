@@ -261,10 +261,10 @@ function ThreadItem({
         <div className="absolute right-1 z-20 opacity-0 transition-opacity group-hover:opacity-100">
           <DropdownMenu>
             <DropdownMenuTrigger
-              className="flex h-6 w-6 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base"
+              className="flex size-6 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base"
               onClick={(e) => e.preventDefault()}
             >
-              <RiMoreFill className="h-3.5 w-3.5" />
+              <RiMoreFill className="size-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem
@@ -274,7 +274,7 @@ function ThreadItem({
                   setIsRenaming(true);
                 }}
               >
-                <RiPencilFill className="h-4 w-4" />
+                <RiPencilFill className="size-4" />
                 Rename
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -285,7 +285,7 @@ function ThreadItem({
                   onDelete(thread._id);
                 }}
               >
-                <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error!" />
+                <RiDeleteBinFill className="size-4 text-ui-fg-error!" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -58,7 +58,7 @@ export function CodePreview({
   return (
     <div className="mt-4 overflow-hidden rounded-xl border border-ui-border-base">
       <div className="flex items-center gap-2 border-ui-border-base border-b bg-ui-bg-subtle px-3 py-2">
-        <RiFileCodeFill className="h-3.5 w-3.5 text-ui-fg-muted" />
+        <RiFileCodeFill className="size-3.5 text-ui-fg-muted" />
         <span className="font-mono text-ui-fg-subtle text-xs">
           {displayName}
         </span>

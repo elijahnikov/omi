@@ -11,8 +11,6 @@ export function useListNavigation(items: ListNavItem[]) {
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
-  // Derive validity during render instead of nulling the id in an effect: if
-  // the active item is no longer in the list, treat it as having no selection.
   const effectiveActiveId =
     activeId && items.some((item) => item.id === activeId) ? activeId : null;
 

@@ -110,7 +110,7 @@ export function UserSettingsPageComponent({
             orientation="vertical"
             value={tab}
           >
-            <div className="sticky top-0 z-10 flex w-full shrink-0 items-center gap-1 overflow-x-auto border-b-[0.5px] bg-ui-bg-base px-2 py-2 md:hidden">
+            <div className="sticky top-0 z-10 flex w-full shrink-0 items-center gap-1 overflow-x-auto border-b-[0.5px] bg-ui-bg-base p-2 md:hidden">
               <Button
                 aria-label="Back"
                 className="shrink-0"

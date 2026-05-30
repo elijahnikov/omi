@@ -42,14 +42,14 @@ function WebsiteIcon({ favicon }: { favicon?: string | null }) {
     return (
       <img
         alt=""
-        className="h-6 w-6 shrink-0 rounded-sm"
+        className="size-6 shrink-0 rounded-sm"
         height={16}
         src={favicon}
         width={16}
       />
     );
   }
-  return <RiGlobeFill className="h-4 w-4 text-ui-fg-muted" />;
+  return <RiGlobeFill className="size-4 text-ui-fg-muted" />;
 }
 
 function ResourceIconContainer({
@@ -73,16 +73,16 @@ function ResourceIconContainer({
   }
   if (type === "note") {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
-        <RiStickyNoteFill className="h-4 w-4" />
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+        <RiStickyNoteFill className="size-4" />
       </div>
     );
   }
   if (type === "file") {
     return (
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
         <FileKindIcon
-          className="h-4 w-4"
+          className="size-4"
           fileName={preview.fileName}
           mimeType={preview.mimeType}
         />
@@ -90,8 +90,8 @@ function ResourceIconContainer({
     );
   }
   return (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
-      <RiFileFill className="h-4 w-4" />
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+      <RiFileFill className="size-4" />
     </div>
   );
 }
@@ -156,7 +156,7 @@ export function RelatedResources({
                 className="flex items-center gap-3 px-3 py-2"
                 key={`skeleton-${i.toString()}`}
               >
-                <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                <Skeleton className="size-8 shrink-0 rounded-md" />
                 <Skeleton className="h-4 flex-1" />
               </div>
             ))}
@@ -190,7 +190,7 @@ export function RelatedResources({
                   </span>
                 </div>
                 {link.status === "pinned" && (
-                  <RiPushpinFill className="h-3 w-3 shrink-0 text-ui-fg-subtle" />
+                  <RiPushpinFill className="size-3 shrink-0 text-ui-fg-subtle" />
                 )}
               </Link>
             ))}

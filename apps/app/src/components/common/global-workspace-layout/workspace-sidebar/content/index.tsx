@@ -181,7 +181,7 @@ function PinnedSection({
   const [collapsed, setCollapsed] = useState(false);
 
   const items = (
-    <div className="flex w-full flex-col gap-1 px-0.5 py-0.5">
+    <div className="flex w-full flex-col gap-1 p-0.5">
       {collections.map((collection) => (
         <PinnedCollectionSidebarItem
           activeCollectionId={activeCollectionId}

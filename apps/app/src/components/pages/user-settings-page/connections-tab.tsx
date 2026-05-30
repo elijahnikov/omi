@@ -227,8 +227,8 @@ function ProviderCard({
     <div className="flex w-full items-center justify-between gap-4 rounded-lg p-4 hover:bg-ui-bg-component">
       <div className="flex min-w-0 items-start gap-3">
         {Logo && (
-          <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-            <Logo aria-hidden="true" className="h-5 w-5" />
+          <div className="flex size-5 shrink-0 items-center justify-center">
+            <Logo aria-hidden="true" className="size-5" />
           </div>
         )}
         <div className="min-w-0">

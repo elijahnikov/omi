@@ -106,11 +106,11 @@ function JobRow({
 
   return (
     <div className="group relative flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-ui-bg-component-hover dark:hover:bg-ui-bg-component">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle">
+      <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle">
         {Logo ? (
-          <Logo aria-hidden="true" className="h-5 w-5 shrink-0" />
+          <Logo aria-hidden="true" className="size-5 shrink-0" />
         ) : (
-          <RiDownload2Fill className="h-4 w-4 text-ui-fg-muted" />
+          <RiDownload2Fill className="size-4 text-ui-fg-muted" />
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -166,15 +166,15 @@ function JobRow({
         )}
       </div>
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
-          <RiMoreFill className="h-3.5 w-3.5" />
+        <DropdownMenuTrigger className="flex size-7 shrink-0 items-center justify-center rounded-md text-ui-fg-muted transition-colors hover:bg-ui-bg-base hover:text-ui-fg-base">
+          <RiMoreFill className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" sideOffset={4}>
           {isActive ? (
             <DropdownMenuItem
               onClick={() => cancel({ workspaceId, jobId: job._id })}
             >
-              <RiCloseFill className="h-4 w-4" />
+              <RiCloseFill className="size-4" />
               Cancel
             </DropdownMenuItem>
           ) : (
@@ -185,7 +185,7 @@ function JobRow({
                     disabled={enriching}
                     onClick={() => enrich({ workspaceId, jobId: job._id })}
                   >
-                    <RiSparklingFill className="h-4 w-4" />
+                    <RiSparklingFill className="size-4" />
                     Enrich all {job.counts.imported} with AI
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -195,7 +195,7 @@ function JobRow({
                 className="text-ui-fg-error"
                 onClick={() => remove({ workspaceId, jobId: job._id })}
               >
-                <RiDeleteBinFill className="h-4 w-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
+                <RiDeleteBinFill className="size-4 text-ui-fg-error! group-hover/menuitem:text-ui-fg-base!" />
                 Remove
               </DropdownMenuItem>
             </>

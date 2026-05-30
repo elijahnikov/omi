@@ -36,9 +36,6 @@ export function CommandPaletteProvider({
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  // Bumped each time the palette opens so it remounts with a fresh key,
-  // resetting its query state without an effect. The closing instance stays
-  // mounted (key unchanged) so its exit animation still plays.
   const [openSession, setOpenSession] = useState(0);
 
   const value = useMemo<CommandPaletteContextValue>(

@@ -52,7 +52,7 @@ function OgImageEmpty() {
   return (
     <div className="mt-4 flex h-[200px] w-full items-center justify-center rounded-xl border border-ui-border-base bg-ui-bg-subtle">
       <div className="flex flex-col items-center gap-2 text-ui-fg-muted">
-        <RiGlobeFill className="h-8 w-8" />
+        <RiGlobeFill className="size-8" />
         <span className="text-xs">Preview unavailable</span>
       </div>
     </div>
@@ -503,7 +503,7 @@ function GistEmbed({ id }: { id: string }) {
           key={file.filename}
         >
           <div className="flex items-center gap-2 border-ui-border-base border-b bg-ui-bg-subtle px-3 py-2">
-            <RiFileCodeFill className="h-3.5 w-3.5 text-ui-fg-muted" />
+            <RiFileCodeFill className="size-3.5 text-ui-fg-muted" />
             <span className="font-mono text-ui-fg-subtle text-xs">
               {file.filename}
             </span>
@@ -619,13 +619,13 @@ function BlueskyEmbed({ embedId, url }: { embedId: string; url: string }) {
         {post.author.avatar ? (
           <img
             alt=""
-            className="h-8 w-8 rounded-full ring-1 ring-black/10 dark:ring-white/10"
+            className="size-8 rounded-full ring-1 ring-black/10 dark:ring-white/10"
             height={32}
             src={post.author.avatar}
             width={32}
           />
         ) : (
-          <div className="h-8 w-8 rounded-full bg-ui-bg-subtle" />
+          <div className="size-8 rounded-full bg-ui-bg-subtle" />
         )}
         <div className="flex min-w-0 flex-col">
           {post.author.displayName && (

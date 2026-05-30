@@ -105,7 +105,7 @@ export function LibraryToolbar({
                 key={option.label}
                 onClick={() => setType(option.value)}
               >
-                {option.icon && <option.icon className="h-4 w-4" />}
+                {option.icon && <option.icon className="size-4" />}
                 {option.label}
               </DropdownMenuItem>
             ))}
@@ -129,7 +129,7 @@ export function LibraryToolbar({
                 key={option.label}
                 onClick={() => setOrder(option.value)}
               >
-                <option.icon className="h-4 w-4" />
+                <option.icon className="size-4" />
                 {option.label}
               </DropdownMenuItem>
             ))}

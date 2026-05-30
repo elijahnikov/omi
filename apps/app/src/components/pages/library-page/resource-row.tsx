@@ -79,7 +79,7 @@ export function ResourceRowInner(props: ResourceRowProps) {
 export function UploadingFileRow({ fileName }: { fileName: string }) {
   return (
     <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md">
         <DotGridLoader />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -273,7 +273,7 @@ function NoteRow({
         resourceId={resource._id}
         workspaceId={workspaceId}
       />
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
         <NoteIcon />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -515,7 +515,7 @@ export function WebsiteIcon({ favicon }: { favicon?: string | null }) {
     return (
       <img
         alt=""
-        className="h-6 w-6 shrink-0 rounded-sm"
+        className="size-6 shrink-0 rounded-sm"
         height={16}
         src={favicon}
         width={16}
@@ -529,7 +529,7 @@ function GlobeIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="h-4 w-4 text-ui-fg-muted"
+      className="size-4 text-ui-fg-muted"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}
@@ -550,5 +550,5 @@ function GlobeIcon() {
 }
 
 export function NoteIcon() {
-  return <RiStickyNoteFill className="h-4 w-4" />;
+  return <RiStickyNoteFill className="size-4" />;
 }

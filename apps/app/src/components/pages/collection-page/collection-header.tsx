@@ -186,8 +186,8 @@ function HeaderBreadcrumbs({
       </Link>
       <Separator className="mx-2 h-3 rotate-30" orientation="vertical" />
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex h-5 w-5 items-center justify-center rounded text-ui-fg-muted transition-colors hover:bg-ui-bg-subtle hover:text-ui-fg-base">
-          <RiMoreFill className="h-3.5 w-3.5" />
+        <DropdownMenuTrigger className="flex size-5 items-center justify-center rounded text-ui-fg-muted transition-colors hover:bg-ui-bg-subtle hover:text-ui-fg-base">
+          <RiMoreFill className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4}>
           {hidden.map((crumb) => (

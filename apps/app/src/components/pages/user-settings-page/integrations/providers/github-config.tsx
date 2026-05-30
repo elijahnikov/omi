@@ -218,8 +218,6 @@ function useGithubRepoPicker({
     queryKey: ["github-repos", connectionId],
     queryFn: () => listRepos({ connectionId }),
   });
-  // Fall back to an empty list on error so the picker shows its empty state
-  // (the global query cache surfaces the error toast).
   const repos: GithubRepo[] | null =
     reposQuery.data ?? (reposQuery.isError ? [] : null);
   const loading = reposQuery.isPending;

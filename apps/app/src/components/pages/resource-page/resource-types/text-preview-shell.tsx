@@ -31,7 +31,7 @@ export function TextPreviewError({
 }) {
   return (
     <div className="mt-4 flex h-[200px] w-full flex-col items-center justify-center gap-2 rounded-xl border border-ui-border-base bg-ui-bg-subtle text-ui-fg-muted">
-      <RiFileFill className="h-8 w-8" />
+      <RiFileFill className="size-8" />
       <span className="font-mono text-xs">{message}</span>
       {fileName && (
         <span className="font-mono text-ui-fg-subtle text-xs">

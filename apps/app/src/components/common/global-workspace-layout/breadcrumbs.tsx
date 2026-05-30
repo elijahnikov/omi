@@ -227,7 +227,7 @@ function ResourceIcon({
         return (
           <img
             alt=""
-            className="h-3.5 w-3.5 shrink-0 rounded-[2px] object-cover"
+            className="size-3.5 shrink-0 rounded-[2px] object-cover"
             height={14}
             src={resource.fileUrl}
             width={14}
@@ -251,7 +251,7 @@ function WebsiteIcon({ favicon }: { favicon?: string | null }) {
     return (
       <img
         alt=""
-        className="h-3.5 w-3.5 shrink-0 rounded-[4px]"
+        className="size-3.5 shrink-0 rounded-[4px]"
         height={14}
         src={favicon}
         width={14}
@@ -261,7 +261,7 @@ function WebsiteIcon({ favicon }: { favicon?: string | null }) {
   return (
     <svg
       aria-hidden="true"
-      className="h-3.5 w-3.5 shrink-0 text-ui-fg-muted"
+      className="size-3.5 shrink-0 text-ui-fg-muted"
       fill="none"
       stroke="currentColor"
       strokeWidth={1.5}
@@ -282,7 +282,7 @@ function WebsiteIcon({ favicon }: { favicon?: string | null }) {
 }
 
 function NoteIcon() {
-  return <RiStickyNoteFill className="h-3.5 w-3.5 shrink-0 text-ui-fg-muted" />;
+  return <RiStickyNoteFill className="size-3.5 shrink-0 text-ui-fg-muted" />;
 }
 
 function ChatThreadBreadcrumbs({
@@ -417,8 +417,8 @@ function TruncatedBreadcrumbs({
       </Link>
       <BreadcrumbSeparator />
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex h-5 w-5 items-center justify-center rounded text-ui-fg-muted transition-colors hover:bg-ui-bg-subtle hover:text-ui-fg-base">
-          <RiMoreFill className="h-3.5 w-3.5" />
+        <DropdownMenuTrigger className="flex size-5 items-center justify-center rounded text-ui-fg-muted transition-colors hover:bg-ui-bg-subtle hover:text-ui-fg-base">
+          <RiMoreFill className="size-3.5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={4}>
           {hidden.map((crumb) => (

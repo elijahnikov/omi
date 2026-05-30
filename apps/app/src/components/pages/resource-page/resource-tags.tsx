@@ -169,7 +169,7 @@ export function ResourceTags({
                 onClick={() => setIsAdding(true)}
                 type="button"
               >
-                <RiAddFill className="h-3 w-3" />
+                <RiAddFill className="size-3" />
                 tag
               </button>
             )}

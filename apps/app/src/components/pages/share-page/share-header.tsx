@@ -78,7 +78,7 @@ function TypeBadge({ resource }: { resource: ShareResourceData }) {
     return (
       <Badge className="min-w-0 max-w-[460px] shrink text-xs" variant="mono">
         <FileKindIcon
-          className="h-3.5 w-3.5 shrink-0"
+          className="size-3.5 shrink-0"
           fileName={file.fileName}
           mimeType={file.mimeType}
         />
