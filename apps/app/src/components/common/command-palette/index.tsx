@@ -123,13 +123,6 @@ export function CommandPalette({
   useEffect(() => () => observerRef.current?.disconnect(), []);
 
   useEffect(() => {
-    if (!open) {
-      setQuery("");
-      setDebouncedQuery("");
-    }
-  }, [open]);
-
-  useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(id);
   }, [query]);

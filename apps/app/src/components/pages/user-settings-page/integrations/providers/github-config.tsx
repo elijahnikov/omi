@@ -8,7 +8,8 @@ import { LoadingButton } from "@omi/ui/loading-button";
 import { Switch } from "@omi/ui/switch";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import {
   type ConfigConnection,
   DestinationPicker,
@@ -205,8 +206,6 @@ function useGithubRepoPicker({
   const listRepos = useConvexAction(
     api.connections.providers.github_actions.listMyRepos
   );
-  const [repos, setRepos] = useState<GithubRepo[] | null>(null);
-  const [loading, setLoading] = useState(false);
   const [selectedRepos, setSelectedRepos] = useState<Set<string>>(
     () => new Set(initialScope?.repos?.map((r) => r.name) ?? [])
   );
@@ -215,20 +214,15 @@ function useGithubRepoPicker({
   );
   const [filter, setFilter] = useState("");
 
-  useEffect(() => {
-    setLoading(true);
-    listRepos({ connectionId })
-      .then((result) => setRepos(result))
-      .catch((err) => {
-        toastManager.add({
-          type: "error",
-          title: "Could not load repositories",
-          description: toErrorMessage(err),
-        });
-        setRepos([]);
-      })
-      .finally(() => setLoading(false));
-  }, [connectionId, listRepos]);
+  const reposQuery = useQuery({
+    queryKey: ["github-repos", connectionId],
+    queryFn: () => listRepos({ connectionId }),
+  });
+  // Fall back to an empty list on error so the picker shows its empty state
+  // (the global query cache surfaces the error toast).
+  const repos: GithubRepo[] | null =
+    reposQuery.data ?? (reposQuery.isError ? [] : null);
+  const loading = reposQuery.isPending;
 
   const filtered = useMemo(() => {
     if (!repos) {

@@ -40,7 +40,6 @@ export function useCyclePhase({
 
   useEffect(() => {
     if (!active) {
-      setPhase(0);
       return;
     }
 
@@ -60,7 +59,9 @@ export function useCyclePhase({
     return () => cancelAnimationFrame(rafId);
   }, [active, cycleMsBase, speed]);
 
-  return phase;
+  // Derive the resting value while inactive instead of resetting state in the
+  // effect; when active resumes, the rAF loop overwrites on the next frame.
+  return active ? phase : 0;
 }
 
 interface UseSteppedCycleOptions {

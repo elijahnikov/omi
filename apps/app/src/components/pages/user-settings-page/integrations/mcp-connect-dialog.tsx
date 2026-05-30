@@ -23,7 +23,7 @@ import {
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { McpLogo } from "./mcp-logos";
 import { toErrorMessage } from "./shared";
 
@@ -46,19 +46,36 @@ export function McpConnectDialog({
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [token, setToken] = useState("");
-  const [authType, setAuthType] = useState<"bearer" | "oauth2">("bearer");
+  if (!target) {
+    return null;
+  }
+  // Key by target identity so switching targets remounts the form and
+  // re-initializes its fields, instead of syncing state from props in an effect.
+  return (
+    <McpConnectDialogForm
+      key={target.catalogId ?? target.defaultName ?? "custom"}
+      onOpenChange={onOpenChange}
+      open={open}
+      target={target}
+    />
+  );
+}
 
-  useEffect(() => {
-    if (target) {
-      setName(target.defaultName ?? "");
-      setUrl(target.defaultUrl ?? "");
-      setAuthType(target.authType);
-      setToken("");
-    }
-  }, [target]);
+function McpConnectDialogForm({
+  target,
+  open,
+  onOpenChange,
+}: {
+  target: ConnectTarget;
+  open: boolean;
+  onOpenChange: (next: boolean) => void;
+}) {
+  const [name, setName] = useState(target.defaultName ?? "");
+  const [url, setUrl] = useState(target.defaultUrl ?? "");
+  const [token, setToken] = useState("");
+  const [authType, setAuthType] = useState<"bearer" | "oauth2">(
+    target.authType
+  );
 
   const connectBearerAction = useConvexAction(
     api.mcpClient.connectActions.connectBearerServer
@@ -102,10 +119,6 @@ export function McpConnectDialog({
       });
     },
   });
-
-  if (!target) {
-    return null;
-  }
 
   const isCatalog = !target.isCustom;
   const showName = target.isCustom;
