@@ -33,6 +33,16 @@ export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   convexQueryClient: ConvexQueryClient;
 }>()({
+  beforeLoad: async (ctx) => {
+    const token = await getAuth();
+    if (token) {
+      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+    }
+    return {
+      isAuthenticated: !!token,
+      token,
+    };
+  },
   head: () => {
     const isDev = import.meta.env.MODE !== "production";
     return {
@@ -66,16 +76,6 @@ export const Route = createRootRouteWithContext<{
         },
         { rel: "manifest", href: "/site.webmanifest" },
       ],
-    };
-  },
-  beforeLoad: async (ctx) => {
-    const token = await getAuth();
-    if (token) {
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
-    }
-    return {
-      isAuthenticated: !!token,
-      token,
     };
   },
   component: RootComponent,

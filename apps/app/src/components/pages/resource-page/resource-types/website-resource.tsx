@@ -1,6 +1,7 @@
 import { Card } from "@omi/ui/card";
 import { FlickeringGrid } from "@omi/ui/flickering-grid";
 import { File as PierreFile } from "@pierre/diffs/react";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import {
   lazy,
@@ -530,70 +531,61 @@ interface BlueskyPostData {
   text: string;
 }
 
-function BlueskyEmbed({ embedId, url }: { embedId: string; url: string }) {
-  const [post, setPost] = useState<BlueskyPostData | null>(null);
-  const [loading, setLoading] = useState(true);
+async function fetchBlueskyPost(
+  embedId: string
+): Promise<BlueskyPostData | null> {
+  const [handle, rkey] = embedId.split("/");
+  if (!(handle && rkey)) {
+    return null;
+  }
 
-  useEffect(() => {
-    const [handle, rkey] = embedId.split("/");
-    if (!(handle && rkey)) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const resolveResp = await fetch(
-          `https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`
-        );
-        if (!resolveResp.ok) {
-          return;
-        }
-        const { did } = (await resolveResp.json()) as { did?: string };
-        if (!did) {
-          return;
-        }
-        const uri = `at://${did}/app.bsky.feed.post/${rkey}`;
-        const threadResp = await fetch(
-          `https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(uri)}&depth=0`
-        );
-        if (!threadResp.ok) {
-          return;
-        }
-        const data = (await threadResp.json()) as {
-          thread?: {
-            post?: {
-              author?: {
-                avatar?: string;
-                displayName?: string;
-                handle?: string;
-              };
-              record?: { createdAt?: string; text?: string };
-            };
-          };
+  const resolveResp = await fetch(
+    `https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`
+  );
+  if (!resolveResp.ok) {
+    return null;
+  }
+  const { did } = (await resolveResp.json()) as { did?: string };
+  if (!did) {
+    return null;
+  }
+
+  const uri = `at://${did}/app.bsky.feed.post/${rkey}`;
+  const threadResp = await fetch(
+    `https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(uri)}&depth=0`
+  );
+  if (!threadResp.ok) {
+    return null;
+  }
+  const data = (await threadResp.json()) as {
+    thread?: {
+      post?: {
+        author?: {
+          avatar?: string;
+          displayName?: string;
+          handle?: string;
         };
-        const p = data.thread?.post;
-        const text = p?.record?.text;
-        if (!(text && p?.author) || cancelled) {
-          return;
-        }
-        setPost({
-          text,
-          author: p.author,
-          createdAt: p.record?.createdAt,
-        });
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
+        record?: { createdAt?: string; text?: string };
+      };
     };
-  }, [embedId]);
+  };
+  const p = data.thread?.post;
+  const text = p?.record?.text;
+  if (!(text && p?.author)) {
+    return null;
+  }
+  return { text, author: p.author, createdAt: p.record?.createdAt };
+}
 
-  if (loading) {
+function BlueskyEmbed({ embedId, url }: { embedId: string; url: string }) {
+  const isValidEmbedId = embedId.split("/").filter(Boolean).length === 2;
+  const { data: post, isPending } = useQuery({
+    queryKey: ["bluesky-embed", embedId],
+    queryFn: () => fetchBlueskyPost(embedId),
+    enabled: isValidEmbedId,
+  });
+
+  if (isValidEmbedId && isPending) {
     return (
       <Card className="mt-4 rounded-2xl p-2 pb-0">
         <div className="relative h-[180px] w-full overflow-hidden rounded-lg">

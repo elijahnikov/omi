@@ -1,5 +1,5 @@
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export interface ListNavItem {
   id: string;
@@ -11,11 +11,10 @@ export function useListNavigation(items: ListNavItem[]) {
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
-  useEffect(() => {
-    if (activeId && !items.some((item) => item.id === activeId)) {
-      setActiveId(null);
-    }
-  }, [items, activeId]);
+  // Derive validity during render instead of nulling the id in an effect: if
+  // the active item is no longer in the list, treat it as having no selection.
+  const effectiveActiveId =
+    activeId && items.some((item) => item.id === activeId) ? activeId : null;
 
   const moveBy = useCallback((delta: number) => {
     const list = itemsRef.current;
@@ -43,15 +42,14 @@ export function useListNavigation(items: ListNavItem[]) {
     moveBy(-1);
   });
   useHotkey("Enter", () => {
-    const current = activeId;
-    if (!current) {
+    if (!effectiveActiveId) {
       return;
     }
-    const item = itemsRef.current.find((i) => i.id === current);
+    const item = itemsRef.current.find((i) => i.id === effectiveActiveId);
     item?.open();
   });
 
-  return { activeId, setActiveId };
+  return { activeId: effectiveActiveId, setActiveId };
 }
 
 export function scrollActiveIntoView(container: HTMLElement | null) {

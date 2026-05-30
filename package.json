@@ -16,12 +16,14 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "check": "ultracite check",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "doctor": "npx react-doctor@latest"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.7",
     "@turbo/gen": "^2.5.8",
     "dotenv-cli": "^10.0.0",
+    "react-doctor": "^0.2.14",
     "turbo": "^2.5.8",
     "typescript": "catalog:",
     "ultracite": "7.3.2"
