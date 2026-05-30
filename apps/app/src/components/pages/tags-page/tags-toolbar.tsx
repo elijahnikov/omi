@@ -79,7 +79,7 @@ export function TagsToolbar() {
                 key={option.label}
                 onClick={() => setOrder(option.value)}
               >
-                <option.icon className="h-4 w-4" />
+                <option.icon className="size-4" />
                 {option.label}
               </DropdownMenuItem>
             ))}

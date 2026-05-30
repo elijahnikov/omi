@@ -44,7 +44,7 @@ function WebsitePreview({ preview }: { preview: PreviewData }) {
       <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
         <img
           alt=""
-          className="h-6 w-6 rounded-sm"
+          className="size-6 rounded-sm"
           height={6}
           src={preview.favicon}
           width={6}
@@ -54,7 +54,7 @@ function WebsitePreview({ preview }: { preview: PreviewData }) {
   }
   return (
     <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
-      <RiGlobeFill className="h-5 w-5 text-ui-fg-muted" />
+      <RiGlobeFill className="size-5 text-ui-fg-muted" />
     </div>
   );
 }
@@ -74,7 +74,7 @@ function FilePreview({ preview }: { preview: PreviewData }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
       <FileKindIcon
-        className="h-6 w-6"
+        className="size-6"
         fileName={preview.fileName}
         mimeType={preview.mimeType}
       />
@@ -85,7 +85,7 @@ function FilePreview({ preview }: { preview: PreviewData }) {
 function NotePreview() {
   return (
     <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
-      <RiStickyNoteFill className="h-4 w-4 text-ui-fg-muted" />
+      <RiStickyNoteFill className="size-4 text-ui-fg-muted" />
     </div>
   );
 }
@@ -107,7 +107,7 @@ function ResourcePreview({
     default:
       return (
         <div className="flex h-full w-full items-center justify-center bg-ui-bg-subtle">
-          <RiFileFill className="h-5 w-5 text-ui-fg-muted" />
+          <RiFileFill className="size-5 text-ui-fg-muted" />
         </div>
       );
   }
@@ -153,7 +153,7 @@ export function DailyNoteSavedToday({
             preload="intent"
             to="/workspace/$workspaceId/resource/$resourceId"
           >
-            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md border border-ui-border-base">
+            <div className="size-8 shrink-0 overflow-hidden rounded-md border border-ui-border-base">
               <ResourcePreview preview={item.preview} type={item.type} />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">

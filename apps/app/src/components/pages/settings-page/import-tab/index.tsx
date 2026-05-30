@@ -64,7 +64,7 @@ export function ImportTab({ workspaceId }: { workspaceId: Id<"workspace"> }) {
                     {Logo && (
                       <Logo
                         aria-hidden="true"
-                        className="mt-0.5 h-6 w-6 shrink-0"
+                        className="mt-0.5 size-6 shrink-0"
                       />
                     )}
                     <Text className="font-medium">{source.label}</Text>

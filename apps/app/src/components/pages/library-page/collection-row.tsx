@@ -135,7 +135,7 @@ export function CollectionRow({
           tabIndex={-1}
           to="/workspace/$workspaceId/library/collection/$collectionId"
         />
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
           <CollectionIcon
             icon={collection.icon ?? undefined}
             iconColor={collection.iconColor ?? undefined}

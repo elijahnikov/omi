@@ -135,11 +135,11 @@ function ProgressCard({
   return (
     <div className="pointer-events-auto flex w-[320px] flex-col gap-2.5 rounded-xl border-[0.5px] bg-ui-bg-component px-3.5 py-3 shadow-lg">
       <div className="flex items-center gap-2.5">
-        <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle">
+        <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle">
           {Logo ? (
-            <Logo aria-hidden="true" className="h-4 w-4 shrink-0" />
+            <Logo aria-hidden="true" className="size-4 shrink-0" />
           ) : (
-            <RiDownload2Fill className="h-3.5 w-3.5 text-ui-fg-muted" />
+            <RiDownload2Fill className="size-3.5 text-ui-fg-muted" />
           )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -206,11 +206,11 @@ function FinishedCard({
 
   return (
     <div className="pointer-events-auto flex w-[320px] items-center gap-2.5 rounded-xl border-[0.5px] bg-ui-bg-component px-3.5 py-3 shadow-lg">
-      <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle">
+      <div className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle">
         {Logo ? (
-          <Logo aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <Logo aria-hidden="true" className="size-4 shrink-0" />
         ) : (
-          <RiDownload2Fill className="h-3.5 w-3.5 text-ui-fg-muted" />
+          <RiDownload2Fill className="size-3.5 text-ui-fg-muted" />
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -234,9 +234,9 @@ function FinishedCard({
         }`}
       >
         {isFailed ? (
-          <RiCloseFill className="h-3 w-3" />
+          <RiCloseFill className="size-3" />
         ) : (
-          <RiCheckFill className="h-3 w-3" />
+          <RiCheckFill className="size-3" />
         )}
       </div>
     </div>

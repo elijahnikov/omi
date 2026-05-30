@@ -175,8 +175,8 @@ function CatalogRow({
   return (
     <div className="flex w-full items-center justify-between gap-4 rounded-lg p-4 hover:bg-ui-bg-component">
       <div className="flex min-w-0 items-start gap-3">
-        <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-          <McpLogo className="h-5 w-5" logoKey={entry.logoKey} />
+        <div className="flex size-5 shrink-0 items-center justify-center">
+          <McpLogo className="size-5" logoKey={entry.logoKey} />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -224,8 +224,8 @@ function CustomServerRow({
   return (
     <div className="flex w-full items-center justify-between gap-4 rounded-lg p-4 hover:bg-ui-bg-component">
       <div className="flex min-w-0 items-start gap-3">
-        <div className="flex h-5 w-5 shrink-0 items-center justify-center">
-          <McpLogo className="h-5 w-5" logoKey="__custom__" />
+        <div className="flex size-5 shrink-0 items-center justify-center">
+          <McpLogo className="size-5" logoKey="__custom__" />
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">

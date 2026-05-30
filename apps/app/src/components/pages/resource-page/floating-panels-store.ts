@@ -3,8 +3,8 @@ import { create } from "zustand";
 export type FloatingPanelSlot = "chat" | "comments";
 
 export const FLOATING_PANEL_WIDTH = 500;
-export const FLOATING_PANEL_GAP = 16;
-export const FLOATING_PANEL_BASE_RIGHT = 16;
+const FLOATING_PANEL_GAP = 16;
+const FLOATING_PANEL_BASE_RIGHT = 16;
 
 interface FloatingPanelsState {
   // Last panel the user interacted with (focus/click). Drives Escape target.

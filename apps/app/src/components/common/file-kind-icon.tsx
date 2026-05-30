@@ -11,7 +11,7 @@ import {
 } from "@remixicon/react";
 import { type FilePreviewKind, getFilePreviewKind } from "~/lib/format";
 
-export const FILE_KIND_ICONS: Record<FilePreviewKind, typeof RiFileFill> = {
+const FILE_KIND_ICONS: Record<FilePreviewKind, typeof RiFileFill> = {
   image: RiImageFill,
   pdf: RiFilePdf2Fill,
   audio: RiFileMusicFill,

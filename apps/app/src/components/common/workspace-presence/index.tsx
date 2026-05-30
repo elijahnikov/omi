@@ -3,15 +3,7 @@ import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { instantDb } from "@omi/backend/instant";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
-
-export { WorkspacePresenceAvatars } from "./workspace-presence-avatars";
+import { createContext, type ReactNode, useEffect, useMemo } from "react";
 
 const MAX_VISIBLE_USERS = 5;
 
@@ -110,18 +102,4 @@ export function WorkspacePresenceProvider({
       {children}
     </WorkspacePresenceContext.Provider>
   );
-}
-
-export function useWorkspacePresence() {
-  const context = useContext(WorkspacePresenceContext);
-  if (!context) {
-    throw new Error(
-      "useWorkspacePresence must be used within WorkspacePresenceProvider"
-    );
-  }
-  return context;
-}
-
-export function useWorkspacePresenceSafe() {
-  return useContext(WorkspacePresenceContext);
 }

@@ -31,7 +31,7 @@ export function LibraryDragOverlay({
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1 }}
-      className="pointer-events-none relative h-10 w-10"
+      className="pointer-events-none relative size-10"
       initial={{ opacity: 0, scale: 0.4 }}
       transition={{ type: "spring", duration: 0.3, bounce: 0 }}
     >
@@ -102,5 +102,5 @@ function OverlayIcon({ data }: { data: ActiveDragItem["data"] }) {
       />
     );
   }
-  return <RiFolderFill className="h-4 w-4 text-ui-fg-muted" />;
+  return <RiFolderFill className="size-4 text-ui-fg-muted" />;
 }

@@ -49,7 +49,7 @@ export function CollapsibleSection({
           initial={false}
           transition={{ duration: 0.15, ease: "easeOut" }}
         >
-          <RiArrowRightSFill className="h-3.5 w-3.5 text-ui-fg-muted" />
+          <RiArrowRightSFill className="size-3.5 text-ui-fg-muted" />
         </motion.div>
         <Heading className={cn("text-sm", titleClassName)} level="h3">
           {title}

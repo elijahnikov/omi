@@ -89,7 +89,7 @@ function FilePreviewEmpty({
     <div className="mt-4 flex h-[200px] w-full items-center justify-center rounded-xl border border-ui-border-base bg-ui-bg-subtle">
       <div className="flex flex-col items-center gap-2 text-ui-fg-muted">
         <FileKindIcon
-          className="h-8 w-8"
+          className="size-8"
           fileName={fileName}
           mimeType={mimeType}
         />

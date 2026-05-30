@@ -158,7 +158,7 @@ interface AIDraftCardProps {
   text: string;
 }
 
-export function AIDraftCard({
+function AIDraftCard({
   state,
   text,
   command,

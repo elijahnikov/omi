@@ -286,7 +286,7 @@ function MoveButton({
               placeholder="Search or create a collection…"
             />
             {collectionsLoading ? (
-              <div className="flex flex-col gap-y-1 px-2 py-2">
+              <div className="flex flex-col gap-y-1 p-2">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <Skeleton
                     className="h-7 w-full"

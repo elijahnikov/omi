@@ -1,6 +1,6 @@
 import type { FC, SVGProps } from "react";
 
-export const Obsidian = (props: SVGProps<SVGSVGElement>) => (
+const Obsidian = (props: SVGProps<SVGSVGElement>) => (
   <svg {...props} preserveAspectRatio="xMidYMid" viewBox="0 0 256 332">
     <title>Obsidian</title>
     <defs>
@@ -156,7 +156,7 @@ export const Notion = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const Chrome = (props: SVGProps<SVGSVGElement>) => (
+const Chrome = (props: SVGProps<SVGSVGElement>) => (
   <svg {...props} preserveAspectRatio="xMidYMid" viewBox="0 0 190.5 190.5">
     <title>Google Chrome</title>
     <path
@@ -182,7 +182,7 @@ export const Chrome = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const Safari = (props: SVGProps<SVGSVGElement>) => (
+const Safari = (props: SVGProps<SVGSVGElement>) => (
   <svg {...props} viewBox="0 0 66.165833 65.803795">
     <title>Safari</title>
     <defs>
@@ -248,7 +248,7 @@ export const Safari = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const Firefox = (props: SVGProps<SVGSVGElement>) => (
+const Firefox = (props: SVGProps<SVGSVGElement>) => (
   <svg {...props} preserveAspectRatio="xMidYMid" viewBox="0 0 256 265">
     <title>Firefox</title>
     <defs>
@@ -341,7 +341,7 @@ function RasterLogo({
   );
 }
 
-export const Fabric: LogoComponent = ({ className, ...props }) => (
+const Fabric: LogoComponent = ({ className, ...props }) => (
   <svg
     {...props}
     className={`[&_path]:fill-black [&_path]:stroke-black dark:[&_path]:fill-white dark:[&_path]:stroke-white ${className ? ` ${className}` : ""}`}
@@ -433,31 +433,31 @@ export const Raindrop: LogoComponent = (props) => (
   </svg>
 );
 
-export const Logseq: LogoComponent = (props) => (
+const Logseq: LogoComponent = (props) => (
   <RasterLogo alt="Logseq" src="/import-logos/logseq.png" {...props} />
 );
 
-export const Bear: LogoComponent = (props) => (
+const Bear: LogoComponent = (props) => (
   <RasterLogo alt="Bear" src="/import-logos/bear.png" {...props} />
 );
 
-export const Evernote: LogoComponent = (props) => (
+const Evernote: LogoComponent = (props) => (
   <RasterLogo alt="Evernote" src="/import-logos/evernote.jpg" {...props} />
 );
 
-export const Readwise: LogoComponent = (props) => (
+const Readwise: LogoComponent = (props) => (
   <RasterLogo alt="Readwise" src="/import-logos/readwise.svg" {...props} />
 );
 
-export const Pocket: LogoComponent = (props) => (
+const Pocket: LogoComponent = (props) => (
   <RasterLogo alt="Pocket" src="/import-logos/pocket.png" {...props} />
 );
 
-export const Instapaper: LogoComponent = (props) => (
+const Instapaper: LogoComponent = (props) => (
   <RasterLogo alt="Instapaper" src="/import-logos/instapaper.png" {...props} />
 );
 
-export const MyMind: LogoComponent = (props) => (
+const MyMind: LogoComponent = (props) => (
   <RasterLogo alt="MyMind" src="/import-logos/mymind.png" {...props} />
 );
 

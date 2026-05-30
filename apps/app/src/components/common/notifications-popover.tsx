@@ -62,7 +62,7 @@ export function NotificationsPopover() {
           ) : (
             invitations?.map((invite) => (
               <div
-                className="flex flex-col gap-2 border-b px-3 py-3 last:border-b-0"
+                className="flex flex-col gap-2 border-b p-3 last:border-b-0"
                 key={invite._id}
               >
                 <div>

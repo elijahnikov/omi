@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -20,17 +19,3 @@ export const useSidebarStore = create<SidebarState>()(
     }
   )
 );
-
-export function useSidebarStoreHydrated() {
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    const unsub = useSidebarStore.persist.onFinishHydration(() => {
-      setHydrated(true);
-    });
-    if (useSidebarStore.persist.hasHydrated()) {
-      setHydrated(true);
-    }
-    return unsub;
-  }, []);
-  return hydrated;
-}
