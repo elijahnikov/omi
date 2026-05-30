@@ -13,8 +13,6 @@
     "with-env": "dotenv -e ../../.env --"
   },
   "dependencies": {
-    "@omi/auth": "*",
-    "@omi/backend": "*",
     "@omi/ui": "*",
     "convex": "catalog:convex",
     "react": "catalog:react",
