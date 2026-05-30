@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { PageContent } from "~/components/common/page-content";
 import { recordSearch } from "~/lib/search/recent-searches";
 import { LibrarySelectionProvider } from "~/lib/selection/library-selection";
-import { FilterBar } from "./filters/filter-bar";
+import { FilterChips, FilterControls } from "./filters/filter-bar";
 import { SearchInput } from "./search-input";
 import { SearchResults } from "./search-results";
 import { SearchSuggestions } from "./search-suggestions";
@@ -185,19 +185,31 @@ export function SearchPageComponent({
 
   return (
     <LibrarySelectionProvider>
-      <div className="fixed inset-x-2 top-10 z-30 flex items-center gap-x-2 rounded-t-2xl bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:w-full md:rounded-t-lg">
-        <SearchInput
-          isPending={enabled && (isPending || isFetching)}
-          onChange={setQ}
-          value={q}
-        />
-        <div className="ml-auto flex items-center gap-x-2 overflow-x-auto">
-          <FilterBar
-            hasActiveFilters={hasActiveFilters}
-            onReset={handleReset}
-            workspaceId={workspaceId}
+      <div className="fixed inset-x-2 top-10 z-30 flex flex-col gap-y-1.5 rounded-t-2xl bg-ui-bg-base! p-2 md:sticky md:inset-x-auto md:top-0 md:w-full md:rounded-t-lg">
+        <div className="flex items-center gap-x-2">
+          <SearchInput
+            isPending={enabled && (isPending || isFetching)}
+            onChange={setQ}
+            value={q}
           />
+          <div className="ml-auto flex shrink-0 items-center gap-x-2">
+            {hasActiveFilters && (
+              <div className="hidden items-center gap-1.5 md:flex">
+                <FilterChips workspaceId={workspaceId} />
+              </div>
+            )}
+            <FilterControls
+              hasActiveFilters={hasActiveFilters}
+              onReset={handleReset}
+              workspaceId={workspaceId}
+            />
+          </div>
         </div>
+        {hasActiveFilters && (
+          <div className="md:hidden">
+            <FilterChips workspaceId={workspaceId} />
+          </div>
+        )}
       </div>
       <PageContent className="pt-14 pb-24 md:pt-2" width="xl:w-3/5">
         {enabled ? (

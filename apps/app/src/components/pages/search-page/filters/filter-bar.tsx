@@ -26,16 +26,7 @@ const SORT_LABELS: Record<SearchSort, string> = {
   alphabetical: "A → Z",
 };
 
-export function FilterBar({
-  workspaceId,
-  onReset,
-  hasActiveFilters,
-}: {
-  workspaceId: Id<"workspace">;
-  onReset: () => void;
-  hasActiveFilters: boolean;
-}) {
-  const { sort, setSort } = useSearchFilters();
+export function FilterChips({ workspaceId }: { workspaceId: Id<"workspace"> }) {
   const [pendingNewFilter, setPendingNewFilter] = useState<FilterId | null>(
     null
   );
@@ -52,6 +43,23 @@ export function FilterBar({
           workspaceId={workspaceId}
         />
       ))}
+    </div>
+  );
+}
+
+export function FilterControls({
+  workspaceId,
+  onReset,
+  hasActiveFilters,
+}: {
+  workspaceId: Id<"workspace">;
+  onReset: () => void;
+  hasActiveFilters: boolean;
+}) {
+  const { sort, setSort } = useSearchFilters();
+
+  return (
+    <div className="flex items-center gap-1.5">
       <AddFilterMenu workspaceId={workspaceId} />
       <DropdownMenu>
         <DropdownMenuTrigger

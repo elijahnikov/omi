@@ -441,7 +441,7 @@ export function CommandPalette({
       <CommandDialog onOpenChange={onOpenChange} open={open}>
         <CommandDialogPopup className="max-h-[min(600px,80vh)]!">
           <Command items={groupedItems} onValueChange={setQuery} value={query}>
-            <CommandPanel className="overflow-y-scroll **:data-[slot=scroll-area-viewport]:max-h-[min(450px,65vh)] **:data-[slot=scroll-area-viewport]:[--fade-size:0px]">
+            <CommandPanel className="overflow-y-scroll rounded-xl bg-ui-bg-base **:data-[slot=scroll-area-viewport]:max-h-[min(450px,65vh)] **:data-[slot=scroll-area-viewport]:[--fade-size:0px]">
               <CommandInput
                 className="text-sm"
                 onPaste={handlePaste}

@@ -91,8 +91,8 @@ function FilterChipInner({
 
   return (
     <Badge
-      className="h-7 gap-x-0 overflow-hidden rounded-full border-[0.5px]! bg-ui-bg-base-hover p-0 pr-0.5 pl-0"
-      variant="outline"
+      className="h-7 gap-x-0 overflow-hidden rounded-md bg-ui-bg-field-component-hover p-0 pr-0.5 pl-0 shadow-borders-base dark:bg-ui-bg-field-component"
+      variant="mono"
     >
       <DropdownMenu onOpenChange={setNameOpen} open={nameOpen}>
         <DropdownMenuTrigger className="flex h-full items-center gap-x-1 px-2 text-ui-fg-subtle text-xs transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base">
