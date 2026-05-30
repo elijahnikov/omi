@@ -174,7 +174,10 @@ function ComboboxItem({
   return (
     <ComboboxPrimitive.Item
       className={cn(
-        "flex min-h-8 w-full in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-default items-center gap-2 rounded-sm py-1 ps-2 pe-2 text-base outline-none data-disabled:pointer-events-none data-highlighted:bg-ui-bg-component-hover data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
+        "data-highlighted:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base [&_svg]:text-ui-fg-subtle data-highlighted:[&_svg]:text-ui-fg-base",
+        "active:bg-ui-bg-component-hover",
+        "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled data-disabled:[&_svg]:text-ui-fg-disabled",
         className
       )}
       data-slot="combobox-item"

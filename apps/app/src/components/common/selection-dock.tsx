@@ -29,11 +29,10 @@ import { toastManager } from "@omi/ui/toast";
 import {
   RiAddLine,
   RiCloseFill,
-  RiDeleteBin6Line,
+  RiDeleteBinFill,
   RiFolderFill,
-  RiFolderLine,
   RiPushpinFill,
-  RiPushpinLine,
+  RiUnpinFill,
 } from "@remixicon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -269,7 +268,7 @@ function MoveButton({
             size="small"
             variant="ghost"
           >
-            <RiFolderLine className="size-3.5 shrink-0" />
+            <RiFolderFill className="size-3.5 shrink-0" />
             Move
           </Button>
         }
@@ -409,9 +408,9 @@ function PinButton({
       variant="ghost"
     >
       {allPinned ? (
-        <RiPushpinFill className="size-3.5 shrink-0" />
+        <RiUnpinFill className="size-3.5 shrink-0" />
       ) : (
-        <RiPushpinLine className="size-3.5 shrink-0" />
+        <RiPushpinFill className="size-3.5 shrink-0" />
       )}
       {allPinned ? "Unpin" : "Pin"}
     </Button>
@@ -503,7 +502,7 @@ function DeleteButton({
         size="small"
         variant="ghost"
       >
-        <RiDeleteBin6Line className="size-3.5 shrink-0" />
+        <RiDeleteBinFill className="size-3.5 shrink-0" />
         Delete
       </Button>
       <Dialog onOpenChange={setOpen} open={open}>

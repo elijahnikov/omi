@@ -53,7 +53,7 @@ function Option({
   return (
     <button
       className={cn(
-        "txt-compact-small flex cursor-pointer items-center gap-x-2 rounded-xl px-2 py-1.5 text-left font-medium text-ui-fg-subtle transition-colors hover:bg-ui-bg-component-hover hover:text-ui-fg-base",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center gap-x-2 rounded-md bg-ui-bg-component px-2 py-1.5 text-left font-medium text-ui-fg-subtle outline-none transition-colors hover:bg-ui-bg-component-hover hover:text-ui-fg-base active:bg-ui-bg-component-hover",
         active && "text-ui-fg-base"
       )}
       onClick={onClick}

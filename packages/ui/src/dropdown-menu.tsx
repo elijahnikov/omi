@@ -240,8 +240,8 @@ function MenuSubTrigger({
   return (
     <MenuPrimitive.SubmenuTrigger
       className={cn(
-        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component py-1.5 pl-2 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
-        "focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-popup-open:bg-ui-bg-component-hover data-popup-open:text-ui-fg-base [&_svg]:text-ui-fg-subtle focus:[&_svg]:text-ui-fg-base",
+        "txt-compact-small group/menuitem relative flex cursor-pointer select-none items-center rounded-md bg-ui-bg-component px-2 py-1.5 font-medium text-ui-fg-subtle outline-none transition-colors [&_svg]:mr-2 [&_svg]:size-4 [&_svg]:text-ui-fg-base",
+        "focus:bg-ui-bg-component-hover focus:text-ui-fg-base focus-visible:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-popup-open:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base data-popup-open:text-ui-fg-base [&_svg]:text-ui-fg-subtle focus:[&_svg]:text-ui-fg-base data-highlighted:[&_svg]:text-ui-fg-base data-popup-open:[&_svg]:text-ui-fg-base",
         "active:bg-ui-bg-component-hover",
         "data-disabled:pointer-events-none data-disabled:text-ui-fg-disabled data-disabled:[&_svg]:text-ui-fg-disabled",
         className

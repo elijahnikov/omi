@@ -79,7 +79,7 @@ export function MultiSelectPicker({
               <CommandCollection>
                 {(item: MultiSelectItem) => (
                   <CommandItem
-                    className="txt-compact-small! flex cursor-pointer items-center gap-x-2 rounded-xl px-2 py-1.5 font-medium! text-ui-fg-subtle data-highlighted:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base"
+                    className="txt-compact-small! group/menuitem relative flex cursor-pointer select-none items-center gap-x-2 rounded-md bg-ui-bg-component px-2 py-1.5 font-medium! text-ui-fg-subtle outline-none transition-colors active:bg-ui-bg-component-hover data-highlighted:bg-ui-bg-component-hover data-highlighted:text-ui-fg-base"
                     key={item.id}
                     onClick={() => toggle(item.id)}
                     value={item.id}
