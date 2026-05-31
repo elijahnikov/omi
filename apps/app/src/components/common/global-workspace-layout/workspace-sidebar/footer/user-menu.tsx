@@ -32,6 +32,8 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import type { UseNavigateResult } from "@tanstack/react-router";
 import { useNavigate, useParams, useRouter } from "@tanstack/react-router";
 import BoringAvatar from "boring-avatars";
+import { useState } from "react";
+import { CreateWorkspaceDialog } from "~/components/common/create-workspace-dialog";
 import { WorkspaceIcon } from "~/components/common/workspace-icon";
 
 type Workspace = Doc<"workspace"> & { role: string };
@@ -75,7 +77,11 @@ function WorkspaceItem({
   );
 }
 
-function WorkspaceSubMenu() {
+function WorkspaceSubMenu({
+  onCreateWorkspace,
+}: {
+  onCreateWorkspace: () => void;
+}) {
   const navigate = useNavigate();
   const { workspaceId } = useParams({ strict: false }) as {
     workspaceId?: string;
@@ -125,7 +131,7 @@ function WorkspaceSubMenu() {
           </DropdownMenuGroup>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={onCreateWorkspace}>
           <RiAddFill />
           New workspace
         </DropdownMenuItem>
@@ -171,6 +177,7 @@ function ThemeSubMenu() {
 
 export function UserMenu() {
   const router = useRouter();
+  const [createOpen, setCreateOpen] = useState(false);
   const { data } = useSuspenseQuery(
     convexQuery(api.user.queries.currentUser, {})
   );
@@ -181,41 +188,55 @@ export function UserMenu() {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="flex size-7! w-full items-center gap-2 rounded-full text-left text-sm hover:bg-accent"
-        render={<Avatar className="size-6" />}
-      >
-        {user.image && <AvatarImage src={user.image} />}
-        <AvatarFallback>
-          <BoringAvatar name={user.username} size={28} variant="marble" />
-        </AvatarFallback>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        className={"relative"}
-        side="bottom"
-        sideOffset={6}
-      >
-        <DropdownMenuItem onClick={() => router.navigate({ to: "/settings" })}>
-          <RiSettings4Fill />
-          Settings
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <WorkspaceSubMenu />
-        <ThemeSubMenu />
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={async () => {
-            await authClient.signOut();
-            router.navigate({ to: "/login" });
-          }}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className="flex size-7! w-full items-center gap-2 rounded-full text-left text-sm hover:bg-accent"
+          render={<Avatar className="size-6" />}
         >
-          <RiLogoutBoxFill />
-          Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {user.image && <AvatarImage src={user.image} />}
+          <AvatarFallback>
+            <BoringAvatar name={user.username} size={28} variant="marble" />
+          </AvatarFallback>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="start"
+          className={"relative"}
+          side="bottom"
+          sideOffset={6}
+        >
+          <DropdownMenuItem
+            onClick={() => router.navigate({ to: "/settings" })}
+          >
+            <RiSettings4Fill />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <WorkspaceSubMenu onCreateWorkspace={() => setCreateOpen(true)} />
+          <ThemeSubMenu />
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={async () => {
+              await authClient.signOut();
+              router.navigate({ to: "/login" });
+            }}
+          >
+            <RiLogoutBoxFill />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <CreateWorkspaceDialog
+        onCreated={(workspaceId) =>
+          router.navigate({
+            to: "/workspace/$workspaceId",
+            params: { workspaceId },
+          })
+        }
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
+    </>
   );
 }
 

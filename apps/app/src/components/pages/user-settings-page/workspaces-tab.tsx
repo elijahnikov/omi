@@ -20,12 +20,9 @@ import {
   DropdownMenuTrigger,
 } from "@omi/ui/dropdown-menu";
 import { Heading } from "@omi/ui/heading";
-import { Input } from "@omi/ui/input";
-import { LoadingButton } from "@omi/ui/loading-button";
 import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
 import {
-  RiAddFill,
   RiDeleteBinFill,
   RiExternalLinkFill,
   RiLogoutBoxFill,
@@ -35,13 +32,8 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
+import { CreateWorkspaceForm } from "~/components/common/create-workspace-dialog";
 import { WorkspaceIcon } from "~/components/common/workspace-icon/workspace-icon";
-import { WorkspaceIconSelector } from "~/components/common/workspace-icon/workspace-icon-selector";
-
-type IconState =
-  | { type: "icon"; name: string; color: string }
-  | { type: "emoji"; emoji: string }
-  | { type: "none" };
 
 type Role = "owner" | "admin" | "member";
 
@@ -88,92 +80,6 @@ export function WorkspacesTab() {
   );
 }
 
-function CreateWorkspaceForm() {
-  const [name, setName] = useState("");
-  const [iconState, setIconState] = useState<IconState>({ type: "none" });
-  const [error, setError] = useState<string | null>(null);
-
-  const { mutate: createWorkspace, isPending } = useMutation({
-    mutationFn: useConvexMutation(api.workspace.mutations.create),
-    onSuccess: () => {
-      setName("");
-      setIconState({ type: "none" });
-      setError(null);
-      toastManager.add({
-        type: "success",
-        title: "Workspace created",
-      });
-    },
-    onError: (err) => {
-      setError(getErrorMessage(err));
-    },
-    meta: { customErrorToast: true },
-  });
-
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    const trimmed = name.trim();
-    if (!trimmed) {
-      return;
-    }
-    createWorkspace({
-      name: trimmed,
-      emoji: iconState.type === "emoji" ? iconState.emoji : undefined,
-      icon: iconState.type === "icon" ? iconState.name : undefined,
-      iconColor: iconState.type === "icon" ? iconState.color : undefined,
-    });
-  };
-
-  return (
-    <div>
-      <form className="flex items-center gap-2" onSubmit={handleSubmit}>
-        <WorkspaceIconSelector
-          currentEmoji={
-            iconState.type === "emoji" ? iconState.emoji : undefined
-          }
-          currentIcon={iconState.type === "icon" ? iconState.name : undefined}
-          currentIconColor={
-            iconState.type === "icon" ? iconState.color : undefined
-          }
-          onSelect={(value) => setIconState(value)}
-        >
-          <div className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-dashed hover:bg-ui-bg-component">
-            <WorkspaceIcon
-              emoji={iconState.type === "emoji" ? iconState.emoji : undefined}
-              icon={iconState.type === "icon" ? iconState.name : undefined}
-              iconColor={
-                iconState.type === "icon" ? iconState.color : undefined
-              }
-              size="md"
-            />
-          </div>
-        </WorkspaceIconSelector>
-        <div className="flex-1">
-          <Input
-            onChange={(e) => {
-              setName(e.target.value);
-              setError(null);
-            }}
-            placeholder="Workspace name"
-            value={name}
-          />
-          {error && <p className="mt-1 text-destructive text-xs">{error}</p>}
-        </div>
-        <LoadingButton
-          disabled={!name.trim()}
-          loading={isPending}
-          type="submit"
-          variant="omi"
-        >
-          <RiAddFill className="size-3 shrink-0" />
-          Create
-        </LoadingButton>
-      </form>
-    </div>
-  );
-}
-
 function WorkspacesList() {
   const { data: workspaces } = useSuspenseQuery(
     convexQuery(api.workspace.queries.listByUser, {})
@@ -183,16 +89,23 @@ function WorkspacesList() {
     return null;
   }
 
+  const ownedCount = workspaces.filter((w) => w.role === "owner").length;
+
   return (
     <div className="flex flex-col gap-1">
       {workspaces.map((workspace) => (
-        <WorkspaceRow key={workspace._id} workspace={workspace} />
+        <WorkspaceRow
+          isLastOwned={workspace.role === "owner" && ownedCount === 1}
+          key={workspace._id}
+          workspace={workspace}
+        />
       ))}
     </div>
   );
 }
 
 interface WorkspaceRowProps {
+  isLastOwned: boolean;
   workspace: {
     _id: Id<"workspace">;
     name: string;
@@ -203,7 +116,7 @@ interface WorkspaceRowProps {
   };
 }
 
-function WorkspaceRow({ workspace }: WorkspaceRowProps) {
+function WorkspaceRow({ workspace, isLastOwned }: WorkspaceRowProps) {
   const navigate = useNavigate();
   const [confirmAction, setConfirmAction] = useState<"leave" | "delete" | null>(
     null
@@ -292,10 +205,16 @@ function WorkspaceRow({ workspace }: WorkspaceRowProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
+                  disabled={isLastOwned}
                   onClick={() => setConfirmAction("delete")}
                 >
                   <RiDeleteBinFill className="size-4" />
                   Delete workspace
+                  {isLastOwned && (
+                    <span className="ml-auto text-[10px] text-ui-fg-muted">
+                      Last workspace
+                    </span>
+                  )}
                 </DropdownMenuItem>
               </>
             )}

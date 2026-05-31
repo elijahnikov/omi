@@ -1,15 +1,17 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { authClient } from "@omi/auth/client";
 import { api } from "@omi/backend/_generated/api.js";
 import { Button } from "@omi/ui/button";
+import { RiFolderOpenFill } from "@remixicon/react";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { ClientAuthBoundary } from "~/lib/auth-client";
+import { useState } from "react";
+import { CreateWorkspaceDialog } from "~/components/common/create-workspace-dialog";
+import { EmptyState } from "~/components/common/empty-state";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
   beforeLoad: async ({ context }) => {
     if (!context.isAuthenticated) {
-      return;
+      throw redirect({ to: "/login" });
     }
     const { user } = await context.queryClient.ensureQueryData(
       convexQuery(api.user.queries.currentUser, {})
@@ -32,48 +34,30 @@ export const Route = createFileRoute("/")({
 
 function RouteComponent() {
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
-  return (
-    <ClientAuthBoundary>
-      <main className="container h-screen py-16">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <h1 className="font-extrabold text-5xl tracking-tight sm:text-[5rem]">
-            Create <span className="text-primary">T3</span> Turbo
-          </h1>
+  const [createOpen, setCreateOpen] = useState(false);
 
-          <Button
-            onClick={async () => {
-              const res = await authClient.signIn.social({
-                provider: "discord",
-                callbackURL: "/",
-              });
-              if (!res.data?.url) {
-                throw new Error("No URL returned from signInSocial");
-              }
-              await navigate({ href: res.data.url, replace: true });
-            }}
-            size="base"
-          >
-            Sign in with Discord
+  return (
+    <main className="flex h-screen items-center justify-center">
+      <EmptyState
+        action={
+          <Button onClick={() => setCreateOpen(true)} variant="omi">
+            Create workspace
           </Button>
-          <Button
-            onClick={async () => {
-              const res = await authClient.signIn.social({
-                provider: "google",
-                callbackURL: "/",
-              });
-              if (!res.data?.url) {
-                throw new Error("No URL returned from signInSocial");
-              }
-              await navigate({ href: res.data.url, replace: true });
-            }}
-            size="base"
-          >
-            Sign in with Google
-          </Button>
-        </div>
-        <pre className="font-mono">{JSON.stringify(session, null, 2)}</pre>
-      </main>
-    </ClientAuthBoundary>
+        }
+        description="Create a workspace to get started."
+        Icon={RiFolderOpenFill}
+        title="No workspace yet"
+      />
+      <CreateWorkspaceDialog
+        onCreated={(workspaceId) =>
+          navigate({
+            to: "/workspace/$workspaceId",
+            params: { workspaceId },
+          })
+        }
+        onOpenChange={setCreateOpen}
+        open={createOpen}
+      />
+    </main>
   );
 }

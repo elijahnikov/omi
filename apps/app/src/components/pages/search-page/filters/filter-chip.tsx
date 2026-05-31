@@ -91,11 +91,11 @@ function FilterChipInner({
 
   return (
     <Badge
-      className="h-7 gap-x-0 overflow-hidden rounded-md bg-ui-bg-field-component-hover p-0 pr-0.5 pl-0 shadow-borders-base dark:bg-ui-bg-field-component"
+      className="h-7 gap-x-0 overflow-hidden rounded-md bg-ui-bg-field-component-hover p-0 pr-0.5 pl-0 font-sans! shadow-borders-base dark:bg-ui-bg-field-component"
       variant="mono"
     >
       <DropdownMenu onOpenChange={setNameOpen} open={nameOpen}>
-        <DropdownMenuTrigger className="flex h-full items-center gap-x-1 px-2 text-ui-fg-subtle text-xs transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base">
+        <DropdownMenuTrigger className="flex h-full items-center gap-x-1 px-2 font-normal text-ui-fg-subtle text-xs transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base">
           <Icon className="size-3 shrink-0" />
           {name}
         </DropdownMenuTrigger>
@@ -126,7 +126,7 @@ function FilterChipInner({
       </DropdownMenu>
       {operatorLabel && chip.operators.length > 1 ? (
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex h-full items-center border-x-[0.5px] px-2 text-ui-fg-muted text-xs transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base">
+          <DropdownMenuTrigger className="flex h-full items-center border-x-[0.5px] px-2 font-normal text-ui-fg-muted text-xs transition-colors hover:bg-ui-bg-component hover:text-ui-fg-base">
             {operatorLabel}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-auto">
@@ -153,7 +153,7 @@ function FilterChipInner({
       )}
       <DropdownMenu onOpenChange={handleValueOpenChange} open={valueOpen}>
         <DropdownMenuTrigger className="flex h-full items-center px-2 text-ui-fg-base text-xs transition-colors hover:bg-ui-bg-component">
-          <span className="max-w-[180px] truncate">
+          <span className="max-w-[180px] truncate font-medium">
             {chip.valueLabel || "…"}
           </span>
         </DropdownMenuTrigger>
