@@ -116,6 +116,19 @@ export const deleteWorkspace = workspaceMutation({
   args: {},
   role: ["owner"],
   handler: async (ctx) => {
+    const ownedWorkspaces = await ctx.db
+      .query("workspace")
+      .withIndex("by_owner", (q) => q.eq("ownerId", ctx.user._id))
+      .collect();
+    const otherOwned = ownedWorkspaces.filter(
+      (w) => w._id !== ctx.workspace._id && w.deletedAt === undefined
+    );
+    if (otherOwned.length === 0) {
+      throw new ConvexError(
+        "You can't delete your only workspace. Create another one first."
+      );
+    }
+
     await ctx.db.patch(ctx.workspace._id, { deletedAt: Date.now() });
   },
 });

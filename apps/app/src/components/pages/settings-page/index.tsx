@@ -330,6 +330,12 @@ function AdvancedTab({
   const [confirmText, setConfirmText] = useState("");
   const navigate = useNavigate();
 
+  const { data: workspaces } = useSuspenseQuery(
+    convexQuery(api.workspace.queries.listByUser, {})
+  );
+  const ownedCount = workspaces.filter((w) => w.role === "owner").length;
+  const isLastOwned = isOwner && ownedCount === 1;
+
   const { mutate: deleteWorkspace, isPending } = useMutation({
     mutationFn: useConvexMutation(api.workspace.mutations.deleteWorkspace),
     onSuccess: () => {
@@ -350,12 +356,14 @@ function AdvancedTab({
           <div>
             <Text className="font-medium">Delete workspace</Text>
             <Text className="text-ui-fg-muted" size="small">
-              Permanently delete this workspace and all of its data.
+              {isLastOwned
+                ? "You must keep at least one workspace. Create another before deleting this one."
+                : "Permanently delete this workspace and all of its data."}
             </Text>
           </div>
           <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
             <LoadingButton
-              disabled={!isOwner}
+              disabled={!isOwner || isLastOwned}
               loading={false}
               onClick={() => setConfirmOpen(true)}
               size="small"
