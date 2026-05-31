@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { tierToBrowserRenderLimit } from "./pricing";
 import { resolveActingBillingAccount } from "./resolver";
 
 const MODEL_MULTIPLIER: Record<string, number> = {
@@ -116,6 +117,55 @@ export const logByoUsage = internalMutation({
       amount: 0,
       balanceAfter: account.creditBalance,
       resourceId: args.resourceId,
+    });
+  },
+});
+
+/**
+ * Atomically reserve a browser-render slot against the resource owner's monthly
+ * cap. Read + increment happen in this single mutation transaction, so two
+ * concurrent extraction actions can't both slip past the limit. Returns the
+ * billing account id so the caller can refund on render failure.
+ */
+export const reserveBrowserRender = internalMutation({
+  args: { resourceId: v.id("resource") },
+  handler: async (ctx, args) => {
+    const resource = await ctx.db.get(args.resourceId);
+    if (!resource) {
+      throw new ConvexError("Resource not found");
+    }
+    const resolved = await resolveActingBillingAccount(
+      ctx,
+      resource.createdBy,
+      resource.workspaceId
+    );
+    const account = await ctx.db.get(resolved.billingAccountId);
+    if (!account) {
+      throw new ConvexError("Billing account not found");
+    }
+    const used = account.browserRendersThisPeriod ?? 0;
+    if (used >= tierToBrowserRenderLimit(resolved.plan)) {
+      return { allowed: false as const };
+    }
+    await ctx.db.patch(account._id, { browserRendersThisPeriod: used + 1 });
+    return { allowed: true as const, billingAccountId: account._id };
+  },
+});
+
+/**
+ * Refund a reserved browser-render slot when the render then fails. Cloudflare
+ * does not bill failed renders, so the user shouldn't lose quota either.
+ */
+export const refundBrowserRender = internalMutation({
+  args: { billingAccountId: v.id("billingAccount") },
+  handler: async (ctx, args) => {
+    const account = await ctx.db.get(args.billingAccountId);
+    if (!account) {
+      return;
+    }
+    const used = account.browserRendersThisPeriod ?? 0;
+    await ctx.db.patch(args.billingAccountId, {
+      browserRendersThisPeriod: Math.max(0, used - 1),
     });
   },
 });

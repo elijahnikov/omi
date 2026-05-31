@@ -71,6 +71,14 @@ export const updateWebsiteMetadata = internalMutation({
     ),
     embedId: v.optional(v.string()),
     articleContent: v.optional(v.string()),
+    extractedLinks: v.optional(v.array(v.string())),
+    contentSource: v.optional(
+      v.union(
+        v.literal("cloudflare"),
+        v.literal("readability"),
+        v.literal("embed")
+      )
+    ),
     metadataStatus: v.union(
       v.literal("pending"),
       v.literal("processing"),
@@ -99,6 +107,8 @@ export const updateWebsiteMetadata = internalMutation({
       embedType: args.embedType,
       embedId: args.embedId,
       articleContent: args.articleContent,
+      extractedLinks: args.extractedLinks,
+      contentSource: args.contentSource,
       metadataStatus: args.metadataStatus,
       metadataError: args.metadataError,
     });
@@ -150,6 +160,34 @@ export const getWebsiteResource = internalQuery({
       .query("websiteResource")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
+  },
+});
+
+// Stores the full rendered markdown in the detail-only resourceContent table
+// (never loaded by list previews), so a future export / read-in-Omi view is a
+// pure read with no re-render.
+export const upsertResourceMarkdown = internalMutation({
+  args: {
+    resourceId: v.id("resource"),
+    markdownContent: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("resourceContent")
+      .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        markdownContent: args.markdownContent,
+      });
+      return;
+    }
+
+    await ctx.db.insert("resourceContent", {
+      resourceId: args.resourceId,
+      markdownContent: args.markdownContent,
+    });
   },
 });
 
