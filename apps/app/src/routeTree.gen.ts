@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ConnectRaycastRouteImport } from './routes/connect-raycast'
 import { Route as ConnectExtensionRouteImport } from './routes/connect-extension'
@@ -45,6 +47,16 @@ import { Route as WorkspaceWorkspaceWorkspaceIdJournalDateRouteImport } from './
 import { Route as WorkspaceWorkspaceWorkspaceIdChatThreadIdRouteImport } from './routes/_workspace/workspace/$workspaceId/chat/$threadId'
 import { Route as WorkspaceWorkspaceWorkspaceIdLibraryCollectionCollectionIdRouteImport } from './routes/_workspace/workspace/$workspaceId/library/collection/$collectionId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -242,6 +254,8 @@ export interface FileRoutesByFullPath {
   '/connect-extension': typeof ConnectExtensionRoute
   '/connect-raycast': typeof ConnectRaycastRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/settings': typeof AppSettingsRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
@@ -276,6 +290,8 @@ export interface FileRoutesByTo {
   '/connect-extension': typeof ConnectExtensionRoute
   '/connect-raycast': typeof ConnectRaycastRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/settings': typeof AppSettingsRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
@@ -310,6 +326,8 @@ export interface FileRoutesById {
   '/connect-extension': typeof ConnectExtensionRoute
   '/connect-raycast': typeof ConnectRaycastRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
@@ -346,6 +364,8 @@ export interface FileRouteTypes {
     | '/connect-extension'
     | '/connect-raycast'
     | '/onboarding'
+    | '/privacy'
+    | '/terms'
     | '/settings'
     | '/login'
     | '/register'
@@ -380,6 +400,8 @@ export interface FileRouteTypes {
     | '/connect-extension'
     | '/connect-raycast'
     | '/onboarding'
+    | '/privacy'
+    | '/terms'
     | '/settings'
     | '/login'
     | '/register'
@@ -413,6 +435,8 @@ export interface FileRouteTypes {
     | '/connect-extension'
     | '/connect-raycast'
     | '/onboarding'
+    | '/privacy'
+    | '/terms'
     | '/_app/settings'
     | '/_auth/login'
     | '/_auth/register'
@@ -451,6 +475,8 @@ export interface RootRouteChildren {
   ConnectExtensionRoute: typeof ConnectExtensionRoute
   ConnectRaycastRoute: typeof ConnectRaycastRoute
   OnboardingRoute: typeof OnboardingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiInlineAiRoute: typeof ApiInlineAiRoute
   ApiSentryTunnelRoute: typeof ApiSentryTunnelRoute
@@ -460,6 +486,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -851,6 +891,8 @@ const rootRouteChildren: RootRouteChildren = {
   ConnectExtensionRoute: ConnectExtensionRoute,
   ConnectRaycastRoute: ConnectRaycastRoute,
   OnboardingRoute: OnboardingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiInlineAiRoute: ApiInlineAiRoute,
   ApiSentryTunnelRoute: ApiSentryTunnelRoute,
