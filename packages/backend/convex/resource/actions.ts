@@ -253,18 +253,12 @@ async function resolveValidFavicon(
   return googleS2Favicon(baseUrl);
 }
 
-// Kept lean on the hot websiteResource row (loaded by list previews); the
-// enricher only reads the first ~12k chars anyway.
 const MAX_ARTICLE_EXCERPT = 16_000;
-// Full markdown lives in the detail-only resourceContent table; cap well under
-// Convex's 1MB per-document limit.
 const MAX_STORED_MARKDOWN = 500_000;
 const FETCH_TIMEOUT_MS = 10_000;
 
 type ContentSource = "cloudflare" | "readability" | "embed";
 
-// Best-effort cheap fetch for OG tags + favicon. Non-fatal: a bot-block here
-// must not abort content extraction, since Cloudflare may still render the page.
 async function fetchOgAndFavicon(url: string): Promise<{
   html?: string;
   ogTitle?: string;
@@ -347,8 +341,6 @@ export const extractWebsiteMetadata = internalAction({
     let contentSource: ContentSource | undefined;
 
     if (embed) {
-      // Embed sites return useless HTML to scrapers — use their native APIs,
-      // and never spend a paid render on them.
       const embedContent = await extractEmbedContent(
         embed.type,
         embed.id,
@@ -362,7 +354,6 @@ export const extractWebsiteMetadata = internalAction({
       }
       contentSource = "embed";
     } else {
-      // Imports/rehydration pass skipAI — keep them Readability-only (no render).
       const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
       const apiToken = process.env.CLOUDFLARE_BROWSER_RENDERING_API_TOKEN;
 
@@ -386,7 +377,6 @@ export const extractWebsiteMetadata = internalAction({
             extractedLinks = extractLinksFromMarkdown(markdown, url);
             contentSource = "cloudflare";
           } else {
-            // Cloudflare doesn't bill failed renders — give the slot back.
             await ctx.runMutation(
               internal.billing.credits.refundBrowserRender,
               { billingAccountId: reservation.billingAccountId }
@@ -395,7 +385,6 @@ export const extractWebsiteMetadata = internalAction({
         }
       }
 
-      // Fallback (no creds / over cap / render failed): local Readability.
       if (!articleContent && og.html) {
         const article = extractArticleContent(og.html, url);
         articleContent = article?.textContent;
@@ -403,8 +392,6 @@ export const extractWebsiteMetadata = internalAction({
       contentSource ??= "readability";
     }
 
-    // "completed" as long as we reached the page at all; only a total failure
-    // (unreachable + no render + not an embed) is "failed", matching prior UX.
     const reachedPage = Boolean(og.html) || Boolean(articleContent) || !!embed;
 
     await ctx.runMutation(internal.resource.internals.updateWebsiteMetadata, {

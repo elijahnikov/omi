@@ -257,6 +257,9 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
       if (!website) {
         return null;
       }
+      const isMetadataPending =
+        website.metadataStatus === "pending" ||
+        website.metadataStatus === "processing";
       return (
         <a
           className="flex min-w-0 max-w-[420px] shrink"
@@ -268,13 +271,33 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
             className="min-w-0 max-w-full shrink text-ui-fg-subtle text-xs"
             variant="mono"
           >
-            <img
-              alt={website.url}
-              className="shrink-0 rounded-[4px]"
-              height={14}
-              src={website.favicon}
-              width={14}
-            />
+            <span className="flex size-3.5 shrink-0 items-center justify-center">
+              <AnimatePresence initial={false} mode="wait">
+                {isMetadataPending ? (
+                  <motion.span
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0 }}
+                    key="loader"
+                    transition={{ duration: 0.15 }}
+                  >
+                    <DotGridLoader circular />
+                  </motion.span>
+                ) : (
+                  <motion.img
+                    alt={website.url}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="rounded-[4px]"
+                    height={14}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    key="favicon"
+                    src={website.favicon}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                    width={14}
+                  />
+                )}
+              </AnimatePresence>
+            </span>
             <span className="shrink-0 font-medium text-ui-fg-base">
               {new URL(website.url).hostname}
             </span>

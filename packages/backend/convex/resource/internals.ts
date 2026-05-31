@@ -163,9 +163,6 @@ export const getWebsiteResource = internalQuery({
   },
 });
 
-// Stores the full rendered markdown in the detail-only resourceContent table
-// (never loaded by list previews), so a future export / read-in-Omi view is a
-// pure read with no re-render.
 export const upsertResourceMarkdown = internalMutation({
   args: {
     resourceId: v.id("resource"),

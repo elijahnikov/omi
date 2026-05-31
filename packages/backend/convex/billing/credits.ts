@@ -121,12 +121,6 @@ export const logByoUsage = internalMutation({
   },
 });
 
-/**
- * Atomically reserve a browser-render slot against the resource owner's monthly
- * cap. Read + increment happen in this single mutation transaction, so two
- * concurrent extraction actions can't both slip past the limit. Returns the
- * billing account id so the caller can refund on render failure.
- */
 export const reserveBrowserRender = internalMutation({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -152,10 +146,6 @@ export const reserveBrowserRender = internalMutation({
   },
 });
 
-/**
- * Refund a reserved browser-render slot when the render then fails. Cloudflare
- * does not bill failed renders, so the user shouldn't lose quota either.
- */
 export const refundBrowserRender = internalMutation({
   args: { billingAccountId: v.id("billingAccount") },
   handler: async (ctx, args) => {
