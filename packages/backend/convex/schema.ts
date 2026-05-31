@@ -30,6 +30,7 @@ export default defineSchema({
     creditResetAt: v.optional(v.number()),
     lastTopUpKey: v.optional(v.string()),
     storageBytesUsed: v.optional(v.number()),
+    browserRendersThisPeriod: v.optional(v.number()),
   })
     .index("by_owner_user", ["ownerUserId"])
     .index("by_stripe_customer", ["stripeCustomerId"]),
@@ -192,6 +193,14 @@ export default defineSchema({
     ogDescription: v.optional(v.string()),
     siteName: v.optional(v.string()),
     articleContent: v.optional(v.string()),
+    extractedLinks: v.optional(v.array(v.string())),
+    contentSource: v.optional(
+      v.union(
+        v.literal("cloudflare"),
+        v.literal("readability"),
+        v.literal("embed")
+      )
+    ),
     fullScreenshotStorageId: v.optional(v.id("_storage")),
     isEmbeddable: v.boolean(),
     embedType: v.optional(
@@ -240,6 +249,7 @@ export default defineSchema({
     htmlContent: v.optional(v.string()),
     jsonContent: v.optional(v.string()),
     plainTextContent: v.optional(v.string()),
+    markdownContent: v.optional(v.string()),
   }).index("by_resource", ["resourceId"]),
 
   // FILE RESOURCE

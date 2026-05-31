@@ -1,5 +1,9 @@
 "use node";
 
+import {
+  extractLinksFromMarkdown,
+  renderMarkdown,
+} from "@omi/ai/browser-render";
 import { extractEmbedContent } from "@omi/ai/embed-extraction";
 import { extractArticleContent } from "@omi/ai/extraction";
 import { v } from "convex/values";
@@ -249,6 +253,52 @@ async function resolveValidFavicon(
   return googleS2Favicon(baseUrl);
 }
 
+const MAX_ARTICLE_EXCERPT = 16_000;
+const MAX_STORED_MARKDOWN = 500_000;
+const FETCH_TIMEOUT_MS = 10_000;
+
+type ContentSource = "cloudflare" | "readability" | "embed";
+
+async function fetchOgAndFavicon(url: string): Promise<{
+  html?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  siteName?: string;
+  favicon?: string;
+}> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    clearTimeout(timeout);
+    if (!response.ok) {
+      return {};
+    }
+    const html = await response.text();
+    return {
+      html,
+      ogTitle: extractMetaContent(html, "og:title"),
+      ogDescription: extractMetaContent(html, "og:description"),
+      ogImage: extractMetaContent(html, "og:image"),
+      siteName: extractMetaContent(html, "og:site_name"),
+      favicon: await resolveValidFavicon(html, url),
+    };
+  } catch {
+    return {};
+  }
+}
+
 export const extractWebsiteMetadata = internalAction({
   args: {
     resourceId: v.id("resource"),
@@ -280,96 +330,100 @@ export const extractWebsiteMetadata = internalAction({
       return;
     }
 
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10_000);
+    const url = websiteResource.url;
+    const og = await fetchOgAndFavicon(url);
+    let { ogTitle, ogImage } = og;
 
-      const response = await fetch(websiteResource.url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-          Accept:
-            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-        },
-        signal: controller.signal,
-        redirect: "follow",
-      });
+    const embed = detectEmbed(url);
+    let articleContent: string | undefined;
+    let extractedLinks: string[] | undefined;
+    let fullMarkdown: string | undefined;
+    let contentSource: ContentSource | undefined;
 
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+    if (embed) {
+      const embedContent = await extractEmbedContent(
+        embed.type,
+        embed.id,
+        og.html ?? "",
+        url
+      );
+      articleContent = embedContent?.textContent;
+      if (embedContent) {
+        ogTitle ??= embedContent.title;
+        ogImage ??= embedContent.thumbnailUrl;
       }
+      contentSource = "embed";
+    } else {
+      const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+      const apiToken = process.env.CLOUDFLARE_BROWSER_RENDERING_API_TOKEN;
 
-      const html = await response.text();
-
-      let ogTitle = extractMetaContent(html, "og:title");
-      const ogDescription = extractMetaContent(html, "og:description");
-      let ogImage = extractMetaContent(html, "og:image");
-      const siteName = extractMetaContent(html, "og:site_name");
-      const favicon = await resolveValidFavicon(html, websiteResource.url);
-
-      const embed = detectEmbed(websiteResource.url);
-
-      let articleContent: string | undefined;
-
-      if (embed) {
-        const embedContent = await extractEmbedContent(
-          embed.type,
-          embed.id,
-          html,
-          websiteResource.url
+      if (!args.skipAI && accountId && apiToken) {
+        const reservation = await ctx.runMutation(
+          internal.billing.credits.reserveBrowserRender,
+          { resourceId: args.resourceId }
         );
-        articleContent = embedContent?.textContent;
 
-        // Embed APIs (Innertube, syndication) return reliable metadata
-        // even when the HTML page doesn't (e.g. YouTube bot-detection)
-        if (embedContent) {
-          ogTitle ??= embedContent.title;
-          ogImage ??= embedContent.thumbnailUrl;
+        if (reservation.allowed) {
+          let markdown: string | null = null;
+          try {
+            markdown = await renderMarkdown({ url, accountId, apiToken });
+          } catch {
+            markdown = null;
+          }
+
+          if (markdown) {
+            fullMarkdown = markdown.slice(0, MAX_STORED_MARKDOWN);
+            articleContent = markdown.slice(0, MAX_ARTICLE_EXCERPT);
+            extractedLinks = extractLinksFromMarkdown(markdown, url);
+            contentSource = "cloudflare";
+          } else {
+            await ctx.runMutation(
+              internal.billing.credits.refundBrowserRender,
+              { billingAccountId: reservation.billingAccountId }
+            );
+          }
         }
       }
 
-      // Only use Readability for non-embed URLs — embed sites
-      // (Twitter, YouTube, etc.) return useless HTML to scrapers
-      if (!(articleContent || embed)) {
-        const article = extractArticleContent(html, websiteResource.url);
+      if (!articleContent && og.html) {
+        const article = extractArticleContent(og.html, url);
         articleContent = article?.textContent;
       }
+      contentSource ??= "readability";
+    }
 
-      await ctx.runMutation(internal.resource.internals.updateWebsiteMetadata, {
-        resourceId: args.resourceId,
-        ogTitle,
-        ogDescription,
-        ogImage,
-        siteName,
-        favicon,
-        isEmbeddable: embed !== null,
-        embedType: embed?.type,
-        embedId: embed?.id,
-        articleContent,
-        metadataStatus: "completed",
-      });
+    const reachedPage = Boolean(og.html) || Boolean(articleContent) || !!embed;
 
-      if (!args.skipAI) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.resource.aiActions.processResourceAI,
-          { resourceId: args.resourceId }
-        );
-      }
-    } catch (error) {
-      // Even when the page fetch fails (Cloudflare block, timeout, 4xx/5xx),
-      // we still know the URL — so fall back to Google's S2 favicon service
-      // so the row at least has a recognisable icon instead of nothing.
-      await ctx.runMutation(internal.resource.internals.updateWebsiteMetadata, {
-        resourceId: args.resourceId,
-        favicon: googleS2Favicon(websiteResource.url),
-        isEmbeddable: false,
-        metadataStatus: "failed",
-        metadataError: error instanceof Error ? error.message : "Unknown error",
-      });
+    await ctx.runMutation(internal.resource.internals.updateWebsiteMetadata, {
+      resourceId: args.resourceId,
+      ogTitle,
+      ogDescription: og.ogDescription,
+      ogImage,
+      siteName: og.siteName,
+      favicon: og.favicon ?? googleS2Favicon(url),
+      isEmbeddable: embed !== null,
+      embedType: embed?.type,
+      embedId: embed?.id,
+      articleContent,
+      extractedLinks,
+      contentSource,
+      metadataStatus: reachedPage ? "completed" : "failed",
+      metadataError: reachedPage ? undefined : "Could not fetch or render page",
+    });
+
+    if (fullMarkdown) {
+      await ctx.runMutation(
+        internal.resource.internals.upsertResourceMarkdown,
+        { resourceId: args.resourceId, markdownContent: fullMarkdown }
+      );
+    }
+
+    if (!args.skipAI) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.resource.aiActions.processResourceAI,
+        { resourceId: args.resourceId }
+      );
     }
   },
 });

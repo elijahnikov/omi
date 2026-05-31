@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { protectedQuery, workspaceQuery } from "../utils";
-import { tierToStorageBytes } from "./pricing";
+import { tierToBrowserRenderLimit, tierToStorageBytes } from "./pricing";
 import { resolveActingBillingAccount } from "./resolver";
 
 export const getMyBillingState = protectedQuery({
@@ -24,6 +24,8 @@ export const getMyBillingState = protectedQuery({
       subscriptionStatus: account.subscriptionStatus ?? null,
       storageBytesUsed: account.storageBytesUsed ?? 0,
       storageBytesAllotment: tierToStorageBytes(account.plan),
+      browserRendersThisPeriod: account.browserRendersThisPeriod ?? 0,
+      browserRenderLimit: tierToBrowserRenderLimit(account.plan),
     };
   },
 });

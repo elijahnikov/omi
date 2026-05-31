@@ -35,6 +35,16 @@ export function tierToWorkspaceLimit(plan: Plan): number {
   return TIER_WORKSPACE_LIMIT[plan];
 }
 
+export const TIER_BROWSER_RENDER_LIMIT: Record<Plan, number> = {
+  free: 100,
+  basic: 2000,
+  pro: Number.POSITIVE_INFINITY,
+};
+
+export function tierToBrowserRenderLimit(plan: Plan): number {
+  return TIER_BROWSER_RENDER_LIMIT[plan];
+}
+
 export const PAID_PLANS = ["basic", "pro"] as const;
 export type PaidPlan = (typeof PAID_PLANS)[number];
 

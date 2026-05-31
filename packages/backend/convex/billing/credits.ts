@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
+import { tierToBrowserRenderLimit } from "./pricing";
 import { resolveActingBillingAccount } from "./resolver";
 
 const MODEL_MULTIPLIER: Record<string, number> = {
@@ -116,6 +117,45 @@ export const logByoUsage = internalMutation({
       amount: 0,
       balanceAfter: account.creditBalance,
       resourceId: args.resourceId,
+    });
+  },
+});
+
+export const reserveBrowserRender = internalMutation({
+  args: { resourceId: v.id("resource") },
+  handler: async (ctx, args) => {
+    const resource = await ctx.db.get(args.resourceId);
+    if (!resource) {
+      throw new ConvexError("Resource not found");
+    }
+    const resolved = await resolveActingBillingAccount(
+      ctx,
+      resource.createdBy,
+      resource.workspaceId
+    );
+    const account = await ctx.db.get(resolved.billingAccountId);
+    if (!account) {
+      throw new ConvexError("Billing account not found");
+    }
+    const used = account.browserRendersThisPeriod ?? 0;
+    if (used >= tierToBrowserRenderLimit(resolved.plan)) {
+      return { allowed: false as const };
+    }
+    await ctx.db.patch(account._id, { browserRendersThisPeriod: used + 1 });
+    return { allowed: true as const, billingAccountId: account._id };
+  },
+});
+
+export const refundBrowserRender = internalMutation({
+  args: { billingAccountId: v.id("billingAccount") },
+  handler: async (ctx, args) => {
+    const account = await ctx.db.get(args.billingAccountId);
+    if (!account) {
+      return;
+    }
+    const used = account.browserRendersThisPeriod ?? 0;
+    await ctx.db.patch(args.billingAccountId, {
+      browserRendersThisPeriod: Math.max(0, used - 1),
     });
   },
 });

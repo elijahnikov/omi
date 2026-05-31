@@ -116,6 +116,7 @@ export const topUpForPeriod = internalMutation({
       creditBalance: allotment,
       creditResetAt: resetAt,
       lastTopUpKey: args.idempotencyKey,
+      browserRendersThisPeriod: 0,
     });
     await ctx.db.insert("creditLedger", {
       billingAccountId: args.billingAccountId,
@@ -166,6 +167,7 @@ export const resetDueCredits = internalMutation({
         creditBalance: allotment,
         creditResetAt: nextResetAt,
         lastTopUpKey: undefined,
+        browserRendersThisPeriod: 0,
       });
       await ctx.db.insert("creditLedger", {
         billingAccountId: account._id,
