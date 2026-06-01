@@ -5,8 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./render": "./src/render.ts",
-    "./senders": "./src/senders.ts",
-    "./templates/verification": "./src/templates/verification.tsx"
+    "./senders": "./src/senders.ts"
   },
   "license": "MIT",
   "scripts": {

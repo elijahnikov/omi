@@ -53,6 +53,21 @@ const limits = {
     rate: 5,
     period: HOUR,
   },
+  emailPasswordResetSend: {
+    kind: "fixed window",
+    rate: 5,
+    period: HOUR,
+  },
+  emailChangeSend: {
+    kind: "fixed window",
+    rate: 5,
+    period: HOUR,
+  },
+  emailWorkspaceInviteSend: {
+    kind: "fixed window",
+    rate: 20,
+    period: HOUR,
+  },
   extensionCapture: {
     kind: "token bucket",
     rate: 30,

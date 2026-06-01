@@ -26,6 +26,8 @@
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@omi/tsconfig": "workspace:*",
+    "@types/react": "catalog:react",
+    "@types/react-dom": "catalog:react",
     "convex-test": "^0.0.49",
     "typescript": "catalog:",
     "vitest": "^3"
@@ -44,6 +46,8 @@
     "convex-helpers": "catalog:convex",
     "fflate": "^0.8.2",
     "marked": "^14.1.3",
+    "react": "catalog:react",
+    "react-dom": "catalog:react",
     "stripe": "^22.0.2"
   }
 }

@@ -1,18 +1,9 @@
 import { ConvexError, v } from "convex/values";
+import { generateToken } from "../token";
 import { workspaceMutation } from "../utils";
 
-const SLUG_ALPHABET =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-const SLUG_LENGTH = 12;
 const MAX_SLUG_RETRIES = 5;
-
-function generateSlug(): string {
-  let s = "";
-  for (let i = 0; i < SLUG_LENGTH; i++) {
-    s += SLUG_ALPHABET[Math.floor(Math.random() * SLUG_ALPHABET.length)];
-  }
-  return s;
-}
+const generateSlug = generateToken;
 
 export const enable = workspaceMutation({
   args: { resourceId: v.id("resource") },

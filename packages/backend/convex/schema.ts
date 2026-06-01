@@ -11,6 +11,9 @@ export default defineSchema({
     onboardedAt: v.optional(v.number()),
     onboardingStep: v.number(),
     personalBillingAccountId: v.optional(v.id("billingAccount")),
+    // Set once the welcome email has been sent, so it never sends twice
+    // regardless of which signup path (email/password or OAuth) verified first.
+    welcomeEmailSentAt: v.optional(v.number()),
   }).index("by_email", ["email"]),
 
   // BILLING ACCOUNT
@@ -105,13 +108,18 @@ export default defineSchema({
       v.literal("declined"),
       v.literal("revoked")
     ),
+    // Random token for the email accept link. Optional so invitations created
+    // before this flow existed (accepted in-app by id) remain valid.
+    token: v.optional(v.string()),
+    expiresAt: v.optional(v.number()),
     createdAt: v.number(),
     respondedAt: v.optional(v.number()),
   })
     .index("by_workspace", ["workspaceId", "status"])
     .index("by_invited_email", ["invitedEmail", "status"])
     .index("by_invited_user", ["invitedUserId", "status"])
-    .index("by_workspace_email", ["workspaceId", "invitedEmail"]),
+    .index("by_workspace_email", ["workspaceId", "invitedEmail"])
+    .index("by_token", ["token"]),
 
   // RESOURCE (base table)
   resource: defineTable({
