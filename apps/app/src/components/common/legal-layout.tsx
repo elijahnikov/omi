@@ -10,11 +10,6 @@ interface LegalLayoutProps {
   title: string;
 }
 
-/**
- * Standalone public layout for legal pages (privacy, terms). Renders the omi
- * wordmark, a home link, and a centered prose column. Not wrapped by the
- * authenticated app shell, so logged-out users can reach it.
- */
 export function LegalLayout({
   title,
   lastUpdated,
@@ -26,7 +21,7 @@ export function LegalLayout({
         <Link className="flex items-center gap-2" to="/">
           <img
             alt="omi"
-            className="rounded-lg dark:block"
+            className="hidden rounded-lg dark:block"
             height={36}
             src="/omi_white_on_transparent.png"
             width={36}
