@@ -10,17 +10,6 @@ import { v } from "convex/values";
 import { type ActionCtx, internalAction } from "../_generated/server";
 import { resend } from "./resend";
 
-/**
- * Render a registered email and enqueue it via Resend. Runs in a Node action
- * because `renderEmail` uses `react-dom/server`, which the Convex V8 isolate
- * can't run. `resend.sendEmail` works from an action — it only needs
- * `runMutation`, which `ActionCtx` provides.
- *
- * Per-template wrappers below are the public surface. Their typed args flow
- * into `props`, so `EmailProps<Id>` enforces at compile time that each wrapper
- * supplies exactly what its template needs — change a template's props and the
- * wrapper stops typechecking.
- */
 async function sendRendered<Id extends EmailTemplateId>(
   ctx: ActionCtx,
   args: {

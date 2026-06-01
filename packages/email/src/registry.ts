@@ -41,11 +41,6 @@ import {
 } from "./templates/workspace-invitation";
 import type { EmailDefinition } from "./types";
 
-/**
- * The single source of truth for every transactional email. Add a template by
- * authoring it under `templates/<name>/` and registering it here. `renderEmail`
- * and the backend send wrappers are driven entirely off this map.
- */
 export const emailRegistry = {
   verification: {
     subject: verificationSubject,

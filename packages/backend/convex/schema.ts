@@ -11,8 +11,6 @@ export default defineSchema({
     onboardedAt: v.optional(v.number()),
     onboardingStep: v.number(),
     personalBillingAccountId: v.optional(v.id("billingAccount")),
-    // Set once the welcome email has been sent, so it never sends twice
-    // regardless of which signup path (email/password or OAuth) verified first.
     welcomeEmailSentAt: v.optional(v.number()),
   }).index("by_email", ["email"]),
 

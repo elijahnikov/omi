@@ -163,8 +163,6 @@ export function InvitePage() {
     );
   }
 
-  // Logged out: send them to sign up (most invitees are new) or sign in,
-  // carrying the invite link so they return here to accept afterwards.
   const redirectTo = `/invite/${token}`;
   return (
     <InviteShell>

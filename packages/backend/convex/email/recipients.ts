@@ -1,12 +1,6 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
 
-/**
- * Resolve an email recipient (address + display name) for the email send
- * actions. These run in plain query context so they can read the database,
- * which the `"use node"` send actions cannot do directly.
- */
-
 export const byUserId = internalQuery({
   args: { userId: v.id("user") },
   handler: async (ctx, { userId }) => {

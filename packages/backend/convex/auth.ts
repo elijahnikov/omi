@@ -49,8 +49,6 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
           await ctx.runMutation(internal.workspace.mutations.seedWorkspace, {
             userId,
           });
-          // OAuth signups arrive already verified, so they never hit
-          // `afterEmailVerification` — send their welcome here instead.
           if (doc.emailVerified) {
             await ctx.scheduler.runAfter(
               0,

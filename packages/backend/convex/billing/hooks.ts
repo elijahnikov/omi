@@ -57,7 +57,6 @@ const MONTH_NAMES = [
   "December",
 ];
 
-/** Format an epoch-ms timestamp as e.g. "June 30, 2026" for email copy. */
 function formatDate(ms: number): string {
   const d = new Date(ms);
   return `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
@@ -126,8 +125,6 @@ export async function applyActiveSubscription(
     });
   }
 
-  // `topUp` is only set from `onSubscriptionComplete` (a brand-new checkout),
-  // so this confirmation fires once on subscribe, not on every renewal/sync.
   if (opts.topUp) {
     const recipient = await ctx.runQuery(internal.email.recipients.byUserId, {
       userId,

@@ -1,8 +1,3 @@
-/**
- * Shared inline styles for email templates. Email clients don't reliably
- * support stylesheets, so every style is inlined via these objects.
- */
-
 export const headingStyle = {
   fontSize: "20px",
   margin: "0 0 16px",

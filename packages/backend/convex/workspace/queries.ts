@@ -116,11 +116,6 @@ export const listPendingInvitationsForUser = protectedQuery({
   },
 });
 
-/**
- * Public (unauthenticated) lookup for the `/invite/:token` accept page. Returns
- * only display data — a logged-out invitee needs to see who invited them before
- * signing up. Accepting still goes through the protected mutation.
- */
 export const getInvitationByToken = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
