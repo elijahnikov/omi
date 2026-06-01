@@ -21,12 +21,15 @@ import { Route as R404RouteImport } from './routes/404'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShareSlugRouteImport } from './routes/share/$slug'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as ApiSentryTunnelRouteImport } from './routes/api/sentry-tunnel'
 import { Route as ApiInlineAiRouteImport } from './routes/api/inline-ai'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthVerifyEmailRouteImport } from './routes/_auth/verify-email'
+import { Route as AuthResetPasswordRouteImport } from './routes/_auth/reset-password'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as WorkspaceWorkspaceWorkspaceIdRouteRouteImport } from './routes/_workspace/workspace/$workspaceId/route'
@@ -104,6 +107,11 @@ const ShareSlugRoute = ShareSlugRouteImport.update({
   path: '/share/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSentryTunnelRoute = ApiSentryTunnelRouteImport.update({
   id: '/api/sentry-tunnel',
   path: '/api/sentry-tunnel',
@@ -124,6 +132,11 @@ const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -132,6 +145,11 @@ const AuthRegisterRoute = AuthRegisterRouteImport.update({
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => AuthRoute,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => AuthRoute,
 } as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
@@ -257,12 +275,15 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/settings': typeof AppSettingsRoute
+  '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
+  '/reset-password': typeof AuthResetPasswordRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/api/inline-ai': typeof ApiInlineAiRoute
   '/api/sentry-tunnel': typeof ApiSentryTunnelRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/share/$slug': typeof ShareSlugRoute
   '/workspace/$workspaceId': typeof WorkspaceWorkspaceWorkspaceIdRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -293,12 +314,15 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/settings': typeof AppSettingsRoute
+  '/forgot-password': typeof AuthForgotPasswordRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
+  '/reset-password': typeof AuthResetPasswordRoute
   '/verify-email': typeof AuthVerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/api/inline-ai': typeof ApiInlineAiRoute
   '/api/sentry-tunnel': typeof ApiSentryTunnelRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/share/$slug': typeof ShareSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/workspace/$workspaceId/search': typeof WorkspaceWorkspaceWorkspaceIdSearchRoute
@@ -329,12 +353,15 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/_app/settings': typeof AppSettingsRoute
+  '/_auth/forgot-password': typeof AuthForgotPasswordRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
+  '/_auth/reset-password': typeof AuthResetPasswordRoute
   '/_auth/verify-email': typeof AuthVerifyEmailRoute
   '/api/chat': typeof ApiChatRoute
   '/api/inline-ai': typeof ApiInlineAiRoute
   '/api/sentry-tunnel': typeof ApiSentryTunnelRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/share/$slug': typeof ShareSlugRoute
   '/_workspace/workspace/$workspaceId': typeof WorkspaceWorkspaceWorkspaceIdRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -367,12 +394,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/settings'
+    | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
     | '/verify-email'
     | '/api/chat'
     | '/api/inline-ai'
     | '/api/sentry-tunnel'
+    | '/invite/$token'
     | '/share/$slug'
     | '/workspace/$workspaceId'
     | '/api/auth/$'
@@ -403,12 +433,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/settings'
+    | '/forgot-password'
     | '/login'
     | '/register'
+    | '/reset-password'
     | '/verify-email'
     | '/api/chat'
     | '/api/inline-ai'
     | '/api/sentry-tunnel'
+    | '/invite/$token'
     | '/share/$slug'
     | '/api/auth/$'
     | '/workspace/$workspaceId/search'
@@ -438,12 +471,15 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/_app/settings'
+    | '/_auth/forgot-password'
     | '/_auth/login'
     | '/_auth/register'
+    | '/_auth/reset-password'
     | '/_auth/verify-email'
     | '/api/chat'
     | '/api/inline-ai'
     | '/api/sentry-tunnel'
+    | '/invite/$token'
     | '/share/$slug'
     | '/_workspace/workspace/$workspaceId'
     | '/api/auth/$'
@@ -480,6 +516,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   ApiInlineAiRoute: typeof ApiInlineAiRoute
   ApiSentryTunnelRoute: typeof ApiSentryTunnelRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   ShareSlugRoute: typeof ShareSlugRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
@@ -570,6 +607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/sentry-tunnel': {
       id: '/api/sentry-tunnel'
       path: '/api/sentry-tunnel'
@@ -598,6 +642,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthVerifyEmailRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/reset-password': {
+      id: '/_auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/register': {
       id: '/_auth/register'
       path: '/register'
@@ -610,6 +661,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/_auth/forgot-password': {
+      id: '/_auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof AuthRoute
     }
     '/_app/settings': {
@@ -759,14 +817,18 @@ const AppRouteChildren: AppRouteChildren = {
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface AuthRouteChildren {
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthRegisterRoute: typeof AuthRegisterRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthRegisterRoute: AuthRegisterRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
 }
 
@@ -896,6 +958,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   ApiInlineAiRoute: ApiInlineAiRoute,
   ApiSentryTunnelRoute: ApiSentryTunnelRoute,
+  InviteTokenRoute: InviteTokenRoute,
   ShareSlugRoute: ShareSlugRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }

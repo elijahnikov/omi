@@ -102,7 +102,7 @@ export function OnboardingPageComponent({ step }: { step: number }) {
         <div className="flex items-center gap-2">
           <img
             alt="omi"
-            className="rounded-lg dark:block"
+            className="hidden rounded-lg dark:block"
             height={32}
             src="/omi_white_on_transparent.png"
             width={32}

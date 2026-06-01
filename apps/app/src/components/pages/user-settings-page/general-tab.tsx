@@ -1,4 +1,5 @@
 import { convexQuery, useConvexMutation } from "@convex-dev/react-query";
+import { authClient } from "@omi/auth/client";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Button } from "@omi/ui/button";
@@ -35,6 +36,8 @@ export function GeneralTab() {
   const user = data.user;
 
   const [username, setUsername] = useState(user?.username ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [changingEmail, setChangingEmail] = useState(false);
   const [pendingAvatar, setPendingAvatar] = useState<PendingAvatar | null>(
     null
   );
@@ -151,6 +154,32 @@ export function GeneralTab() {
     }
   };
 
+  const emailChanged = email.trim().toLowerCase() !== user.email.toLowerCase();
+
+  const handleEmailChange = async () => {
+    if (!emailChanged || email.trim().length === 0) {
+      return;
+    }
+    setChangingEmail(true);
+    const res = await authClient.changeEmail({
+      newEmail: email.trim(),
+      callbackURL: window.location.origin,
+    });
+    setChangingEmail(false);
+    if (res.error) {
+      toastManager.add({
+        type: "error",
+        title: res.error.message ?? "Could not change email",
+      });
+      return;
+    }
+    toastManager.add({
+      type: "success",
+      title: "Confirm the change from your current inbox",
+      description: `We sent a confirmation link to ${user.email}.`,
+    });
+  };
+
   return (
     <form className="w-full" onSubmit={handleSubmit}>
       <div className="mb-6">
@@ -244,10 +273,27 @@ export function GeneralTab() {
         <Text className="mb-1.5" size="small">
           Email
         </Text>
-        <Input disabled type="email" value={user.email} />
+        <div className="flex items-center gap-2">
+          <Input
+            autoComplete="off"
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            type="email"
+            value={email}
+          />
+          <LoadingButton
+            disabled={!emailChanged || email.trim().length === 0}
+            loading={changingEmail}
+            onClick={handleEmailChange}
+            type="button"
+            variant="secondary"
+          >
+            Update
+          </LoadingButton>
+        </div>
         <Text className="mt-2 text-ui-fg-muted" size="xsmall">
-          Email changes aren't supported here yet. Contact support to update
-          your email.
+          We'll email a confirmation link to your current address before the
+          change takes effect.
         </Text>
       </div>
 

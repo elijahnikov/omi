@@ -22,7 +22,7 @@ function AuthLayoutComponent() {
       <div className="absolute top-6 left-6 flex items-center gap-2">
         <img
           alt="omi"
-          className="rounded-lg dark:block"
+          className="hidden rounded-lg dark:block"
           height={48}
           src="/omi_white_on_transparent.png"
           width={48}

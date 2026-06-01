@@ -116,6 +116,30 @@ export const listPendingInvitationsForUser = protectedQuery({
   },
 });
 
+export const getInvitationByToken = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    const invitation = await ctx.db
+      .query("workspaceInvitation")
+      .withIndex("by_token", (q) => q.eq("token", token))
+      .unique();
+    if (!invitation) {
+      return null;
+    }
+    const workspace = await ctx.db.get(invitation.workspaceId);
+    const inviter = await ctx.db.get(invitation.invitedByUserId);
+    const expired =
+      invitation.expiresAt !== undefined && invitation.expiresAt < Date.now();
+    return {
+      status: invitation.status,
+      expired,
+      invitedEmail: invitation.invitedEmail,
+      workspaceName: workspace?.name ?? null,
+      inviterName: inviter?.username ?? null,
+    };
+  },
+});
+
 // ── Members ──────────────────────────────────────────────────────────
 
 export const listMembers = workspaceQuery({

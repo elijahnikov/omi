@@ -6,7 +6,7 @@ import { type BetterAuthOptions, betterAuth } from "better-auth/minimal";
 import { username } from "better-auth/plugins";
 import Stripe from "stripe";
 import { components, internal } from "./_generated/api";
-import type { DataModel } from "./_generated/dataModel";
+import type { DataModel, Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import { internalAction } from "./_generated/server";
 import authConfig from "./auth.config";
@@ -49,6 +49,13 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
           await ctx.runMutation(internal.workspace.mutations.seedWorkspace, {
             userId,
           });
+          if (doc.emailVerified) {
+            await ctx.scheduler.runAfter(
+              0,
+              internal.email.welcome.maybeSendWelcome,
+              { userId }
+            );
+          }
         },
       },
     },
@@ -63,6 +70,44 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: true,
+      sendResetPassword: async ({ user, url }) => {
+        if (!("scheduler" in ctx)) {
+          throw new Error(
+            "sendResetPassword requires a mutation or action context"
+          );
+        }
+        await rateLimiter.limit(ctx, "emailPasswordResetSend", {
+          key: user.email,
+          throws: true,
+        });
+        await ctx.scheduler.runAfter(0, internal.email.send.sendPasswordReset, {
+          to: user.email,
+          url,
+          name: user.name,
+        });
+      },
+    },
+    user: {
+      changeEmail: {
+        enabled: true,
+        sendChangeEmailConfirmation: async ({ user, newEmail, url }) => {
+          if (!("scheduler" in ctx)) {
+            throw new Error(
+              "sendChangeEmailConfirmation requires a mutation or action context"
+            );
+          }
+          await rateLimiter.limit(ctx, "emailChangeSend", {
+            key: user.email,
+            throws: true,
+          });
+          await ctx.scheduler.runAfter(0, internal.email.send.sendEmailChange, {
+            to: user.email,
+            newEmail,
+            url,
+            name: user.name,
+          });
+        },
+      },
     },
     emailVerification: {
       sendOnSignUp: true,
@@ -77,14 +122,27 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
           key: user.email,
           throws: true,
         });
+        await ctx.scheduler.runAfter(0, internal.email.send.sendVerification, {
+          to: user.email,
+          url,
+          name: user.name,
+        });
+      },
+      afterEmailVerification: async (user) => {
+        if (!("scheduler" in ctx)) {
+          return;
+        }
+        const appUserId = await ctx.runQuery(
+          components.betterAuth.queries.getAppUserId,
+          { authId: user.id as Id<"user"> }
+        );
+        if (!appUserId) {
+          return;
+        }
         await ctx.scheduler.runAfter(
           0,
-          internal.email.sendVerificationEmail.send,
-          {
-            to: user.email,
-            url,
-            name: user.name,
-          }
+          internal.email.welcome.maybeSendWelcome,
+          { userId: appUserId as Id<"user"> }
         );
       },
     },

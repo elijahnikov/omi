@@ -42,6 +42,32 @@ function coerceTimestampMs(value: Date | number | string | undefined): number {
   return 0;
 }
 
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function formatDate(ms: number): string {
+  const d = new Date(ms);
+  return `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+const billingUrl = `${process.env.SITE_URL ?? "http://localhost:3000"}/settings?tab=billing`;
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export async function applyActiveSubscription(
   ctx: BetterAuthCtx,
   subscription: PluginSubscription,
@@ -98,6 +124,27 @@ export async function applyActiveSubscription(
       idempotencyKey: `${stripeSubscriptionId}:${periodStart}:${planName}`,
     });
   }
+
+  if (opts.topUp) {
+    const recipient = await ctx.runQuery(internal.email.recipients.byUserId, {
+      userId,
+    });
+    if (recipient) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.email.send.sendBillingSubscriptionStarted,
+        {
+          to: recipient.email,
+          name: recipient.name,
+          planName: capitalize(planName),
+          renewalDate: currentPeriodEnd
+            ? formatDate(currentPeriodEnd)
+            : undefined,
+          manageUrl: billingUrl,
+        }
+      );
+    }
+  }
 }
 
 export async function applyCanceledSubscription(
@@ -110,12 +157,38 @@ export async function applyCanceledSubscription(
   await ctx.runMutation(internal.billing.sync.syncSubscriptionCanceled, {
     stripeCustomerId: subscription.stripeCustomerId,
   });
+
+  const recipient = await ctx.runQuery(
+    internal.email.recipients.byStripeCustomerId,
+    { stripeCustomerId: subscription.stripeCustomerId }
+  );
+  if (recipient) {
+    const periodEndMs = coerceTimestampMs(subscription.periodEnd);
+    await ctx.scheduler.runAfter(
+      0,
+      internal.email.send.sendBillingSubscriptionCanceled,
+      {
+        to: recipient.email,
+        name: recipient.name,
+        planName:
+          subscription.plan && isPaidPlan(subscription.plan)
+            ? capitalize(subscription.plan)
+            : undefined,
+        accessUntil: periodEndMs ? formatDate(periodEndMs) : undefined,
+        resubscribeUrl: billingUrl,
+      }
+    );
+  }
 }
 
 export async function handleStripeEvent(
   ctx: BetterAuthCtx,
   event: Stripe.Event
 ): Promise<void> {
+  if (event.type === "invoice.payment_failed") {
+    await handlePaymentFailed(ctx, event);
+    return;
+  }
   if (event.type !== "invoice.paid") {
     return;
   }
@@ -140,4 +213,34 @@ export async function handleStripeEvent(
     stripeCustomerId,
     currentPeriodEnd: periodEnd * 1000,
   });
+}
+
+async function handlePaymentFailed(
+  ctx: BetterAuthCtx,
+  event: Stripe.Event & { type: "invoice.payment_failed" }
+): Promise<void> {
+  const invoice = event.data.object as Stripe.Invoice;
+  const stripeCustomerId =
+    typeof invoice.customer === "string"
+      ? invoice.customer
+      : invoice.customer?.id;
+  if (!stripeCustomerId) {
+    return;
+  }
+  const recipient = await ctx.runQuery(
+    internal.email.recipients.byStripeCustomerId,
+    { stripeCustomerId }
+  );
+  if (!recipient) {
+    return;
+  }
+  await ctx.scheduler.runAfter(
+    0,
+    internal.email.send.sendBillingPaymentFailed,
+    {
+      to: recipient.email,
+      name: recipient.name,
+      updatePaymentUrl: billingUrl,
+    }
+  );
 }

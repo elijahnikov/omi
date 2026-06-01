@@ -9,7 +9,7 @@ import {
 import { Input } from "@omi/ui/input";
 import { LoadingButton } from "@omi/ui/loading-button";
 import { toastManager } from "@omi/ui/toast";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { safeRedirect } from "~/lib/safe-redirect";
 
@@ -98,6 +98,13 @@ export function EmailPasswordForm() {
           )}
           rules={{ required: "Password is required" }}
         />
+        <Link
+          className="-mt-2 self-end text-ui-fg-muted text-xs underline hover:text-ui-fg-base"
+          preload="viewport"
+          to="/forgot-password"
+        >
+          Forgot password?
+        </Link>
         <LoadingButton
           className="w-full"
           loading={form.formState.isSubmitting}

@@ -1,8 +1,15 @@
 import { ConvexError, v } from "convex/values";
+import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 import { tierToWorkspaceLimit } from "../billing/pricing";
 import { resolveActingBillingAccount } from "../billing/resolver";
+import { rateLimiter } from "../rateLimiter";
+import { generateToken } from "../token";
 import { protectedMutation, workspaceMutation } from "../utils";
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_TOKEN_RETRIES = 5;
+const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 // ── Workspace ────────────────────────────────────────────────────────
 
@@ -178,15 +185,47 @@ export const createInvitation = workspaceMutation({
       throw new ConvexError("An invitation is already pending for this email");
     }
 
-    return ctx.db.insert("workspaceInvitation", {
+    await rateLimiter.limit(ctx, "emailWorkspaceInviteSend", {
+      key: ctx.user._id,
+      throws: true,
+    });
+
+    let token = generateToken();
+    for (let i = 0; i < MAX_TOKEN_RETRIES; i++) {
+      const collision = await ctx.db
+        .query("workspaceInvitation")
+        .withIndex("by_token", (q) => q.eq("token", token))
+        .unique();
+      if (!collision) {
+        break;
+      }
+      token = generateToken();
+    }
+
+    const invitationId = await ctx.db.insert("workspaceInvitation", {
       workspaceId: ctx.workspace._id,
       invitedEmail: args.email,
       invitedUserId: existingUser?._id,
       invitedByUserId: ctx.user._id,
       role: args.role,
       status: "pending",
+      token,
+      expiresAt: Date.now() + INVITE_TTL_MS,
       createdAt: Date.now(),
     });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.email.send.sendWorkspaceInvitation,
+      {
+        to: args.email,
+        inviterName: ctx.user.username,
+        workspaceName: ctx.workspace.name,
+        url: `${siteUrl}/invite/${token}`,
+      }
+    );
+
+    return invitationId;
   },
 });
 
@@ -253,6 +292,60 @@ export const acceptInvitation = protectedMutation({
       respondedAt: Date.now(),
       invitedUserId: ctx.user._id,
     });
+  },
+});
+
+export const acceptInvitationByToken = protectedMutation({
+  args: {
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const invitation = await ctx.db
+      .query("workspaceInvitation")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+    if (!invitation) {
+      throw new ConvexError("Invitation not found");
+    }
+
+    if (invitation.status !== "pending") {
+      throw new ConvexError("Invitation is no longer pending");
+    }
+
+    if (
+      invitation.expiresAt !== undefined &&
+      invitation.expiresAt < Date.now()
+    ) {
+      throw new ConvexError("This invitation has expired");
+    }
+
+    if (invitation.invitedEmail !== ctx.user.email) {
+      throw new ConvexError("This invitation was sent to a different email");
+    }
+
+    const existingMember = await ctx.db
+      .query("workspaceMember")
+      .withIndex("by_workspace_user", (q) =>
+        q.eq("workspaceId", invitation.workspaceId).eq("userId", ctx.user._id)
+      )
+      .unique();
+
+    if (!existingMember) {
+      await ctx.db.insert("workspaceMember", {
+        workspaceId: invitation.workspaceId,
+        userId: ctx.user._id,
+        role: invitation.role,
+        lastAccessedAt: Date.now(),
+      });
+    }
+
+    await ctx.db.patch(invitation._id, {
+      status: "accepted",
+      respondedAt: Date.now(),
+      invitedUserId: ctx.user._id,
+    });
+
+    return { workspaceId: invitation.workspaceId };
   },
 });
 
