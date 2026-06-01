@@ -105,6 +105,7 @@ import type * as resource_internals from "../resource/internals.js";
 import type * as resource_linkInternals from "../resource/linkInternals.js";
 import type * as resource_mutations from "../resource/mutations.js";
 import type * as resource_queries from "../resource/queries.js";
+import type * as resource_similarity from "../resource/similarity.js";
 import type * as resource_tagActions from "../resource/tagActions.js";
 import type * as resourceComment_mutations from "../resourceComment/mutations.js";
 import type * as resourceComment_queries from "../resourceComment/queries.js";
@@ -233,6 +234,7 @@ declare const fullApi: ApiFromModules<{
   "resource/linkInternals": typeof resource_linkInternals;
   "resource/mutations": typeof resource_mutations;
   "resource/queries": typeof resource_queries;
+  "resource/similarity": typeof resource_similarity;
   "resource/tagActions": typeof resource_tagActions;
   "resourceComment/mutations": typeof resourceComment_mutations;
   "resourceComment/queries": typeof resourceComment_queries;
