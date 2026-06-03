@@ -25,6 +25,7 @@ async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
     ogImage?: string | null;
     favicon?: string | null;
     domain?: string | null;
+    url?: string | null;
     fileUrl?: string | null;
     mimeType?: string | null;
     fileName?: string | null;
@@ -41,6 +42,7 @@ async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
         preview.ogImage = website.ogImage;
         preview.favicon = website.favicon;
         preview.domain = website.domain;
+        preview.url = website.url;
       }
       break;
     }
@@ -586,20 +588,29 @@ export const enrichResource = async (
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
     .unique();
 
+  const creatorDoc = await ctx.db.get(resource.createdBy);
+  const creator = creatorDoc
+    ? {
+        _id: creatorDoc._id,
+        username: creatorDoc.username,
+        image: creatorDoc.image,
+      }
+    : null;
+
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
         .query("websiteResource")
         .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
         .unique();
-      return { ...resource, website, aiStatus: resourceAI?.status };
+      return { ...resource, website, aiStatus: resourceAI?.status, creator };
     }
     case "note": {
       const note = await ctx.db
         .query("noteResource")
         .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
         .unique();
-      return { ...resource, note, aiStatus: resourceAI?.status };
+      return { ...resource, note, aiStatus: resourceAI?.status, creator };
     }
     case "file": {
       const file = await ctx.db
@@ -610,10 +621,16 @@ export const enrichResource = async (
         file?.mimeType?.startsWith("image/") && file.storageId
           ? await ctx.storage.getUrl(file.storageId)
           : null;
-      return { ...resource, file, fileUrl, aiStatus: resourceAI?.status };
+      return {
+        ...resource,
+        file,
+        fileUrl,
+        aiStatus: resourceAI?.status,
+        creator,
+      };
     }
     default:
-      return { ...resource, aiStatus: resourceAI?.status };
+      return { ...resource, aiStatus: resourceAI?.status, creator };
   }
 };
 
@@ -634,6 +651,44 @@ export const getPreview = workspaceQuery({
       _id: resource._id,
       title: resource.title,
       type: resource.type,
+      preview,
+    };
+  },
+});
+
+const MAX_COLLECTION_PATH_DEPTH = 6;
+
+async function getCollectionPath(
+  ctx: QueryCtx,
+  collectionId: Id<"collection"> | undefined
+) {
+  const path: string[] = [];
+  let currentId = collectionId;
+  for (let depth = 0; depth < MAX_COLLECTION_PATH_DEPTH && currentId; depth++) {
+    const collection = await ctx.db.get(currentId);
+    if (!collection || collection.deletedAt) {
+      break;
+    }
+    path.unshift(collection.name);
+    currentId = collection.parentId;
+  }
+  return path;
+}
+
+export const getTabPreview = workspaceQuery({
+  args: { resourceId: v.id("resource") },
+  handler: async (ctx, args) => {
+    const resource = await ctx.db.get(args.resourceId);
+    if (!resource || resource.workspaceId !== ctx.workspace._id) {
+      return null;
+    }
+    const preview = await getResourcePreview(ctx, resource);
+    const path = await getCollectionPath(ctx, resource.collectionId);
+    return {
+      _id: resource._id,
+      title: resource.title,
+      type: resource.type,
+      path,
       preview,
     };
   },

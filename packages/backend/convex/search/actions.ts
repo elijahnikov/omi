@@ -57,6 +57,7 @@ interface EnrichedResource {
   collectionId?: Id<"collection">;
   concepts: Array<{ _id: Id<"concept">; name: string; importance: number }>;
   createdBy: Id<"user">;
+  creator?: { _id: Id<"user">; username: string; image?: string } | null;
   deletedAt?: number;
   description?: string;
   file?: {

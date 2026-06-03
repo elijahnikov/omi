@@ -329,12 +329,14 @@ function PinnedSidebarItem({
 
   const link = (
     <SidebarLinkItem
+      hoverResourceId={resource._id}
       iconNode={<ResourceIcon resource={resource} />}
       isActive={activeResourceId === resource._id}
       preload="render"
       sidebarOpen={sidebarOpen}
       title={resource.title || "Untitled"}
       url={`/workspace/${workspaceId}/resource/${resource._id}`}
+      workspaceId={workspaceId}
     />
   );
 

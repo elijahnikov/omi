@@ -1,17 +1,18 @@
 import { cn } from "@omi/ui";
 import { ContextMenu } from "@omi/ui/context-menu";
 import { toastManager } from "@omi/ui/toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@omi/ui/tooltip";
 import {
   RiArrowRightUpLine,
   RiCloseLine,
   RiDeleteBin6Line,
-  RiFileCopyLine,
   RiLinkM,
   RiPushpinFill,
   RiUnpinLine,
 } from "@remixicon/react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, memo, useCallback } from "react";
+import { TabHoverCard } from "~/components/common/global-workspace-layout/top-bar/tab-hover-card";
 import { TabIcon } from "~/components/common/global-workspace-layout/top-bar/tab-icon";
 import {
   useWorkspaceTabs,
@@ -30,7 +31,6 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
   const closeToRight = useWorkspaceTabs((s) => s.closeToRight);
   const closeAll = useWorkspaceTabs((s) => s.closeAll);
   const pinTab = useWorkspaceTabs((s) => s.pinTab);
-  const duplicateTab = useWorkspaceTabs((s) => s.duplicateTab);
   const navigate = useNavigate();
 
   const handleClose = useCallback(
@@ -91,13 +91,6 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
     pinTab(workspaceId, tab.id);
   }, [pinTab, tab.id, workspaceId]);
 
-  const handleDuplicate = useCallback(() => {
-    const result = duplicateTab(workspaceId, tab.id);
-    if (result) {
-      navigate({ to: tab.url });
-    }
-  }, [duplicateTab, navigate, tab.id, tab.url, workspaceId]);
-
   const handleCopyUrl = useCallback(() => {
     const origin = typeof window === "undefined" ? "" : window.location.origin;
     const fullUrl = `${origin}${tab.url}`;
@@ -110,6 +103,37 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
         toastManager.add({ type: "error", title: "Failed to copy URL" });
       });
   }, [tab.url]);
+
+  const link = (
+    <Link
+      className={cn(
+        "relative mb-0.25 flex h-6.5 items-center justify-center gap-1.5 rounded-sm px-2 font-medium! outline-none transition-colors md:min-w-[120px] md:max-w-[220px] md:justify-start",
+        isActive
+          ? "z-[100] bg-ui-bg-base text-ui-fg-base shadow-borders-base"
+          : "text-ui-fg-muted hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base dark:hover:bg-[rgba(255,255,255,0.070)]"
+      )}
+      onMouseDown={handleMouseDown}
+      preload="intent"
+      preloadDelay={100}
+      to={tab.url}
+    >
+      {tab.pinned && (
+        <RiPushpinFill className="size-3 shrink-0 text-ui-fg-muted" />
+      )}
+      <span className="flex size-3.5 shrink-0 items-center justify-center text-ui-fg-muted [&>*]:shrink-0">
+        <TabIcon tab={tab} workspaceId={workspaceId} />
+      </span>
+      <span className="hidden truncate text-xs! md:inline">{tab.title}</span>
+      <button
+        aria-label={`Close ${tab.title}`}
+        className="ml-auto hidden size-3 shrink-0 items-center justify-center rounded-full text-ui-fg-muted hover:bg-black/8 hover:text-ui-fg-base md:flex dark:hover:bg-white/10"
+        onClick={handleClose}
+        type="button"
+      >
+        <RiCloseLine className="size-3" />
+      </button>
+    </Link>
+  );
 
   return (
     <ContextMenu>
@@ -124,45 +148,29 @@ function TabComponent({ tab, isActive, workspaceId }: TabProps) {
           />
         }
       >
-        <Link
-          className={cn(
-            "relative mb-0.25 flex h-6.5 items-center justify-center gap-1.5 rounded-sm px-2 font-medium! outline-none transition-colors md:min-w-[120px] md:max-w-[220px] md:justify-start",
-            isActive
-              ? "z-[100] bg-ui-bg-base text-ui-fg-base shadow-borders-base"
-              : "text-ui-fg-muted hover:bg-[rgba(0,0,0,0.070)] hover:text-ui-fg-base dark:hover:bg-[rgba(255,255,255,0.070)]"
-          )}
-          onMouseDown={handleMouseDown}
-          preload="intent"
-          preloadDelay={100}
-          to={tab.url}
-        >
-          {tab.pinned && (
-            <RiPushpinFill className="size-3 shrink-0 text-ui-fg-muted" />
-          )}
-          <span className="flex size-3.5 shrink-0 items-center justify-center text-ui-fg-muted [&>*]:shrink-0">
-            <TabIcon tab={tab} workspaceId={workspaceId} />
-          </span>
-          <span className="hidden truncate text-xs! md:inline">
-            {tab.title}
-          </span>
-          <button
-            aria-label={`Close ${tab.title}`}
-            className="ml-auto hidden size-3 shrink-0 items-center justify-center rounded-full text-ui-fg-muted hover:bg-black/8 hover:text-ui-fg-base md:flex dark:hover:bg-white/10"
-            onClick={handleClose}
-            type="button"
-          >
-            <RiCloseLine className="size-3" />
-          </button>
-        </Link>
+        {tab.kind === "resource" && !isActive ? (
+          <Tooltip>
+            <TooltipTrigger render={link} />
+            <TooltipContent
+              className="rounded-md p-0"
+              side="bottom"
+              sideOffset={6}
+            >
+              <TabHoverCard
+                resourceId={tab.entityId}
+                title={tab.title}
+                workspaceId={workspaceId}
+              />
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          link
+        )}
       </ContextMenu.Trigger>
       <ContextMenu.Content className="z-[110]!">
         <ContextMenu.Item onClick={handleOpen}>
           <RiArrowRightUpLine />
           Open
-        </ContextMenu.Item>
-        <ContextMenu.Item onClick={handleDuplicate}>
-          <RiFileCopyLine />
-          Duplicate tab
         </ContextMenu.Item>
         <ContextMenu.Item onClick={handleTogglePin}>
           {tab.pinned ? <RiUnpinLine /> : <RiPushpinFill />}
