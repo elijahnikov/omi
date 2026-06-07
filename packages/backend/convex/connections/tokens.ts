@@ -1,5 +1,4 @@
 "use node";
-
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -10,7 +9,6 @@ const ALGO = "aes-256-gcm";
 const IV_LEN = 12;
 const AUTH_TAG_LEN = 16;
 const CURRENT_KEY_VERSION = 1;
-
 function getEncryptionKey(): Buffer {
   const raw = process.env.OMI_TOKEN_KEY;
   if (!raw) {
@@ -22,12 +20,10 @@ function getEncryptionKey(): Buffer {
   }
   return key;
 }
-
 export interface EncryptedToken {
   ciphertext: string;
   keyVersion: number;
 }
-
 export function encryptToken(plaintext: string): EncryptedToken {
   const key = getEncryptionKey();
   const iv = randomBytes(IV_LEN);
@@ -42,7 +38,6 @@ export function encryptToken(plaintext: string): EncryptedToken {
     keyVersion: CURRENT_KEY_VERSION,
   };
 }
-
 export function decryptToken(ciphertext: string, keyVersion: number): string {
   if (keyVersion !== CURRENT_KEY_VERSION) {
     throw new ConvexError(
@@ -62,20 +57,13 @@ export function decryptToken(ciphertext: string, keyVersion: number): string {
   ]);
   return decrypted.toString("utf8");
 }
-
 const providerValidator = v.union(
   v.literal("notion"),
   v.literal("google_drive"),
   v.literal("github"),
   v.literal("linear")
 );
-
 const authTypeValidator = v.union(v.literal("oauth2"), v.literal("api_token"));
-
-/**
- * Encrypt a freshly-issued token pair and persist via the internal mutation.
- * Called from V8-runtime httpActions (OAuth callback) that cannot use node:crypto directly.
- */
 export const encryptAndInsertConnection = internalAction({
   args: {
     userId: v.id("user"),
@@ -110,7 +98,6 @@ export const encryptAndInsertConnection = internalAction({
     );
   },
 });
-
 export const encryptAndUpdateRefreshedTokens = internalAction({
   args: {
     connectionId: v.id("connection"),

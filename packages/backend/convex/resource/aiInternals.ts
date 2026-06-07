@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-
 export const getResourceContent = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -10,7 +9,6 @@ export const getResourceContent = internalQuery({
     if (!resource) {
       throw new ConvexError("Resource not found");
     }
-
     switch (resource.type) {
       case "website": {
         const website = await ctx.db
@@ -82,7 +80,6 @@ export const getResourceContent = internalQuery({
     }
   },
 });
-
 export const setResourceAIStatus = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -99,11 +96,9 @@ export const setResourceAIStatus = internalMutation({
       .query("resourceAI")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
     if (!resourceAI) {
       throw new ConvexError("ResourceAI not found");
     }
-
     await ctx.db.patch(resourceAI._id, {
       status: args.status,
       error: args.error,
@@ -111,7 +106,15 @@ export const setResourceAIStatus = internalMutation({
     });
   },
 });
-
+export const getResourceAI = internalQuery({
+  args: { resourceId: v.id("resource") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("resourceAI")
+      .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
+      .unique();
+  },
+});
 export const updateResourceAI = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -128,11 +131,9 @@ export const updateResourceAI = internalMutation({
       .query("resourceAI")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
     if (!resourceAI) {
       throw new ConvexError("ResourceAI not found");
     }
-
     await ctx.db.patch(resourceAI._id, {
       summary: args.summary,
       tags: args.tags,
@@ -141,11 +142,9 @@ export const updateResourceAI = internalMutation({
       language: args.language,
       category: args.category,
       keyQuotes: args.keyQuotes,
-      // status stays "processing" — completion is set after chunking finishes
     });
   },
 });
-
 export const upsertResourceEmbedding = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -159,7 +158,6 @@ export const upsertResourceEmbedding = internalMutation({
       .query("resourceEmbedding")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
     if (existing) {
       if (existing.inputHash === args.inputHash) {
         return;
@@ -180,7 +178,6 @@ export const upsertResourceEmbedding = internalMutation({
     }
   },
 });
-
 export const getResourceEmbedding = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -192,7 +189,6 @@ export const getResourceEmbedding = internalQuery({
       .unique();
   },
 });
-
 export const getResourceById = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -205,7 +201,6 @@ export const getResourceById = internalQuery({
     return resource;
   },
 });
-
 export const getTagById = internalQuery({
   args: {
     tagId: v.id("tag"),
@@ -214,7 +209,6 @@ export const getTagById = internalQuery({
     return await ctx.db.get(args.tagId);
   },
 });
-
 export const getTagByName = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -229,7 +223,6 @@ export const getTagByName = internalQuery({
       .unique();
   },
 });
-
 export const enrichResourceById = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -239,12 +232,10 @@ export const enrichResourceById = internalQuery({
     if (!resource || resource.deletedAt) {
       return null;
     }
-
     const resourceAI = await ctx.db
       .query("resourceAI")
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
       .unique();
-
     switch (resource.type) {
       case "website": {
         const website = await ctx.db
@@ -276,7 +267,6 @@ export const enrichResourceById = internalQuery({
     }
   },
 });
-
 export const getEmbeddingById = internalQuery({
   args: {
     embeddingId: v.id("resourceEmbedding"),
@@ -285,7 +275,6 @@ export const getEmbeddingById = internalQuery({
     return await ctx.db.get(args.embeddingId);
   },
 });
-
 export const getResourceChunkHash = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -298,7 +287,6 @@ export const getResourceChunkHash = internalQuery({
     return chunk?.contentHash ?? null;
   },
 });
-
 export const deleteResourceChunks = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -313,7 +301,6 @@ export const deleteResourceChunks = internalMutation({
     }
   },
 });
-
 export const insertResourceChunks = internalMutation({
   args: {
     chunks: v.array(
@@ -342,7 +329,6 @@ export const insertResourceChunks = internalMutation({
     }
   },
 });
-
 export const getChunkById = internalQuery({
   args: {
     chunkId: v.id("resourceChunk"),
@@ -351,7 +337,6 @@ export const getChunkById = internalQuery({
     return await ctx.db.get(args.chunkId);
   },
 });
-
 export const updateFileExtractedText = internalMutation({
   args: {
     resourceId: v.id("resource"),

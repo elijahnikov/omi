@@ -2,17 +2,14 @@ const BOOST_SECTION_HEADINGS = [
   "active projects",
   "recurring interests",
 ] as const;
-
 const MAX_TERMS = 30;
 const MIN_TERM_LENGTH = 3;
-
 const LINE_SPLIT_RE = /\r?\n/;
 const H2_RE = /^##\s+(.+)$/;
 const BULLET_PREFIX_RE = /^([-*+•]\s+|\d+\.\s+)/;
 const DELIMITER_RE = /[—–\-:]/;
 const NON_ALNUM_RE = /[^a-z0-9\s]/g;
 const WHITESPACE_SPLIT_RE = /\s+/;
-
 const STOPWORDS = new Set([
   "and",
   "the",
@@ -52,19 +49,15 @@ const STOPWORDS = new Set([
   "not",
   "but",
 ]);
-
 export function extractBoostTerms(memory: string | null | undefined): string[] {
   if (!memory) {
     return [];
   }
-
   const lines = memory.split(LINE_SPLIT_RE);
   const terms = new Set<string>();
   let inSection = false;
-
   for (const rawLine of lines) {
     const line = rawLine.trim();
-
     const h2 = line.match(H2_RE);
     if (h2) {
       const heading = (h2[1] ?? "").trim().toLowerCase();
@@ -73,19 +66,15 @@ export function extractBoostTerms(memory: string | null | undefined): string[] {
       );
       continue;
     }
-
     if (!inSection) {
       continue;
     }
-
     const bullet = line.replace(BULLET_PREFIX_RE, "");
     const split = bullet.split(DELIMITER_RE)[0] ?? bullet;
-
     const tokens = split
       .toLowerCase()
       .replace(NON_ALNUM_RE, " ")
       .split(WHITESPACE_SPLIT_RE);
-
     for (const token of tokens) {
       if (token.length < MIN_TERM_LENGTH) {
         continue;
@@ -99,10 +88,8 @@ export function extractBoostTerms(memory: string | null | undefined): string[] {
       }
     }
   }
-
   return Array.from(terms);
 }
-
 export function matchesBoostTerms(
   name: string,
   boostTerms: readonly string[]

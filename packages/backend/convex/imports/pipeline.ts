@@ -1,5 +1,4 @@
 "use node";
-
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -21,13 +20,10 @@ interface ResolvedAttachment {
   mimeType: string;
   storageId: Id<"_storage">;
 }
-
 type ResolvedRecord = Omit<ImportRecord, "attachment"> & {
   attachment?: ResolvedAttachment;
 };
-
 const BATCH_SIZE = 50;
-
 const PARSERS: Record<string, ImportParser | undefined> = {
   markdown_zip: parseMarkdownZip,
   url_csv: parseUrlCsv,
@@ -38,7 +34,6 @@ const PARSERS: Record<string, ImportParser | undefined> = {
   fabric: parseFabricZip,
   notion_oauth: parseNotionApi,
 };
-
 export const runImport = internalAction({
   args: { jobId: v.id("importJob") },
   handler: async (ctx, args) => {
@@ -55,18 +50,15 @@ export const runImport = internalAction({
     ) {
       return;
     }
-
     try {
       await ctx.runMutation(internal.imports.internals.setJobStatus, {
         jobId: args.jobId,
         status: "parsing",
       });
-
       const parser = PARSERS[job.source];
       if (!parser) {
         throw new Error(`No parser for source "${job.source}"`);
       }
-
       let iterator: AsyncIterable<ImportYield>;
       if (parser.kind === "file") {
         if (!job.storageId) {
@@ -95,7 +87,6 @@ export const runImport = internalAction({
         );
         iterator = parser.parse({ token: accessToken });
       }
-
       let rootCollectionId: Id<"collection"> | undefined;
       if (job.options?.createRootCollection) {
         const name =
@@ -106,15 +97,12 @@ export const runImport = internalAction({
             { jobId: args.jobId, name }
           )) ?? undefined;
       }
-
       await ctx.runMutation(internal.imports.internals.setJobStatus, {
         jobId: args.jobId,
         status: "importing",
       });
-
       const allWebsiteIds: Id<"resource">[] = [];
       let batch: ResolvedRecord[] = [];
-
       const flush = async () => {
         if (batch.length === 0) {
           return;
@@ -130,7 +118,6 @@ export const runImport = internalAction({
         allWebsiteIds.push(...result.websiteIds);
         batch = [];
       };
-
       for await (const yielded of iterator) {
         if (isImportError(yielded)) {
           continue;
@@ -142,7 +129,6 @@ export const runImport = internalAction({
         }
       }
       await flush();
-
       if (allWebsiteIds.length > 0 && (job.options?.rehydrateUrls ?? true)) {
         await ctx.scheduler.runAfter(
           0,
@@ -150,12 +136,16 @@ export const runImport = internalAction({
           { resourceIds: allWebsiteIds }
         );
       }
-
       await ctx.runMutation(internal.imports.internals.setJobStatus, {
         jobId: args.jobId,
         status: "completed",
         completedAt: Date.now(),
       });
+      await ctx.scheduler.runAfter(
+        0,
+        internal.resource.suggestOrganizationActions.suggestForImportJob,
+        { importJobId: args.jobId }
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await ctx.runMutation(internal.imports.internals.setJobStatus, {
@@ -167,9 +157,12 @@ export const runImport = internalAction({
     }
   },
 });
-
 async function resolveAttachment(
-  ctx: { storage: { store: (blob: Blob) => Promise<Id<"_storage">> } },
+  ctx: {
+    storage: {
+      store: (blob: Blob) => Promise<Id<"_storage">>;
+    };
+  },
   record: ImportRecord
 ): Promise<ResolvedRecord> {
   if (!record.attachment) {
@@ -191,7 +184,6 @@ async function resolveAttachment(
     },
   };
 }
-
 function providerForSource(source: string): "notion" | "google_drive" {
   switch (source) {
     case "notion_oauth":
@@ -200,7 +192,6 @@ function providerForSource(source: string): "notion" | "google_drive" {
       throw new Error(`No provider mapping for source "${source}"`);
   }
 }
-
 function defaultRootName(source: string): string {
   switch (source) {
     case "markdown_zip":

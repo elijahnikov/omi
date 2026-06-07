@@ -10,7 +10,6 @@ const GT_ENTITY_RE = /&gt;/g;
 const QUOT_ENTITY_RE = /&quot;/g;
 const APOS_ENTITY_RE = /&#39;/g;
 const NBSP_ENTITY_RE = /&nbsp;/g;
-
 export const parseBookmarkHtml: ImportParser = {
   kind: "file",
   source: "bookmark_html",
@@ -18,15 +17,12 @@ export const parseBookmarkHtml: ImportParser = {
     const text = await blob.text();
     const path: string[] = [];
     let pendingFolderName: string | undefined;
-
     TAG_RE.lastIndex = 0;
     let match: RegExpExecArray | null = TAG_RE.exec(text);
     let lastIndex = 0;
-
     while (match !== null) {
       const [, closing, tagNameRaw, attrs] = match;
       const tagName = tagNameRaw?.toLowerCase();
-
       if (!closing && tagName === "h3") {
         const inner = extractInner(text, TAG_RE.lastIndex, "h3");
         pendingFolderName = decodeHtml(inner).trim();
@@ -52,7 +48,6 @@ export const parseBookmarkHtml: ImportParser = {
                 .map((t) => t.trim())
                 .filter(Boolean)
             : undefined;
-
           yield {
             sourceItemId: hashString(href),
             type: "website",
@@ -64,7 +59,6 @@ export const parseBookmarkHtml: ImportParser = {
           };
         }
       }
-
       lastIndex = TAG_RE.lastIndex;
       match = TAG_RE.exec(text);
       if (match && match.index < lastIndex) {
@@ -73,10 +67,8 @@ export const parseBookmarkHtml: ImportParser = {
     }
   },
 };
-
 const CLOSE_H3_RE = /<\/h3\s*>/i;
 const CLOSE_A_RE = /<\/a\s*>/i;
-
 function extractInner(text: string, start: number, tagName: string): string {
   const closeRe = tagName === "h3" ? CLOSE_H3_RE : CLOSE_A_RE;
   const slice = text.slice(start);
@@ -86,7 +78,6 @@ function extractInner(text: string, start: number, tagName: string): string {
   }
   return slice.slice(0, endMatch.index);
 }
-
 function parseAttrs(attrs: string): Record<string, string> {
   const result: Record<string, string> = {};
   ATTR_RE.lastIndex = 0;
@@ -101,7 +92,6 @@ function parseAttrs(attrs: string): Record<string, string> {
   }
   return result;
 }
-
 function parseEpoch(raw: string | undefined): number | undefined {
   if (!raw) {
     return;
@@ -112,7 +102,6 @@ function parseEpoch(raw: string | undefined): number | undefined {
   }
   return n > 1e12 ? n : n * 1000;
 }
-
 function decodeHtml(s: string): string {
   return s
     .replace(AMP_ENTITY_RE, "&")

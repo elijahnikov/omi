@@ -1,5 +1,4 @@
 "use node";
-
 import { generateEmbedding } from "@omi/ai/embeddings";
 import { createOpenAIProvider } from "@omi/ai/providers";
 import { v } from "convex/values";
@@ -8,7 +7,6 @@ import type { Id } from "../_generated/dataModel";
 import { internalAction } from "../_generated/server";
 import { tokensToCredits } from "../billing/credits";
 import { rateLimiter } from "../rateLimiter";
-
 export const searchLibraryForUser = internalAction({
   args: {
     workspaceId: v.id("workspace"),
@@ -21,12 +19,10 @@ export const searchLibraryForUser = internalAction({
       key: args.userId,
       throws: true,
     });
-
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return [];
     }
-
     const billingAccount = await ctx.runQuery(
       internal.billing.credits.preflight,
       {
@@ -35,7 +31,6 @@ export const searchLibraryForUser = internalAction({
         estimate: 1,
       }
     );
-
     const provider = createOpenAIProvider(apiKey);
     const { embedding, model, tokens } = await generateEmbedding(
       provider,
@@ -48,14 +43,12 @@ export const searchLibraryForUser = internalAction({
       reason: "chat",
       amount: tokensToCredits(tokens, model),
     });
-
     const maxResults = args.limit ?? 10;
     const results = await ctx.vectorSearch("resourceChunk", "by_embedding", {
       vector: embedding,
       limit: maxResults * 4,
       filter: (q) => q.eq("workspaceId", args.workspaceId),
     });
-
     const seen = new Set<string>();
     const passages: Array<{
       resourceId: Id<"resource">;
@@ -64,7 +57,6 @@ export const searchLibraryForUser = internalAction({
       content: string;
       score: number;
     }> = [];
-
     for (const result of results) {
       if (passages.length >= maxResults) {
         break;
@@ -92,7 +84,6 @@ export const searchLibraryForUser = internalAction({
         score: result._score,
       });
     }
-
     return passages;
   },
 });

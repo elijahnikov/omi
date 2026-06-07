@@ -1,5 +1,4 @@
 import { workspaceQuery } from "../utils";
-
 export const getMyMemory = workspaceQuery({
   args: {},
   handler: async (ctx) => {
@@ -9,11 +8,9 @@ export const getMyMemory = workspaceQuery({
         q.eq("workspaceId", ctx.workspace._id).eq("userId", ctx.user._id)
       )
       .first();
-
     if (!row) {
       return null;
     }
-
     return {
       content: row.content,
       status: row.status,

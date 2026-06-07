@@ -1,5 +1,4 @@
 "use node";
-
 import {
   extractLinksFromMarkdown,
   renderMarkdown,
@@ -115,7 +114,6 @@ const EMBED_PATTERNS: Array<{
     extractId: (m) => m[1] as string,
   },
 ];
-
 function detectEmbed(url: string) {
   for (const { type, pattern, extractId } of EMBED_PATTERNS) {
     const match = url.match(pattern);
@@ -125,7 +123,6 @@ function detectEmbed(url: string) {
   }
   return null;
 }
-
 function extractMetaContent(
   html: string,
   property: string
@@ -137,7 +134,6 @@ function extractMetaContent(
   const match = html.match(regex);
   return match?.[1] ?? match?.[2] ?? undefined;
 }
-
 const LINK_TAG_REGEX = /<link\b[^>]*>/gi;
 const REL_ATTR_REGEX = /\brel\s*=\s*["']([^"']+)["']/i;
 const HREF_ATTR_REGEX = /\bhref\s*=\s*["']([^"']+)["']/i;
@@ -150,9 +146,11 @@ const ICON_REL_PRIORITY = [
   "mask-icon",
   "fluid-icon",
 ];
-
 function extractFaviconCandidates(html: string, baseUrl: string): string[] {
-  const found: { rel: string; href: string }[] = [];
+  const found: {
+    rel: string;
+    href: string;
+  }[] = [];
   const matches = html.matchAll(LINK_TAG_REGEX);
   for (const m of matches) {
     const tag = m[0];
@@ -170,23 +168,20 @@ function extractFaviconCandidates(html: string, baseUrl: string): string[] {
     }
     found.push({ rel: matchedRel, href: hrefMatch[1] });
   }
-
   found.sort(
     (a, b) =>
       ICON_REL_PRIORITY.indexOf(a.rel) - ICON_REL_PRIORITY.indexOf(b.rel)
   );
-
   const urls: string[] = [];
   for (const { href } of found) {
     try {
       urls.push(new URL(href, baseUrl).href);
     } catch {
-      // skip invalid hrefs
+      void 0;
     }
   }
   return urls;
 }
-
 function googleS2Favicon(baseUrl: string): string | undefined {
   try {
     const domain = new URL(baseUrl).hostname;
@@ -194,14 +189,12 @@ function googleS2Favicon(baseUrl: string): string | undefined {
       return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
     }
   } catch {
-    // invalid baseUrl
+    void 0;
   }
   return undefined;
 }
-
 async function isValidIconUrl(url: string): Promise<boolean> {
   try {
-    // Try GET with a tiny range; some servers reject HEAD or block bot UAs.
     const res = await fetch(url, {
       method: "GET",
       redirect: "follow",
@@ -228,37 +221,27 @@ async function isValidIconUrl(url: string): Promise<boolean> {
     return false;
   }
 }
-
 async function resolveValidFavicon(
   html: string,
   baseUrl: string
 ): Promise<string | undefined> {
   const candidates: string[] = [...extractFaviconCandidates(html, baseUrl)];
-
   try {
     candidates.push(new URL("/favicon.ico", baseUrl).href);
   } catch {
-    // invalid baseUrl, skip
+    void 0;
   }
-
   for (const url of candidates) {
     if (await isValidIconUrl(url)) {
       return url;
     }
   }
-
-  // Final fallback: Google's S2 favicon service. Always returns something
-  // (a generic globe for unknown domains), so don't validate it — just
-  // hand back the URL and let the browser load it.
   return googleS2Favicon(baseUrl);
 }
-
 const MAX_ARTICLE_EXCERPT = 16_000;
 const MAX_STORED_MARKDOWN = 500_000;
 const FETCH_TIMEOUT_MS = 10_000;
-
 type ContentSource = "cloudflare" | "readability" | "embed";
-
 async function fetchOgAndFavicon(url: string): Promise<{
   html?: string;
   ogTitle?: string;
@@ -298,7 +281,6 @@ async function fetchOgAndFavicon(url: string): Promise<{
     return {};
   }
 }
-
 export const extractWebsiteMetadata = internalAction({
   args: {
     resourceId: v.id("resource"),
@@ -312,12 +294,10 @@ export const extractWebsiteMetadata = internalAction({
         metadataStatus: "processing",
       }
     );
-
     const websiteResource = await ctx.runQuery(
       internal.resource.internals.getWebsiteResource,
       { resourceId: args.resourceId }
     );
-
     if (!websiteResource) {
       await ctx.runMutation(
         internal.resource.internals.setWebsiteMetadataStatus,
@@ -329,17 +309,14 @@ export const extractWebsiteMetadata = internalAction({
       );
       return;
     }
-
     const url = websiteResource.url;
     const og = await fetchOgAndFavicon(url);
     let { ogTitle, ogImage } = og;
-
     const embed = detectEmbed(url);
     let articleContent: string | undefined;
     let extractedLinks: string[] | undefined;
     let fullMarkdown: string | undefined;
     let contentSource: ContentSource | undefined;
-
     if (embed) {
       const embedContent = await extractEmbedContent(
         embed.type,
@@ -356,13 +333,11 @@ export const extractWebsiteMetadata = internalAction({
     } else {
       const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
       const apiToken = process.env.CLOUDFLARE_BROWSER_RENDERING_API_TOKEN;
-
       if (!args.skipAI && accountId && apiToken) {
         const reservation = await ctx.runMutation(
           internal.billing.credits.reserveBrowserRender,
           { resourceId: args.resourceId }
         );
-
         if (reservation.allowed) {
           let markdown: string | null = null;
           try {
@@ -370,7 +345,6 @@ export const extractWebsiteMetadata = internalAction({
           } catch {
             markdown = null;
           }
-
           if (markdown) {
             fullMarkdown = markdown.slice(0, MAX_STORED_MARKDOWN);
             articleContent = markdown.slice(0, MAX_ARTICLE_EXCERPT);
@@ -384,16 +358,13 @@ export const extractWebsiteMetadata = internalAction({
           }
         }
       }
-
       if (!articleContent && og.html) {
         const article = extractArticleContent(og.html, url);
         articleContent = article?.textContent;
       }
       contentSource ??= "readability";
     }
-
     const reachedPage = Boolean(og.html) || Boolean(articleContent) || !!embed;
-
     await ctx.runMutation(internal.resource.internals.updateWebsiteMetadata, {
       resourceId: args.resourceId,
       ogTitle,
@@ -410,14 +381,12 @@ export const extractWebsiteMetadata = internalAction({
       metadataStatus: reachedPage ? "completed" : "failed",
       metadataError: reachedPage ? undefined : "Could not fetch or render page",
     });
-
     if (fullMarkdown) {
       await ctx.runMutation(
         internal.resource.internals.upsertResourceMarkdown,
         { resourceId: args.resourceId, markdownContent: fullMarkdown }
       );
     }
-
     if (!args.skipAI) {
       await ctx.scheduler.runAfter(
         0,

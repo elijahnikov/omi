@@ -8,9 +8,7 @@ const providerValidator = v.union(
   v.literal("github"),
   v.literal("linear")
 );
-
 const authTypeValidator = v.union(v.literal("oauth2"), v.literal("api_token"));
-
 export const insertConnection = internalMutation({
   args: {
     userId: v.id("user"),
@@ -31,19 +29,14 @@ export const insertConnection = internalMutation({
         q.eq("userId", args.userId).eq("provider", args.provider)
       )
       .collect();
-
     const sameAccount = args.providerAccountId
       ? existing.find((c) => c.providerAccountId === args.providerAccountId)
       : existing.find((c) => c.status === "active" || c.status === "expired");
-
     const now = Date.now();
-
     if (sameAccount) {
       await ctx.db.patch(sameAccount._id, {
         authType: args.authType,
         status: "active",
-        accessToken: undefined,
-        refreshToken: undefined,
         encryptedAccessToken: args.encryptedAccessToken,
         encryptedRefreshToken: args.encryptedRefreshToken,
         tokenKeyVersion: args.tokenKeyVersion,
@@ -57,7 +50,6 @@ export const insertConnection = internalMutation({
       });
       return sameAccount._id;
     }
-
     return await ctx.db.insert("connection", {
       userId: args.userId,
       provider: args.provider,
@@ -74,7 +66,6 @@ export const insertConnection = internalMutation({
     });
   },
 });
-
 export const updateTokenAfterRefresh = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -90,8 +81,6 @@ export const updateTokenAfterRefresh = internalMutation({
       throw new ConvexError("Connection not found");
     }
     await ctx.db.patch(args.connectionId, {
-      accessToken: undefined,
-      refreshToken: undefined,
       encryptedAccessToken: args.encryptedAccessToken,
       encryptedRefreshToken:
         args.encryptedRefreshToken ?? connection.encryptedRefreshToken,
@@ -104,7 +93,6 @@ export const updateTokenAfterRefresh = internalMutation({
     });
   },
 });
-
 export const markError = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -124,7 +112,6 @@ export const markError = internalMutation({
     });
   },
 });
-
 export const getEncryptedToken = internalQuery({
   args: {
     connectionId: v.id("connection"),
@@ -156,7 +143,6 @@ export const getEncryptedToken = internalQuery({
     };
   },
 });
-
 export const getConnectionForRefresh = internalQuery({
   args: { connectionId: v.id("connection") },
   handler: async (
@@ -180,7 +166,6 @@ export const getConnectionForRefresh = internalQuery({
     };
   },
 });
-
 export const getConnectionForTokenRefresh = internalQuery({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {

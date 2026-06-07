@@ -8,7 +8,6 @@ const TAG_KEYS = ["tags", "folder", "labels"];
 const TIME_KEYS = ["time_added", "created_at", "created", "date", "timestamp"];
 const ARCHIVED_KEYS = ["status", "folder"];
 const NOTE_KEYS = ["note", "description", "highlight", "excerpt"];
-
 export const parseUrlCsv: ImportParser = {
   kind: "file",
   source: "url_csv",
@@ -29,7 +28,6 @@ export const parseUrlCsv: ImportParser = {
         headerIndex[key] = i;
       }
     }
-
     const getField = (row: string[], keys: string[]): string | undefined => {
       for (const key of keys) {
         const idx = headerIndex[key];
@@ -42,7 +40,6 @@ export const parseUrlCsv: ImportParser = {
       }
       return undefined;
     };
-
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length === 0) {
@@ -67,7 +64,6 @@ export const parseUrlCsv: ImportParser = {
         archivedRaw?.toLowerCase() === "archive" ||
         archivedRaw?.toLowerCase() === "archived";
       const description = getField(row, NOTE_KEYS);
-
       const record: ImportRecord = {
         sourceItemId: hashString(url),
         type: "website",
@@ -82,7 +78,6 @@ export const parseUrlCsv: ImportParser = {
     }
   },
 };
-
 function parseTimestamp(raw: string | undefined): number | undefined {
   if (!raw) {
     return;
@@ -94,13 +89,11 @@ function parseTimestamp(raw: string | undefined): number | undefined {
   const parsed = Date.parse(raw);
   return Number.isNaN(parsed) ? undefined : parsed;
 }
-
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
   let inQuotes = false;
-
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (inQuotes) {

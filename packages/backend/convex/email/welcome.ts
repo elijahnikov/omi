@@ -3,7 +3,6 @@ import { internal } from "../_generated/api";
 import { internalMutation } from "../_generated/server";
 
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
-
 export const maybeSendWelcome = internalMutation({
   args: { userId: v.id("user") },
   handler: async (ctx, { userId }) => {

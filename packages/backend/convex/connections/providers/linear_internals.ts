@@ -1,16 +1,13 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../../_generated/server";
-
 export interface ScopedTeam {
   id: string;
   name: string;
   webhookId?: string;
 }
-
 export interface LinearWebhookScope {
   teams?: ScopedTeam[];
 }
-
 export const getConnectionForLinear = internalQuery({
   args: { connectionId: v.id("connection") },
   handler: async (
@@ -37,7 +34,6 @@ export const getConnectionForLinear = internalQuery({
     };
   },
 });
-
 export const writeWebhookScope = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -49,14 +45,11 @@ export const writeWebhookScope = internalMutation({
     });
   },
 });
-
 export const finalizeDisconnect = internalMutation({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.connectionId, {
       status: "revoked",
-      accessToken: undefined,
-      refreshToken: undefined,
       encryptedAccessToken: undefined,
       encryptedRefreshToken: undefined,
       tokenKeyVersion: undefined,
@@ -65,5 +58,4 @@ export const finalizeDisconnect = internalMutation({
     });
   },
 });
-
 export type { LinearScopeSelection } from "../bindings/scopeHelpers";

@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalQuery, type QueryCtx } from "../_generated/server";
-
 export const validateMembership = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -31,7 +30,6 @@ export const validateMembership = internalQuery({
     return { user, workspace };
   },
 });
-
 export const hasEmbeddings = internalQuery({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args) => {
@@ -42,7 +40,6 @@ export const hasEmbeddings = internalQuery({
     return sample.length > 0;
   },
 });
-
 export const titleSearch = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -52,9 +49,11 @@ export const titleSearch = internalQuery({
   handler: async (ctx, args) => {
     const normalized = args.query.toLowerCase().trim();
     if (!normalized) {
-      return [] as Array<{ resourceId: Id<"resource">; rank: number }>;
+      return [] as Array<{
+        resourceId: Id<"resource">;
+        rank: number;
+      }>;
     }
-
     const hits = await ctx.db
       .query("resource")
       .withSearchIndex("search_title", (q) =>
@@ -64,19 +63,16 @@ export const titleSearch = internalQuery({
           .eq("deletedAt", undefined)
       )
       .take(args.limit);
-
     const filtered = hits.filter((r) =>
       r.title.toLowerCase().includes(normalized)
     );
     const source = filtered.length > 0 ? filtered : hits;
-
     return source.slice(0, args.limit).map((r, rank) => ({
       resourceId: r._id,
       rank,
     }));
   },
 });
-
 export const tagSearch = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -93,21 +89,18 @@ export const tagSearch = internalQuery({
         rank: number;
       }>;
     }
-
     const tags = await ctx.db
       .query("tag")
       .withSearchIndex("search_name", (q) =>
         q.search("name", normalized).eq("workspaceId", args.workspaceId)
       )
       .take(5);
-
     const out: Array<{
       resourceId: Id<"resource">;
       tagId: Id<"tag">;
       tagName: string;
       rank: number;
     }> = [];
-
     let rank = 0;
     for (const tag of tags) {
       const links = await ctx.db
@@ -129,11 +122,9 @@ export const tagSearch = internalQuery({
         }
       }
     }
-
     return out;
   },
 });
-
 export const listResourcesForConcepts = internalQuery({
   args: {
     conceptIds: v.array(v.id("concept")),
@@ -145,7 +136,6 @@ export const listResourcesForConcepts = internalQuery({
       conceptName: string;
       importance: number;
     }> = [];
-
     const seen = new Set<string>();
     for (const conceptId of args.conceptIds) {
       const concept = await ctx.db.get(conceptId);
@@ -156,7 +146,6 @@ export const listResourcesForConcepts = internalQuery({
         .query("resourceConcept")
         .withIndex("by_concept", (q) => q.eq("conceptId", conceptId))
         .collect();
-
       for (const link of links) {
         const key = `${link.resourceId}:${conceptId}`;
         if (seen.has(key)) {
@@ -174,7 +163,6 @@ export const listResourcesForConcepts = internalQuery({
     return out;
   },
 });
-
 export const listResourcesForTags = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -195,25 +183,26 @@ export const listResourcesForTags = internalQuery({
     return sets;
   },
 });
-
 async function enrichOne(ctx: QueryCtx, resource: Doc<"resource">) {
   const resourceAI = await ctx.db
     .query("resourceAI")
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
     .unique();
-
   const resourceTags = await ctx.db
     .query("resourceTag")
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
     .collect();
-  const tags: Array<{ _id: Id<"tag">; name: string; color?: string }> = [];
+  const tags: Array<{
+    _id: Id<"tag">;
+    name: string;
+    color?: string;
+  }> = [];
   for (const rt of resourceTags) {
     const tag = await ctx.db.get(rt.tagId);
     if (tag) {
       tags.push({ _id: tag._id, name: tag.name, color: tag.color });
     }
   }
-
   const resourceConcepts = await ctx.db
     .query("resourceConcept")
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
@@ -233,13 +222,11 @@ async function enrichOne(ctx: QueryCtx, resource: Doc<"resource">) {
       });
     }
   }
-
   const aiStatus = resourceAI?.status;
   const summary = resourceAI?.summary;
   const sentiment = resourceAI?.sentiment;
   const language = resourceAI?.language;
   const category = resourceAI?.category;
-
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
@@ -327,7 +314,6 @@ async function enrichOne(ctx: QueryCtx, resource: Doc<"resource">) {
       };
   }
 }
-
 export const enrichResources = internalQuery({
   args: {
     resourceIds: v.array(v.id("resource")),
@@ -345,7 +331,6 @@ export const enrichResources = internalQuery({
     return out.filter((r) => r !== null);
   },
 });
-
 export const getUserMemoryContent = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -361,14 +346,12 @@ export const getUserMemoryContent = internalQuery({
     return row?.content ?? null;
   },
 });
-
 export const getChunksByIds = internalQuery({
   args: { chunkIds: v.array(v.id("resourceChunk")) },
   handler: async (ctx, args) => {
     return await Promise.all(args.chunkIds.map((id) => ctx.db.get(id)));
   },
 });
-
 export const getResourceIdsForEmbeddings = internalQuery({
   args: { embeddingIds: v.array(v.id("resourceEmbedding")) },
   handler: async (ctx, args) => {
@@ -378,14 +361,12 @@ export const getResourceIdsForEmbeddings = internalQuery({
     return docs.map((doc) => doc?.resourceId ?? null);
   },
 });
-
 const listOpValidator = v.union(v.literal("is"), v.literal("isNot"));
 const dateOpValidator = v.union(
   v.literal("before"),
   v.literal("after"),
   v.literal("between")
 );
-
 export const listFilteredResourceIds = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -419,12 +400,10 @@ export const listFilteredResourceIds = internalQuery({
         q.eq("workspaceId", args.workspaceId).eq("deletedAt", undefined)
       )
       .collect();
-
     const typesOp = args.typesOp ?? "is";
     const createdByOp = args.createdByOp ?? "is";
     const collectionOp = args.collectionIdOp ?? "is";
     const dateOp = args.dateOp ?? "between";
-
     const filtered = all.filter((r) => {
       if (args.types && args.types.length > 0) {
         const matches = args.types.includes(r.type);
@@ -485,7 +464,6 @@ export const listFilteredResourceIds = internalQuery({
       }
       return true;
     });
-
     filtered.sort((a, b) => b._creationTime - a._creationTime);
     return filtered.slice(0, args.limit).map((r) => r._id);
   },

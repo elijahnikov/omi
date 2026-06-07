@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
 import { protectedMutation } from "../utils";
-
 export const setEnabledTools = protectedMutation({
   args: {
     serverId: v.id("mcpServer"),
@@ -16,7 +15,6 @@ export const setEnabledTools = protectedMutation({
     await ctx.db.patch(args.serverId, { enabledTools: filtered });
   },
 });
-
 export const disconnectMcpServer = protectedMutation({
   args: { serverId: v.id("mcpServer") },
   handler: async (ctx, args) => {

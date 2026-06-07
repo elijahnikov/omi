@@ -1,6 +1,5 @@
 import { ConvexError, v } from "convex/values";
 import { workspaceQuery } from "../utils";
-
 export const list = workspaceQuery({
   args: {
     resourceId: v.id("resource"),
@@ -10,7 +9,6 @@ export const list = workspaceQuery({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     const comments = await ctx.db
       .query("resourceComment")
       .withIndex("by_resource", (q) =>
@@ -18,7 +16,6 @@ export const list = workspaceQuery({
       )
       .order("asc")
       .collect();
-
     return await Promise.all(
       comments.map(async (c) => {
         const author = await ctx.db.get(c.authorId);
@@ -36,7 +33,6 @@ export const list = workspaceQuery({
     );
   },
 });
-
 export const getUnreadInfo = workspaceQuery({
   args: {
     resourceId: v.id("resource"),
@@ -46,7 +42,6 @@ export const getUnreadInfo = workspaceQuery({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       return { hasUnread: false, latestAt: null as number | null };
     }
-
     const latest = await ctx.db
       .query("resourceComment")
       .withIndex("by_resource", (q) =>
@@ -54,22 +49,18 @@ export const getUnreadInfo = workspaceQuery({
       )
       .order("desc")
       .first();
-
     if (!latest) {
       return { hasUnread: false, latestAt: null as number | null };
     }
-
     const readRow = await ctx.db
       .query("resourceCommentRead")
       .withIndex("by_user_resource", (q) =>
         q.eq("userId", ctx.user._id).eq("resourceId", args.resourceId)
       )
       .unique();
-
     const lastSeenAt = readRow?.lastSeenAt ?? 0;
     const hasUnread =
       latest.authorId !== ctx.user._id && latest.createdAt > lastSeenAt;
-
     return { hasUnread, latestAt: latest.createdAt };
   },
 });

@@ -6,20 +6,28 @@ import { getAuthIdentity } from "../utils";
 import { type PaidPlan, planAndCadenceToPriceId } from "./pricing";
 
 type ResyncResult =
-  | { status: "no-auth-user" }
-  | { status: "no-active-subscription" }
-  | { status: "subscription-missing-fields" }
-  | { status: "unknown-plan"; plan: string; interval?: string }
+  | {
+      status: "no-auth-user";
+    }
+  | {
+      status: "no-active-subscription";
+    }
+  | {
+      status: "subscription-missing-fields";
+    }
+  | {
+      status: "unknown-plan";
+      plan: string;
+      interval?: string;
+    }
   | {
       status: "resynced";
       plan: "free" | "basic" | "pro";
       cadence: "monthly" | "yearly";
     };
-
 function isPaidPlan(value: string): value is PaidPlan {
   return value === "basic" || value === "pro";
 }
-
 export const resyncMySubscription = action({
   args: {},
   handler: async (ctx): Promise<ResyncResult> => {

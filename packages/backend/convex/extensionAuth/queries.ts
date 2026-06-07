@@ -1,5 +1,4 @@
 import { protectedQuery } from "../utils";
-
 export const listMyExtensionTokens = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -9,7 +8,6 @@ export const listMyExtensionTokens = protectedQuery({
         q.eq("userId", ctx.user._id).eq("revokedAt", undefined)
       )
       .collect();
-
     return rows
       .sort((a, b) => b.createdAt - a.createdAt)
       .map((row) => ({

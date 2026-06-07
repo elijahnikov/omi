@@ -7,6 +7,7 @@ import { fetchAuthMutation, fetchAuthQuery, getToken } from "~/lib/auth-server";
 import {
   buildRAGContext,
   buildSystemPrompt,
+  buildUserMessageContent,
   createChatTools,
   createMcpToolsForChat,
   extractCitations,
@@ -115,21 +116,31 @@ export const Route = createFileRoute("/api/chat")({
           await getChatModel(workspaceId);
         const MAX_HISTORY_TURNS = 20;
         const recentMessages = messages.slice(-MAX_HISTORY_TURNS);
+        const modelMessages = recentMessages.map((m, index, arr) => {
+          const isLastUser = index === arr.length - 1 && m.role === "user";
+          const text =
+            m.content ??
+            m.parts
+              ?.filter((p) => p.type === "text")
+              .map((p) => p.text)
+              .join("") ??
+            "";
+          if (m.role === "assistant") {
+            return { role: "assistant" as const, content: text };
+          }
+          return {
+            role: "user" as const,
+            content: isLastUser
+              ? buildUserMessageContent(text, ragContext)
+              : text,
+          };
+        });
         const result = streamText({
           model: chatModel,
           system: systemPrompt,
           tools,
           stopWhen: stepCountIs(5),
-          messages: recentMessages.map((m) => ({
-            role: m.role as "user" | "assistant",
-            content:
-              m.content ??
-              m.parts
-                ?.filter((p) => p.type === "text")
-                .map((p) => p.text)
-                .join("") ??
-              "",
-          })),
+          messages: modelMessages,
           onFinish: async ({ text, steps, usage }) => {
             const citations = extractCitations(ragContext);
             const toolParts = extractToolPartsFromSteps(

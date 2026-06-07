@@ -39,7 +39,6 @@ async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
       return {};
   }
 }
-
 export const listCollections = internalQuery({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args) => {
@@ -49,7 +48,6 @@ export const listCollections = internalQuery({
         q.eq("workspaceId", args.workspaceId).eq("deletedAt", undefined)
       )
       .collect();
-
     return rows.map((c) => ({
       _id: c._id,
       name: c.name,
@@ -57,7 +55,6 @@ export const listCollections = internalQuery({
     }));
   },
 });
-
 export const getResource = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -72,12 +69,10 @@ export const getResource = internalQuery({
     ) {
       return null;
     }
-
     const resourceAI = await ctx.db
       .query("resourceAI")
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
       .unique();
-
     let content: string | undefined;
     let url: string | undefined;
     if (resource.type === "note") {
@@ -100,7 +95,6 @@ export const getResource = internalQuery({
         .unique();
       content = file?.extractedText;
     }
-
     return {
       _id: resource._id,
       title: resource.title,
@@ -115,7 +109,6 @@ export const getResource = internalQuery({
     };
   },
 });
-
 export const validateMembership = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -138,7 +131,6 @@ export const validateMembership = internalQuery({
     return Boolean(member);
   },
 });
-
 export const searchTitleHits = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -155,7 +147,6 @@ export const searchTitleHits = internalQuery({
         preview: Awaited<ReturnType<typeof getResourcePreview>>;
       }>;
     }
-
     const hits = await ctx.db
       .query("resource")
       .withSearchIndex("search_title", (q) =>
@@ -165,7 +156,6 @@ export const searchTitleHits = internalQuery({
           .eq("deletedAt", undefined)
       )
       .take(args.limit);
-
     return await Promise.all(
       hits.map(async (r) => ({
         _id: r._id,

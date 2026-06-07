@@ -1,5 +1,4 @@
 "use node";
-
 import { generateEmbedding } from "@omi/ai/embeddings";
 import { createOpenAIProvider } from "@omi/ai/providers";
 import { v } from "convex/values";
@@ -9,7 +8,6 @@ import { action } from "../_generated/server";
 import { tokensToCredits } from "../billing/credits";
 import { rateLimiter } from "../rateLimiter";
 import { getAuthIdentity } from "../utils";
-
 export const searchChunks = action({
   args: {
     workspaceId: v.id("workspace"),
@@ -21,7 +19,6 @@ export const searchChunks = action({
     if (!identity?.userId) {
       throw new Error("Unauthorized");
     }
-
     const membership = await ctx.runQuery(
       internal.chat.internals.validateMembership,
       {
@@ -29,21 +26,17 @@ export const searchChunks = action({
         userId: identity.userId as Id<"user">,
       }
     );
-
     if (!membership) {
       throw new Error("Not authorized");
     }
-
     await rateLimiter.limit(ctx, "chatSearch", {
       key: identity.userId,
       throws: true,
     });
-
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return [];
     }
-
     const billingAccount = await ctx.runQuery(
       internal.billing.credits.preflight,
       {
@@ -52,7 +45,6 @@ export const searchChunks = action({
         estimate: 1,
       }
     );
-
     const provider = createOpenAIProvider(apiKey);
     const { embedding, model, tokens } = await generateEmbedding(
       provider,
@@ -65,31 +57,34 @@ export const searchChunks = action({
       reason: "chat",
       amount: tokensToCredits(tokens, model),
     });
-
     const results = await ctx.vectorSearch("resourceChunk", "by_embedding", {
       vector: embedding,
       limit: (args.limit ?? 10) * 4,
       filter: (q) => q.eq("workspaceId", args.workspaceId),
     });
-
-    const seen = new Set<string>();
     const chunks: Array<{
       chunkId: string;
       resourceId: string;
       content: string;
       score: number;
       chunkIndex: number;
-      metadata?: { pageNumber?: number; sectionHeader?: string };
-      resource: { _id: string; title: string; type: string };
+      metadata?: {
+        pageNumber?: number;
+        sectionHeader?: string;
+      };
+      resource: {
+        _id: string;
+        title: string;
+        type: string;
+      };
     }> = [];
-
     const maxResults = args.limit ?? 10;
-
+    const maxChunksPerResource = 2;
+    const chunksPerResource = new Map<string, number>();
     for (const result of results) {
       if (chunks.length >= maxResults) {
         break;
       }
-
       const chunk = await ctx.runQuery(
         internal.resource.aiInternals.getChunkById,
         { chunkId: result._id }
@@ -97,12 +92,11 @@ export const searchChunks = action({
       if (!chunk) {
         continue;
       }
-
-      if (seen.has(chunk.resourceId)) {
+      const perResourceCount = chunksPerResource.get(chunk.resourceId) ?? 0;
+      if (perResourceCount >= maxChunksPerResource) {
         continue;
       }
-      seen.add(chunk.resourceId);
-
+      chunksPerResource.set(chunk.resourceId, perResourceCount + 1);
       const resource = await ctx.runQuery(
         internal.resource.aiInternals.getResourceById,
         { resourceId: chunk.resourceId }
@@ -110,7 +104,6 @@ export const searchChunks = action({
       if (!resource) {
         continue;
       }
-
       chunks.push({
         chunkId: chunk._id,
         resourceId: chunk.resourceId,
@@ -125,7 +118,6 @@ export const searchChunks = action({
         },
       });
     }
-
     return chunks;
   },
 });

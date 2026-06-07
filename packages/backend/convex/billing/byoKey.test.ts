@@ -12,12 +12,10 @@ import type { Id } from "../_generated/dataModel";
 import { decryptKey, encryptKey } from "./byoKeyActions";
 
 beforeEach(() => {
-  // 32-byte base64-encoded key (deterministic for tests).
   process.env.BYO_KEY_ENCRYPTION_KEY = Buffer.from(
     "0123456789abcdef0123456789abcdef"
   ).toString("base64");
 });
-
 describe("encryptKey / decryptKey", () => {
   it("round-trips a plaintext key", () => {
     const plaintext = "sk-test-1234567890";
@@ -25,7 +23,6 @@ describe("encryptKey / decryptKey", () => {
     expect(ct).not.toBe(plaintext);
     expect(decryptKey(ct)).toBe(plaintext);
   });
-
   it("produces different ciphertext on each encryption (random IV)", () => {
     const plaintext = "sk-same-key";
     const a = encryptKey(plaintext);
@@ -34,7 +31,6 @@ describe("encryptKey / decryptKey", () => {
     expect(decryptKey(a)).toBe(plaintext);
     expect(decryptKey(b)).toBe(plaintext);
   });
-
   it("rejects decryption with a different key (auth tag mismatch)", () => {
     const plaintext = "sk-test";
     const ct = encryptKey(plaintext);
@@ -43,7 +39,6 @@ describe("encryptKey / decryptKey", () => {
     ).toString("base64");
     expect(() => decryptKey(ct)).toThrow();
   });
-
   it("throws when the env key is missing", () => {
     process.env.BYO_KEY_ENCRYPTION_KEY = "";
     expect(() => encryptKey("sk-test")).toThrow(
@@ -51,15 +46,23 @@ describe("encryptKey / decryptKey", () => {
     );
   });
 });
-
 async function seedAdmin(t: ReturnType<typeof createHarness>): Promise<{
   ownerId: Id<"user">;
   adminId: Id<"user">;
   memberId: Id<"user">;
   workspaceId: Id<"workspace">;
-  ownerIdentity: { subject: string; userId: string };
-  adminIdentity: { subject: string; userId: string };
-  memberIdentity: { subject: string; userId: string };
+  ownerIdentity: {
+    subject: string;
+    userId: string;
+  };
+  adminIdentity: {
+    subject: string;
+    userId: string;
+  };
+  memberIdentity: {
+    subject: string;
+    userId: string;
+  };
 }> {
   const owner = await seedUser(t);
   const admin = await seedUser(t);
@@ -77,7 +80,6 @@ async function seedAdmin(t: ReturnType<typeof createHarness>): Promise<{
     memberIdentity: member.identity,
   };
 }
-
 describe("upsertKeyInternal / deleteKeyInternal", () => {
   it("inserts a row and encryption round-trips through the DB", async () => {
     const t = createHarness();
@@ -90,7 +92,6 @@ describe("upsertKeyInternal / deleteKeyInternal", () => {
       model: "gpt-4.1-mini",
       createdByUserId: ownerId,
     });
-
     const row = await t.query(internal.billing.byoKey.getProviderRowInternal, {
       workspaceId,
     });
@@ -98,7 +99,6 @@ describe("upsertKeyInternal / deleteKeyInternal", () => {
     expect(row?.provider).toBe("openai");
     expect(decryptKey(row?.encryptedApiKey ?? "")).toBe("sk-abc");
   });
-
   it("upsert replaces the prior row for the workspace", async () => {
     const t = createHarness();
     const { workspaceId, ownerId } = await seedAdmin(t);
@@ -115,7 +115,6 @@ describe("upsertKeyInternal / deleteKeyInternal", () => {
       model: "gemini-2.5-pro",
       createdByUserId: ownerId,
     });
-
     const row = await t.query(internal.billing.byoKey.getProviderRowInternal, {
       workspaceId,
     });
@@ -124,7 +123,6 @@ describe("upsertKeyInternal / deleteKeyInternal", () => {
     expect(row?.model).toBe("gemini-2.5-pro");
   });
 });
-
 describe("getWorkspaceProvider / removeWorkspaceKey", () => {
   it("reports hasKey=false and admin flag for an admin user with no row", async () => {
     const t = createHarness();
@@ -137,7 +135,6 @@ describe("getWorkspaceProvider / removeWorkspaceKey", () => {
     expect(state.hasKey).toBe(false);
     expect(state.isAdmin).toBe(true);
   });
-
   it("reports isAdmin=false for a regular member", async () => {
     const t = createHarness();
     const { workspaceId, memberIdentity } = await seedAdmin(t);
@@ -148,7 +145,6 @@ describe("getWorkspaceProvider / removeWorkspaceKey", () => {
     );
     expect(state.isAdmin).toBe(false);
   });
-
   it("non-admin member cannot call removeWorkspaceKey", async () => {
     const t = createHarness();
     const { workspaceId, memberIdentity, ownerId } = await seedAdmin(t);
@@ -166,7 +162,6 @@ describe("getWorkspaceProvider / removeWorkspaceKey", () => {
       )
     ).rejects.toThrow(ConvexError);
   });
-
   it("admin can remove the key; falls back to platform default", async () => {
     const t = createHarness();
     const { workspaceId, adminIdentity, ownerId } = await seedAdmin(t);

@@ -1,5 +1,4 @@
 "use node";
-
 import { generateEmbedding } from "@omi/ai/embeddings";
 import { createOpenAIProvider } from "@omi/ai/providers";
 import { v } from "convex/values";
@@ -12,7 +11,6 @@ interface SearchResult {
   title: string;
   type: string;
 }
-
 export const semanticSearch = internalAction({
   args: {
     workspaceId: v.id("workspace"),
@@ -24,12 +22,9 @@ export const semanticSearch = internalAction({
     if (!apiKey) {
       throw new Error("OPENAI_API_KEY not configured");
     }
-
     const provider = createOpenAIProvider(apiKey);
     const searchLimit = args.limit ?? 10;
-
     const { embedding } = await generateEmbedding(provider, args.query);
-
     const results = await ctx.vectorSearch(
       "resourceEmbedding",
       "by_embedding",
@@ -39,7 +34,6 @@ export const semanticSearch = internalAction({
         filter: (q) => q.eq("workspaceId", args.workspaceId),
       }
     );
-
     const resources: SearchResult[] = [];
     for (const result of results) {
       const embeddingDoc = await ctx.runQuery(
@@ -49,7 +43,6 @@ export const semanticSearch = internalAction({
       if (!embeddingDoc) {
         continue;
       }
-
       const resource = await ctx.runQuery(
         internal.resource.aiInternals.getResourceById,
         { resourceId: embeddingDoc.resourceId }
@@ -57,19 +50,16 @@ export const semanticSearch = internalAction({
       if (!resource) {
         continue;
       }
-
       resources.push({
         resourceId: embeddingDoc.resourceId,
         score: result._score,
         title: resource.title,
         type: resource.type,
       });
-
       if (resources.length >= searchLimit) {
         break;
       }
     }
-
     return resources;
   },
 });

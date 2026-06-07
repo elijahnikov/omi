@@ -18,7 +18,6 @@ const jobKindValidator = v.union(
   v.literal("delta"),
   v.literal("webhook")
 );
-
 const jobStatusValidator = v.union(
   v.literal("queued"),
   v.literal("running"),
@@ -26,7 +25,6 @@ const jobStatusValidator = v.union(
   v.literal("failed"),
   v.literal("cancelled")
 );
-
 const upsertPayload = v.object({
   externalId: v.string(),
   externalUrl: v.optional(v.string()),
@@ -67,7 +65,6 @@ const upsertPayload = v.object({
     })
   ),
 });
-
 export const createSyncJob = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -87,7 +84,6 @@ export const createSyncJob = internalMutation({
     });
   },
 });
-
 export const updateSyncJobProgress = internalMutation({
   args: {
     jobId: v.id("syncJob"),
@@ -113,7 +109,6 @@ export const updateSyncJobProgress = internalMutation({
     });
   },
 });
-
 export const finishSyncJob = internalMutation({
   args: {
     jobId: v.id("syncJob"),
@@ -143,7 +138,6 @@ export const finishSyncJob = internalMutation({
     }
   },
 });
-
 export const getSyncCursor = internalQuery({
   args: {
     connectionId: v.id("connection"),
@@ -159,7 +153,6 @@ export const getSyncCursor = internalQuery({
     return row?.cursor;
   },
 });
-
 export const setSyncCursor = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -188,7 +181,6 @@ export const setSyncCursor = internalMutation({
     });
   },
 });
-
 export const recordSyncEvent = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -214,7 +206,6 @@ export const recordSyncEvent = internalMutation({
     return true;
   },
 });
-
 async function patchExistingResource(
   ctx: MutationCtx,
   existing: Doc<"resource">,
@@ -374,7 +365,6 @@ async function patchExistingResource(
     }
   }
 }
-
 export const upsertSyncedResource = internalMutation({
   args: {
     bindingId: v.id("connectionSyncBinding"),
@@ -390,7 +380,6 @@ export const upsertSyncedResource = internalMutation({
     if (!connection) {
       throw new ConvexError("Connection not found");
     }
-
     const existing = await ctx.db
       .query("resource")
       .withIndex("by_source_external", (q) =>
@@ -399,7 +388,6 @@ export const upsertSyncedResource = internalMutation({
           .eq("sourceExternalId", args.upsert.externalId)
       )
       .first();
-
     if (existing) {
       if (existing.workspaceId !== binding.workspaceId) {
         return "skipped";
@@ -407,9 +395,7 @@ export const upsertSyncedResource = internalMutation({
       await patchExistingResource(ctx, existing, args.upsert);
       return "updated";
     }
-
     const importedFrom = `${args.providerId}_sync:${args.upsert.externalId}`;
-
     if (args.upsert.type === "synced" && args.upsert.synced) {
       const resourceId = await createSyncedResourceForImport(ctx, {
         workspaceId: binding.workspaceId,
@@ -425,7 +411,6 @@ export const upsertSyncedResource = internalMutation({
         diffPatch: args.upsert.synced.diffPatch,
         subtitle: args.upsert.synced.subtitle,
       });
-
       await ctx.db.patch(resourceId, {
         sourceConnectionId: binding.connectionId,
         sourceProviderId: args.providerId,
@@ -435,7 +420,6 @@ export const upsertSyncedResource = internalMutation({
       });
       return "created";
     }
-
     const resourceId = await createResourceForImport(ctx, {
       workspaceId: binding.workspaceId,
       userId: connection.userId,
@@ -450,7 +434,6 @@ export const upsertSyncedResource = internalMutation({
       collectionId: binding.destinationCollectionId,
       importedFrom,
     });
-
     await ctx.db.patch(resourceId, {
       sourceConnectionId: binding.connectionId,
       sourceProviderId: args.providerId,
@@ -458,7 +441,6 @@ export const upsertSyncedResource = internalMutation({
       sourceExternalId: args.upsert.externalId,
       syncedAt: Date.now(),
     });
-
     if (args.upsert.type === "note" && args.upsert.note) {
       await ctx.db.insert("resourceContent", {
         resourceId,
@@ -494,7 +476,6 @@ export const upsertSyncedResource = internalMutation({
     return "created";
   },
 });
-
 export const tombstoneSyncedResource = internalMutation({
   args: {
     bindingId: v.id("connectionSyncBinding"),
@@ -523,7 +504,6 @@ export const tombstoneSyncedResource = internalMutation({
     return true;
   },
 });
-
 export const getActiveBindingForSync = internalQuery({
   args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args) => {
@@ -551,7 +531,6 @@ export const getActiveBindingForSync = internalQuery({
     };
   },
 });
-
 export const getConnectionForWebhook = internalQuery({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {
@@ -570,7 +549,6 @@ export const getConnectionForWebhook = internalQuery({
     };
   },
 });
-
 export const listMatchingBindingsForWebhook = internalQuery({
   args: {
     connectionId: v.id("connection"),
@@ -588,7 +566,6 @@ export const listMatchingBindingsForWebhook = internalQuery({
         q.eq("connectionId", args.connectionId)
       )
       .collect();
-
     return bindings
       .filter((b) => b.syncEnabled && !b.syncPaused)
       .filter((b) => {
@@ -612,7 +589,6 @@ export const listMatchingBindingsForWebhook = internalQuery({
       .map((b) => b._id);
   },
 });
-
 export const findConnectionByProviderAccount = internalQuery({
   args: {
     provider: v.union(
@@ -644,7 +620,6 @@ export const findConnectionByProviderAccount = internalQuery({
     return { _id: match._id };
   },
 });
-
 export const markWebhookReceived = internalMutation({
   args: {
     bindingIds: v.array(v.id("connectionSyncBinding")),

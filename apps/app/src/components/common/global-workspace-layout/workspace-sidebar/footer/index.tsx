@@ -50,7 +50,7 @@ export default function WorkspaceSidebarFooter() {
             icon={RiQuestionFill}
             sidebarOpen={sidebarOpen}
             title="Help"
-            url="https://docs.omi.co"
+            url="https://docs.omi.ac"
           />
         </div>
       </TooltipProvider>

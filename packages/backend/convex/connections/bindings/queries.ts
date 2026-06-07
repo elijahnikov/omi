@@ -2,7 +2,6 @@ import { ConvexError, v } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
 import { protectedQuery, workspaceQuery } from "../../utils";
 import { getProvider, isProviderId } from "../providers/registry";
-
 export const listBindingsForWorkspace = workspaceQuery({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx) => {
@@ -10,7 +9,6 @@ export const listBindingsForWorkspace = workspaceQuery({
       .query("connectionSyncBinding")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", ctx.workspace._id))
       .collect();
-
     const result: {
       _id: Id<"connectionSyncBinding">;
       connectionId: Id<"connection">;
@@ -59,7 +57,6 @@ export const listBindingsForWorkspace = workspaceQuery({
     return result;
   },
 });
-
 export const listBindingsForConnection = protectedQuery({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {

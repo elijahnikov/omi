@@ -1,7 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import { protectedMutation } from "../utils";
-
 export const disconnect = protectedMutation({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {
@@ -12,12 +11,10 @@ export const disconnect = protectedMutation({
     if (connection.status === "revoked") {
       return;
     }
-
     await ctx.runMutation(
       internal.connections.bindings.internals.deleteBindingsForConnection,
       { connectionId: args.connectionId }
     );
-
     if (connection.provider === "github") {
       await ctx.db.patch(args.connectionId, {
         disconnectedAt: Date.now(),
@@ -29,7 +26,6 @@ export const disconnect = protectedMutation({
       );
       return;
     }
-
     if (connection.provider === "linear") {
       await ctx.db.patch(args.connectionId, {
         disconnectedAt: Date.now(),
@@ -41,11 +37,8 @@ export const disconnect = protectedMutation({
       );
       return;
     }
-
     await ctx.db.patch(args.connectionId, {
       status: "revoked",
-      accessToken: undefined,
-      refreshToken: undefined,
       encryptedAccessToken: undefined,
       encryptedRefreshToken: undefined,
       tokenKeyVersion: undefined,
@@ -55,7 +48,6 @@ export const disconnect = protectedMutation({
     });
   },
 });
-
 export const rename = protectedMutation({
   args: {
     connectionId: v.id("connection"),

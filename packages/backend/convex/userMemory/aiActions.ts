@@ -1,5 +1,4 @@
 "use node";
-
 import { extractMemory, wordJaccardSimilarity } from "@omi/ai/memory";
 import { createOpenAIProvider } from "@omi/ai/providers";
 import { v } from "convex/values";
@@ -12,7 +11,6 @@ const MAX_MESSAGES_IN_CTX = 40;
 const SIMILARITY_FLOOR = 0.7;
 const DRIFT_GUARD_MIN_MESSAGES = 8;
 const MEMORY_EXTRACT_COST = 3;
-
 export const extractUserMemory = internalAction({
   args: {
     memoryId: v.id("userMemory"),
@@ -22,19 +20,16 @@ export const extractUserMemory = internalAction({
   },
   handler: async (ctx, args) => {
     const attempt = args.attempt ?? 0;
-
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       return;
     }
-
     const row = await ctx.runQuery(internal.userMemory.internals.getMemoryRow, {
       memoryId: args.memoryId,
     });
     if (!row) {
       return;
     }
-
     const latestMessageAt = await ctx.runQuery(
       internal.userMemory.internals.getLatestMessageAtInThread,
       { threadId: args.threadId }
@@ -42,7 +37,6 @@ export const extractUserMemory = internalAction({
     if (latestMessageAt && latestMessageAt > args.scheduledAt) {
       return;
     }
-
     const messages = await ctx.runQuery(
       internal.userMemory.internals.getMessagesInThreadSince,
       {
@@ -51,11 +45,9 @@ export const extractUserMemory = internalAction({
         limit: MAX_MESSAGES_IN_CTX,
       }
     );
-
     if (messages.length < MIN_NEW_MESSAGES) {
       return;
     }
-
     const lock = await ctx.runMutation(
       internal.userMemory.internals.setStatus,
       {
@@ -67,7 +59,6 @@ export const extractUserMemory = internalAction({
     if (!lock.success) {
       return;
     }
-
     try {
       const provider = createOpenAIProvider(apiKey);
       const result = await extractMemory(provider, {
@@ -77,10 +68,8 @@ export const extractUserMemory = internalAction({
           content: m.content,
         })),
       });
-
       const newContent = result.content.trim();
       const existingContent = row.content.trim();
-
       const similarity =
         existingContent.length > 0
           ? wordJaccardSimilarity(existingContent, newContent)
@@ -88,7 +77,6 @@ export const extractUserMemory = internalAction({
       const isDrifted =
         similarity < SIMILARITY_FLOOR &&
         messages.length < DRIFT_GUARD_MIN_MESSAGES;
-
       if (isDrifted) {
         console.log("[extractUserMemory] drift guard rejected update", {
           memoryId: args.memoryId,
@@ -101,7 +89,6 @@ export const extractUserMemory = internalAction({
         );
         return;
       }
-
       const write = await ctx.runMutation(
         internal.userMemory.internals.upsertMemoryContent,
         {
@@ -117,15 +104,15 @@ export const extractUserMemory = internalAction({
             internal.billing.resolver.resolveActing,
             { userId: row.userId, workspaceId: row.workspaceId }
           );
-          await ctx.runMutation(internal.billing.credits.debit, {
+          await ctx.runMutation(internal.billing.credits.debitUpTo, {
             billingAccountId: resolved.billingAccountId,
             workspaceId: row.workspaceId,
             actingUserId: row.userId,
             reason: "memory-extract",
-            amount: MEMORY_EXTRACT_COST,
+            requestedAmount: MEMORY_EXTRACT_COST,
           });
-        } catch {
-          // Swallow billing errors — don't undo a successful extraction.
+        } catch (billingError) {
+          console.warn("[extractUserMemory] billing failed", billingError);
         }
       } else {
         await ctx.runMutation(
@@ -139,7 +126,6 @@ export const extractUserMemory = internalAction({
         internal.userMemory.internals.markExtractionFailed,
         { memoryId: args.memoryId }
       );
-
       if (attempt < RETRY_BACKOFFS.length) {
         const delay = RETRY_BACKOFFS[attempt] as number;
         await ctx.scheduler.runAfter(

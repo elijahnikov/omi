@@ -1,4 +1,4 @@
-const DEFAULT_WEB_APP_URL = "https://app.omi.com";
+const DEFAULT_WEB_APP_URL = "https://app.omi.ac";
 
 function getWebAppUrl(): string {
   const fromEnv = import.meta.env.VITE_SITE_URL as string | undefined;

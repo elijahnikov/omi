@@ -6,14 +6,11 @@ const env = (
     env?: Record<string, string | undefined>;
   }
 ).env;
-
 const appId = env?.VITE_INSTANT_APP_ID ?? "";
-
 export const instantDb = init({
   appId,
   schema,
   useDateObjects: true,
   devtool: false,
 });
-
 export type { AppSchema } from "./instant.schema";

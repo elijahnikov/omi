@@ -10,7 +10,6 @@ const MARKDOWN_EXT_RE = /\.md$/i;
 const CSV_EXT_RE = /\.csv$/i;
 const HEADING_RE = /^#\s+(.+)$/m;
 const ROOT_DIR_RE = /^[^/]+\//;
-
 export const parseNotionZip: ImportParser = {
   kind: "file",
   source: "notion_zip",
@@ -26,15 +25,12 @@ export const parseNotionZip: ImportParser = {
       };
       return;
     }
-
     const decoder = new TextDecoder("utf-8");
-
     for (const [path, bytes] of Object.entries(entries)) {
       if (path.endsWith("/")) {
         continue;
       }
       const content = decoder.decode(bytes);
-
       if (MARKDOWN_EXT_RE.test(path)) {
         const record = parseMarkdownPage(path, content);
         if (record) {
@@ -42,36 +38,30 @@ export const parseNotionZip: ImportParser = {
         }
         continue;
       }
-
       if (CSV_EXT_RE.test(path)) {
         yield* parseDatabaseCsv(path, content);
       }
     }
   },
 };
-
 function stripUuid(s: string): string {
   return s.replace(UUID_SUFFIX_RE, "").replace(UUID_HEX_SUFFIX_RE, "");
 }
-
 function cleanPath(path: string): string {
   return path
     .split("/")
     .map((seg) => stripUuid(seg))
     .join("/");
 }
-
 function parseMarkdownPage(path: string, content: string): ImportRecord | null {
   const rel = cleanPath(path.replace(ROOT_DIR_RE, ""));
   const fileName = rel.split("/").pop() ?? rel;
   const titleFromFile = fileName.replace(MARKDOWN_EXT_RE, "");
-
   const title = firstHeading(content) || titleFromFile;
   const html = markdownToHtml(content);
   const collectionPath = rel.includes("/")
     ? rel.split("/").slice(0, -1).filter(Boolean)
     : undefined;
-
   return {
     sourceItemId: hashString(path),
     type: "note",
@@ -81,7 +71,6 @@ function parseMarkdownPage(path: string, content: string): ImportRecord | null {
     collectionPath,
   };
 }
-
 function* parseDatabaseCsv(
   path: string,
   content: string
@@ -99,7 +88,6 @@ function* parseDatabaseCsv(
   const parentPath = cleanedDbPath.includes("/")
     ? cleanedDbPath.split("/").slice(0, -1).filter(Boolean)
     : [];
-
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     if (!row || row.every((cell) => cell === "")) {
@@ -126,18 +114,15 @@ function* parseDatabaseCsv(
     };
   }
 }
-
 function firstHeading(body: string): string | undefined {
   const match = body.match(HEADING_RE);
   return match?.[1]?.trim();
 }
-
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";
   let inQuotes = false;
-
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (inQuotes) {

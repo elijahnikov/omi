@@ -8,41 +8,34 @@ const BEARER_PREFIX = "Bearer ";
 const PROTOCOL_VERSION = "2025-03-26";
 const SERVER_NAME = "omi";
 const SERVER_VERSION = "0.1.0";
-
 type ToolName =
   | "save_resource"
   | "search_library"
   | "list_collections"
   | "get_resource";
-
 interface JsonRpcRequest {
   id?: string | number | null;
   jsonrpc: "2.0";
   method: string;
   params?: Record<string, unknown>;
 }
-
 interface ResolvedMcpAuth {
   tokenId: Id<"extensionToken">;
   userId: Id<"user">;
   workspaceId: Id<"workspace">;
 }
-
 class McpError extends Error {
   readonly code: number;
   readonly httpStatus: number;
-
   constructor(code: number, message: string, httpStatus = 400) {
     super(message);
     this.code = code;
     this.httpStatus = httpStatus;
   }
 }
-
 function jsonRpcResult(id: JsonRpcRequest["id"], result: unknown): Response {
   return Response.json({ jsonrpc: "2.0", id: id ?? null, result });
 }
-
 function jsonRpcError(
   id: JsonRpcRequest["id"],
   code: number,
@@ -52,9 +45,6 @@ function jsonRpcError(
   const headers: Record<string, string> = {
     "content-type": "application/json",
   };
-  // Signal bearer-only auth so spec-compliant MCP clients don't fall through
-  // to OAuth 2.1 dynamic client registration on 401. The realm gives clients
-  // a hint about where to obtain tokens.
   if (httpStatus === 401) {
     headers["www-authenticate"] = 'Bearer realm="omi", error="invalid_token"';
   }
@@ -67,7 +57,6 @@ function jsonRpcError(
     { status: httpStatus, headers }
   );
 }
-
 async function authenticate(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   request: Request
@@ -77,7 +66,6 @@ async function authenticate(
     throw new McpError(-32_001, "Missing bearer token", 401);
   }
   const token = header.slice(BEARER_PREFIX.length).trim();
-
   const resolved = await ctx.runQuery(
     internal.extensionAuth.internals.resolveByToken,
     { token }
@@ -88,7 +76,6 @@ async function authenticate(
   if (!resolved.defaultWorkspaceId) {
     throw new McpError(-32_002, "Token is not bound to a workspace", 400);
   }
-
   const member = await ctx.runQuery(internal.mcp.internals.validateMembership, {
     workspaceId: resolved.defaultWorkspaceId,
     userId: resolved.userId,
@@ -96,18 +83,15 @@ async function authenticate(
   if (!member) {
     throw new McpError(-32_003, "No longer a member of this workspace", 403);
   }
-
   await ctx.runMutation(internal.extensionAuth.internals.touchLastUsed, {
     tokenId: resolved.tokenId,
   });
-
   return {
     userId: resolved.userId,
     workspaceId: resolved.defaultWorkspaceId,
     tokenId: resolved.tokenId,
   };
 }
-
 const TOOL_DEFINITIONS: ReadonlyArray<{
   name: ToolName;
   description: string;
@@ -191,13 +175,10 @@ const TOOL_DEFINITIONS: ReadonlyArray<{
     },
   },
 ];
-
 function textContent(text: string) {
   return { content: [{ type: "text", text }] };
 }
-
 const NOTE_TITLE_MAX_LEN = 60;
-
 function deriveNoteTitle(content: string): string {
   const firstLine = content.split("\n", 1)[0]?.trim() ?? "";
   if (firstLine.length === 0) {
@@ -208,13 +189,11 @@ function deriveNoteTitle(content: string): string {
   }
   return `${firstLine.slice(0, NOTE_TITLE_MAX_LEN).trimEnd()}…`;
 }
-
 function jsonContent(value: unknown) {
   return {
     content: [{ type: "text", text: JSON.stringify(value, null, 2) }],
   };
 }
-
 async function callTool(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   auth: ResolvedMcpAuth,
@@ -222,7 +201,6 @@ async function callTool(
   rawArgs: unknown
 ): Promise<unknown> {
   const args = (rawArgs ?? {}) as Record<string, unknown>;
-
   switch (name) {
     case "save_resource": {
       const url = typeof args.url === "string" ? args.url.trim() : "";
@@ -236,14 +214,12 @@ async function callTool(
         typeof args.collectionId === "string"
           ? (args.collectionId as Id<"collection">)
           : undefined;
-
       if (url && content) {
         throw new McpError(
           -32_602,
           "Provide either `url` or `content`, not both"
         );
       }
-
       if (url) {
         const resourceId = await ctx.runMutation(
           internal.resource.internals.createForUser,
@@ -261,7 +237,6 @@ async function callTool(
           `Saved ${url} as resource ${resourceId}. The real page title and metadata will populate within seconds.`
         );
       }
-
       if (content !== undefined && content.trim().length > 0) {
         const resourceId = await ctx.runMutation(
           internal.resource.internals.createForUser,
@@ -277,10 +252,8 @@ async function callTool(
         );
         return textContent(`Saved note as resource ${resourceId}.`);
       }
-
       throw new McpError(-32_602, "Provide either `url` or `content`");
     }
-
     case "search_library": {
       const query = typeof args.query === "string" ? args.query.trim() : "";
       if (!query) {
@@ -289,7 +262,6 @@ async function callTool(
       const requestedLimit =
         typeof args.limit === "number" ? Math.floor(args.limit) : 10;
       const limit = Math.max(1, Math.min(20, requestedLimit));
-
       const [passages, titleHits] = await Promise.all([
         ctx.runAction(internal.mcp.searchAction.searchLibraryForUser, {
           workspaceId: auth.workspaceId,
@@ -303,10 +275,8 @@ async function callTool(
           limit,
         }),
       ]);
-
       return jsonContent({ passages, titleMatches: titleHits });
     }
-
     case "list_collections": {
       const collections = await ctx.runQuery(
         internal.mcp.internals.listCollections,
@@ -314,7 +284,6 @@ async function callTool(
       );
       return jsonContent({ collections });
     }
-
     case "get_resource": {
       const resourceId =
         typeof args.resourceId === "string" ? args.resourceId : "";
@@ -330,19 +299,16 @@ async function callTool(
       }
       return jsonContent(resource);
     }
-
     default:
       throw new McpError(-32_601, `Unknown tool: ${name}`);
   }
 }
-
 async function dispatch(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   auth: ResolvedMcpAuth,
   message: JsonRpcRequest
 ): Promise<Response> {
   const id = message.id;
-
   if (message.method === "initialize") {
     return jsonRpcResult(id, {
       protocolVersion: PROTOCOL_VERSION,
@@ -350,19 +316,15 @@ async function dispatch(
       serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
     });
   }
-
   if (message.method === "notifications/initialized") {
     return new Response(null, { status: 202 });
   }
-
   if (message.method === "ping") {
     return jsonRpcResult(id, {});
   }
-
   if (message.method === "tools/list") {
     return jsonRpcResult(id, { tools: TOOL_DEFINITIONS });
   }
-
   if (message.method === "tools/call") {
     const params = (message.params ?? {}) as {
       name?: string;
@@ -383,7 +345,10 @@ async function dispatch(
       }
       if (err instanceof ConvexError) {
         const data = err.data as
-          | { kind?: string; retryAfter?: number }
+          | {
+              kind?: string;
+              retryAfter?: number;
+            }
           | string;
         if (
           typeof data === "object" &&
@@ -409,22 +374,15 @@ async function dispatch(
       });
     }
   }
-
   return jsonRpcError(id, -32_601, `Method not found: ${message.method}`);
 }
-
 export const mcpHandler = httpAction(async (ctx, request) => {
   if (request.method === "GET" || request.method === "DELETE") {
-    // Streamable HTTP allows GET (open SSE stream) and DELETE (terminate
-    // session). v1 is stateless: every POST stands alone, so we just
-    // acknowledge these without doing anything.
     return new Response(null, { status: 200 });
   }
-
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
-
   let auth: ResolvedMcpAuth;
   try {
     auth = await authenticate(ctx, request);
@@ -434,7 +392,6 @@ export const mcpHandler = httpAction(async (ctx, request) => {
     }
     return jsonRpcError(null, -32_603, "Internal error", 500);
   }
-
   try {
     await rateLimiter.limit(ctx, "chatSearch", {
       key: auth.tokenId,
@@ -442,7 +399,12 @@ export const mcpHandler = httpAction(async (ctx, request) => {
     });
   } catch (err) {
     if (err instanceof ConvexError) {
-      const data = err.data as { kind?: string; retryAfter?: number } | string;
+      const data = err.data as
+        | {
+            kind?: string;
+            retryAfter?: number;
+          }
+        | string;
       if (
         typeof data === "object" &&
         data !== null &&
@@ -466,17 +428,14 @@ export const mcpHandler = httpAction(async (ctx, request) => {
       }
     }
   }
-
   let message: JsonRpcRequest;
   try {
     message = (await request.json()) as JsonRpcRequest;
   } catch {
     return jsonRpcError(null, -32_700, "Parse error", 400);
   }
-
   if (message.jsonrpc !== "2.0" || typeof message.method !== "string") {
     return jsonRpcError(message?.id ?? null, -32_600, "Invalid request", 400);
   }
-
   return await dispatch(ctx, auth, message);
 });

@@ -1,5 +1,4 @@
 "use node";
-
 import { createHash } from "node:crypto";
 import { chunkPdfPages, chunkText } from "@omi/ai/chunking";
 import { normalizeConceptName } from "@omi/ai/concepts";
@@ -17,11 +16,9 @@ import { computeWeightedJaccard } from "./similarity";
 const RETRY_BACKOFFS = [5000, 30_000, 120_000];
 const MIN_CONTENT_LENGTH = 50;
 const MAX_ENRICH_CREDITS = 200;
-
 function computeHash(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
-
 export const processResourceAI = internalAction({
   args: {
     resourceId: v.id("resource"),
@@ -29,7 +26,6 @@ export const processResourceAI = internalAction({
   },
   handler: async (ctx, args) => {
     const attempt = args.attempt ?? 0;
-
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
       await ctx.runMutation(internal.resource.aiInternals.setResourceAIStatus, {
@@ -39,28 +35,22 @@ export const processResourceAI = internalAction({
       });
       return;
     }
-
     await ctx.runMutation(internal.resource.aiInternals.setResourceAIStatus, {
       resourceId: args.resourceId,
       status: "processing",
     });
-
     try {
       const content = await ctx.runQuery(
         internal.resource.aiInternals.getResourceContent,
         { resourceId: args.resourceId }
       );
-
       const provider = createOpenAIProvider(apiKey);
-
       const tokensByModel: Record<string, number> = {};
       const addTokens = (model: string, tokens: number) => {
         tokensByModel[model] = (tokensByModel[model] ?? 0) + tokens;
       };
-
       let enricherInput: EnricherInput | undefined;
       let embeddingText = content.title;
-
       switch (content.type) {
         case "website": {
           enricherInput = {
@@ -128,7 +118,6 @@ export const processResourceAI = internalAction({
         default:
           break;
       }
-
       const isTextBased =
         content.type === "website" ||
         content.type === "note" ||
@@ -143,11 +132,9 @@ export const processResourceAI = internalAction({
         );
         return;
       }
-
       if (!enricherInput) {
         return;
       }
-
       const enricher = createEnricher(provider, enricherInput);
       const {
         result,
@@ -155,7 +142,6 @@ export const processResourceAI = internalAction({
         model: enrichModel,
       } = await enricher.enrich();
       addTokens(enrichModel, enrichTokens);
-
       await ctx.runMutation(internal.resource.aiInternals.updateResourceAI, {
         resourceId: args.resourceId,
         summary: result.summary,
@@ -166,7 +152,6 @@ export const processResourceAI = internalAction({
         category: result.category,
         keyQuotes: result.keyQuotes,
       });
-
       if (result.tags.length > 0) {
         await ctx.runMutation(
           internal.resource.linkInternals.upsertTagsForResource,
@@ -176,11 +161,9 @@ export const processResourceAI = internalAction({
             tags: result.tags,
           }
         );
-
         const normalizedTags = result.tags
           .map((t) => t.trim().toLowerCase())
           .filter((t) => t.length > 0);
-
         if (normalizedTags.length > 0) {
           const {
             embeddings: tagEmbeddings,
@@ -188,7 +171,6 @@ export const processResourceAI = internalAction({
             model: tagEmbedModel,
           } = await generateEmbeddings(provider, normalizedTags);
           addTokens(tagEmbedModel, tagTokens);
-
           for (let i = 0; i < normalizedTags.length; i++) {
             const tagName = normalizedTags[i];
             const tagEmbedding = tagEmbeddings[i];
@@ -205,19 +187,16 @@ export const processResourceAI = internalAction({
           }
         }
       }
-
       if (result.concepts && result.concepts.length > 0) {
         await ctx.runMutation(
           internal.resource.linkInternals.deleteResourceConcepts,
           { resourceId: args.resourceId }
         );
-
         const normalizedConcepts = result.concepts.map((c) => ({
           name: normalizeConceptName(c.name),
           displayName: c.name,
           importance: c.importance,
         }));
-
         const conceptNames = normalizedConcepts.map((c) => c.name);
         const {
           embeddings: conceptEmbeddings,
@@ -225,25 +204,20 @@ export const processResourceAI = internalAction({
           model: conceptEmbedModel,
         } = await generateEmbeddings(provider, conceptNames);
         addTokens(conceptEmbedModel, conceptTokens);
-
         for (let i = 0; i < normalizedConcepts.length; i++) {
           const concept = normalizedConcepts[i];
           const conceptEmbedding = conceptEmbeddings[i];
-
           if (!(concept && conceptEmbedding)) {
             continue;
           }
-
           const similar = await ctx.vectorSearch("concept", "by_embedding", {
             vector: conceptEmbedding,
             limit: 1,
             filter: (q) => q.eq("workspaceId", content.workspaceId),
           });
-
           const DEDUP_THRESHOLD = 0.92;
           const topMatch = similar[0];
           let conceptId: string | undefined;
-
           if (topMatch && topMatch._score >= DEDUP_THRESHOLD) {
             conceptId = topMatch._id;
           } else {
@@ -256,7 +230,6 @@ export const processResourceAI = internalAction({
               }
             );
           }
-
           await ctx.runMutation(
             internal.resource.linkInternals.insertResourceConcept,
             {
@@ -268,10 +241,13 @@ export const processResourceAI = internalAction({
           );
         }
       }
-
       let extractedPdfText: string | undefined;
-      let pdfPages: Array<{ pageNumber: number; text: string }> | undefined;
-
+      let pdfPages:
+        | Array<{
+            pageNumber: number;
+            text: string;
+          }>
+        | undefined;
       if (
         content.type === "file" &&
         content.mimeType === "application/pdf" &&
@@ -283,7 +259,6 @@ export const processResourceAI = internalAction({
           const extraction = await extractPdfText(buffer);
           extractedPdfText = extraction.fullText;
           pdfPages = extraction.pages;
-
           await ctx.runMutation(
             internal.resource.aiInternals.updateFileExtractedText,
             {
@@ -291,17 +266,14 @@ export const processResourceAI = internalAction({
               extractedText: extraction.fullText.slice(0, 100_000),
             }
           );
-
           embeddingText = extraction.fullText;
         } catch {
-          // PDF extraction failed — fall back to summary-based embedding
+          void 0;
         }
       }
-
       if (content.type === "file" && !extractedPdfText) {
         embeddingText = `${result.summary} ${result.tags.join(" ")}`;
       }
-
       const inputHash = computeHash(embeddingText);
       const {
         embedding,
@@ -309,7 +281,6 @@ export const processResourceAI = internalAction({
         tokens: mainEmbedTokens,
       } = await generateEmbedding(provider, embeddingText);
       addTokens(model, mainEmbedTokens);
-
       await ctx.runMutation(
         internal.resource.aiInternals.upsertResourceEmbedding,
         {
@@ -320,7 +291,6 @@ export const processResourceAI = internalAction({
           inputHash,
         }
       );
-
       await ctx.scheduler.runAfter(
         0,
         internal.resource.aiActions.generateResourceLinks,
@@ -329,38 +299,43 @@ export const processResourceAI = internalAction({
           workspaceId: content.workspaceId,
         }
       );
-
+      await ctx.scheduler.runAfter(
+        0,
+        internal.resource.suggestOrganizationActions.suggest,
+        {
+          resourceId: args.resourceId,
+          workspaceId: content.workspaceId,
+        }
+      );
       const CHUNK_MIN_LENGTH = 2000;
+      const SYNCED_CHUNK_MIN_LENGTH = 500;
       const MAX_CHUNKS = 100;
-
       let chunkableText: string | undefined;
-
       if (content.type === "website") {
         chunkableText = content.articleContent ?? undefined;
       } else if (content.type === "note") {
         chunkableText = content.plainTextContent ?? undefined;
+      } else if (content.type === "synced") {
+        chunkableText = content.markdownContent ?? undefined;
       } else if (extractedPdfText) {
         chunkableText = extractedPdfText;
       }
-
-      if (chunkableText && chunkableText.length > CHUNK_MIN_LENGTH) {
+      const minLength =
+        content.type === "synced" ? SYNCED_CHUNK_MIN_LENGTH : CHUNK_MIN_LENGTH;
+      if (chunkableText && chunkableText.length > minLength) {
         const contentHash = computeHash(chunkableText);
-
         const existingHash = await ctx.runQuery(
           internal.resource.aiInternals.getResourceChunkHash,
           { resourceId: args.resourceId }
         );
-
         if (existingHash !== contentHash) {
           await ctx.runMutation(
             internal.resource.aiInternals.deleteResourceChunks,
             { resourceId: args.resourceId }
           );
-
           const chunks = pdfPages
             ? chunkPdfPages(pdfPages)
             : chunkText(chunkableText);
-
           const cappedChunks = chunks.slice(0, MAX_CHUNKS);
           const chunkTexts = cappedChunks.map((c) => c.content);
           const {
@@ -369,7 +344,6 @@ export const processResourceAI = internalAction({
             tokens: chunkTokens,
           } = await generateEmbeddings(provider, chunkTexts);
           addTokens(chunkModel, chunkTokens);
-
           const chunkDocs = cappedChunks.map((chunk, i) => ({
             resourceId: args.resourceId,
             workspaceId: content.workspaceId,
@@ -382,20 +356,16 @@ export const processResourceAI = internalAction({
             metadata: chunk.metadata,
             contentHash,
           }));
-
           await ctx.runMutation(
             internal.resource.aiInternals.insertResourceChunks,
             { chunks: chunkDocs }
           );
         }
       }
-
-      // All processing (enrichment + embedding + chunking) is done
       await ctx.runMutation(internal.resource.aiInternals.setResourceAIStatus, {
         resourceId: args.resourceId,
         status: "completed",
       });
-
       try {
         const rawCredits = Object.entries(tokensByModel).reduce(
           (sum, [m, t]) => sum + tokensToCredits(t, m),
@@ -404,7 +374,6 @@ export const processResourceAI = internalAction({
         const capped = rawCredits > MAX_ENRICH_CREDITS;
         const amount = capped ? MAX_ENRICH_CREDITS : rawCredits;
         const reason = capped ? "enrich:capped" : "enrich";
-
         if (amount > 0) {
           const resolved = await ctx.runQuery(
             internal.billing.resolver.resolveActingByResource,
@@ -420,14 +389,11 @@ export const processResourceAI = internalAction({
           });
         }
       } catch {
-        // Don't fail enrichment if billing debit fails (e.g. insufficient
-        // credits from a race). Balance will just go slightly negative on the
-        // last bit of a period. Log via normal observability.
+        void 0;
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-
       if (attempt < RETRY_BACKOFFS.length) {
         const delay = RETRY_BACKOFFS[attempt] as number;
         await ctx.scheduler.runAfter(
@@ -451,7 +417,6 @@ export const processResourceAI = internalAction({
     }
   },
 });
-
 export const generateResourceLinks = internalAction({
   args: {
     resourceId: v.id("resource"),
@@ -462,16 +427,13 @@ export const generateResourceLinks = internalAction({
       internal.resource.linkInternals.getResourceConcepts,
       { resourceId: args.resourceId }
     );
-
     const sourceEmbedding = await ctx.runQuery(
       internal.resource.aiInternals.getResourceEmbedding,
       { resourceId: args.resourceId }
     );
-
     if (!sourceEmbedding) {
       return;
     }
-
     const similar = await ctx.vectorSearch(
       "resourceEmbedding",
       "by_embedding",
@@ -481,12 +443,10 @@ export const generateResourceLinks = internalAction({
         filter: (q) => q.eq("workspaceId", args.workspaceId),
       }
     );
-
     const HYBRID_THRESHOLD = 0.35;
     const SEMANTIC_ONLY_THRESHOLD = 0.4;
     const CONCEPT_WEIGHT = 0.7;
     const SEMANTIC_WEIGHT = 0.3;
-
     for (const candidate of similar) {
       const embeddingDoc = await ctx.runQuery(
         internal.resource.aiInternals.getEmbeddingById,
@@ -495,11 +455,9 @@ export const generateResourceLinks = internalAction({
       if (!embeddingDoc) {
         continue;
       }
-
       if (embeddingDoc.resourceId === args.resourceId) {
         continue;
       }
-
       const candidateResource = await ctx.runQuery(
         internal.resource.aiInternals.getResourceById,
         { resourceId: embeddingDoc.resourceId }
@@ -507,22 +465,17 @@ export const generateResourceLinks = internalAction({
       if (!candidateResource) {
         continue;
       }
-
       const candidateConcepts = await ctx.runQuery(
         internal.resource.linkInternals.getResourceConcepts,
         { resourceId: embeddingDoc.resourceId }
       );
-
       const { overlap: conceptOverlap, sharedNames } = computeWeightedJaccard(
         sourceConcepts,
         candidateConcepts
       );
-
       const semanticSimilarity = candidate._score;
-
       let combinedScore: number;
       let meetsThreshold: boolean;
-
       if (conceptOverlap > 0) {
         combinedScore =
           CONCEPT_WEIGHT * conceptOverlap +
@@ -532,7 +485,6 @@ export const generateResourceLinks = internalAction({
         combinedScore = semanticSimilarity;
         meetsThreshold = combinedScore >= SEMANTIC_ONLY_THRESHOLD;
       }
-
       if (meetsThreshold) {
         await ctx.runMutation(
           internal.resource.linkInternals.upsertResourceLink,
@@ -551,7 +503,6 @@ export const generateResourceLinks = internalAction({
     }
   },
 });
-
 export const chunkSemanticSearch = internalAction({
   args: {
     workspaceId: v.id("workspace"),
@@ -563,16 +514,13 @@ export const chunkSemanticSearch = internalAction({
     if (!apiKey) {
       return [];
     }
-
     const provider = createOpenAIProvider(apiKey);
     const { embedding } = await generateEmbedding(provider, args.query);
-
     const results = await ctx.vectorSearch("resourceChunk", "by_embedding", {
       vector: embedding,
       limit: (args.limit ?? 10) * 3,
       filter: (q) => q.eq("workspaceId", args.workspaceId),
     });
-
     const seen = new Set<string>();
     const chunks: Array<{
       chunkId: string;
@@ -580,21 +528,21 @@ export const chunkSemanticSearch = internalAction({
       content: string;
       score: number;
       chunkIndex: number;
-      metadata?: { pageNumber?: number; sectionHeader?: string };
+      metadata?: {
+        pageNumber?: number;
+        sectionHeader?: string;
+      };
       resource: {
         _id: string;
         title: string;
         type: string;
       };
     }> = [];
-
     const maxResults = args.limit ?? 10;
-
     for (const result of results) {
       if (chunks.length >= maxResults) {
         break;
       }
-
       const chunk = await ctx.runQuery(
         internal.resource.aiInternals.getChunkById,
         { chunkId: result._id }
@@ -602,12 +550,10 @@ export const chunkSemanticSearch = internalAction({
       if (!chunk) {
         continue;
       }
-
       if (seen.has(chunk.resourceId)) {
         continue;
       }
       seen.add(chunk.resourceId);
-
       const resource = await ctx.runQuery(
         internal.resource.aiInternals.getResourceById,
         { resourceId: chunk.resourceId }
@@ -615,7 +561,6 @@ export const chunkSemanticSearch = internalAction({
       if (!resource) {
         continue;
       }
-
       chunks.push({
         chunkId: chunk._id,
         resourceId: chunk.resourceId,
@@ -630,11 +575,9 @@ export const chunkSemanticSearch = internalAction({
         },
       });
     }
-
     return chunks;
   },
 });
-
 export const generateTagEmbedding = internalAction({
   args: {
     workspaceId: v.id("workspace"),
@@ -645,10 +588,8 @@ export const generateTagEmbedding = internalAction({
     if (!apiKey) {
       return;
     }
-
     const provider = createOpenAIProvider(apiKey);
     const { embedding } = await generateEmbedding(provider, args.tagName);
-
     await ctx.runMutation(internal.resource.linkInternals.updateTagEmbedding, {
       workspaceId: args.workspaceId,
       name: args.tagName,

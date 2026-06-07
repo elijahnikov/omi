@@ -7,7 +7,6 @@ import { exchangeCodeForToken } from "./tokenExchange";
 
 const OAUTH_PREFIX = "/api/oauth/";
 const TRAILING_SLASHES_RE = /\/+$/;
-
 function convexSiteUrl(): string {
   const url = process.env.CONVEX_SITE_URL;
   if (!url) {
@@ -15,11 +14,9 @@ function convexSiteUrl(): string {
   }
   return url.replace(TRAILING_SLASHES_RE, "");
 }
-
 function redirectUri(provider: string): string {
   return `${convexSiteUrl()}${OAUTH_PREFIX}${provider}/callback`;
 }
-
 function parsePath(pathname: string): {
   provider: string;
   action: "start" | "callback";
@@ -38,14 +35,12 @@ function parsePath(pathname: string): {
   }
   return { provider: provider as string, action };
 }
-
 function errorRedirect(returnTo: string, reason: string): Response {
   const url = new URL(returnTo);
   url.searchParams.set("connected", "error");
   url.searchParams.set("reason", reason);
   return Response.redirect(url.toString(), 302);
 }
-
 export const oauthCallbackHandler = httpAction(async (ctx, request) => {
   const url = new URL(request.url);
   const parsed = parsePath(url.pathname);
@@ -55,7 +50,6 @@ export const oauthCallbackHandler = httpAction(async (ctx, request) => {
   if (!isProviderId(parsed.provider)) {
     return new Response("Unknown provider", { status: 404 });
   }
-
   const stateParam = url.searchParams.get("state");
   if (!stateParam) {
     return new Response("Missing state", { status: 400 });
@@ -64,17 +58,14 @@ export const oauthCallbackHandler = httpAction(async (ctx, request) => {
   if (!state || state.provider !== parsed.provider) {
     return new Response("Invalid state", { status: 400 });
   }
-
   const errorParam = url.searchParams.get("error");
   if (errorParam) {
     return errorRedirect(state.returnTo, errorParam);
   }
-
   const code = url.searchParams.get("code");
   if (!code) {
     return errorRedirect(state.returnTo, "missing_code");
   }
-
   const descriptor = getOAuth2Provider(parsed.provider);
   try {
     const tokens = await exchangeCodeForToken(
@@ -104,6 +95,5 @@ export const oauthCallbackHandler = httpAction(async (ctx, request) => {
     const message = err instanceof Error ? err.message : "unknown_error";
     return errorRedirect(state.returnTo, message);
   }
-
   return Response.redirect(state.returnTo, 302);
 });

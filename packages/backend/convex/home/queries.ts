@@ -11,7 +11,6 @@ const RECENT_CONNECTION_LIMIT = 4;
 const FORGOTTEN_GEM_AGE_DAYS = 30;
 const FORGOTTEN_GEM_LIMIT = 4;
 const DAY_MS = 24 * 60 * 60 * 1000;
-
 interface ResourcePreview {
   domain?: string | null;
   favicon?: string | null;
@@ -22,7 +21,6 @@ interface ResourcePreview {
   plainTextSnippet?: string | null;
   summary?: string | null;
 }
-
 interface ResourceCard {
   _id: Id<"resource">;
   preview: ResourcePreview;
@@ -30,13 +28,11 @@ interface ResourceCard {
   type: "website" | "note" | "file" | "synced";
   updatedAt: number;
 }
-
 async function buildResourceCard(
   ctx: QueryCtx,
   resource: Doc<"resource">
 ): Promise<ResourceCard> {
   const preview: ResourcePreview = {};
-
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
@@ -87,7 +83,6 @@ async function buildResourceCard(
     default:
       break;
   }
-
   const ai = await ctx.db
     .query("resourceAI")
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
@@ -95,7 +90,6 @@ async function buildResourceCard(
   if (ai?.summary) {
     preview.summary = ai.summary;
   }
-
   return {
     _id: resource._id,
     title: resource.title,
@@ -104,30 +98,25 @@ async function buildResourceCard(
     preview,
   };
 }
-
 async function getConceptClusters(ctx: QueryCtx, workspaceId: Id<"workspace">) {
   const concepts = await ctx.db
     .query("concept")
     .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
     .collect();
-
   const clusters: Array<{
     conceptId: Id<"concept">;
     name: string;
     resourceCount: number;
     sampleResources: Awaited<ReturnType<typeof enrichResource>>[];
   }> = [];
-
   for (const concept of concepts) {
     const links = await ctx.db
       .query("resourceConcept")
       .withIndex("by_concept", (q) => q.eq("conceptId", concept._id))
       .collect();
-
     if (links.length < CONCEPT_CLUSTER_MIN_RESOURCES) {
       continue;
     }
-
     const liveResources: Doc<"resource">[] = [];
     for (const link of links) {
       const resource = await ctx.db.get(link.resourceId);
@@ -136,15 +125,12 @@ async function getConceptClusters(ctx: QueryCtx, workspaceId: Id<"workspace">) {
       }
       liveResources.push(resource);
     }
-
     if (liveResources.length < CONCEPT_CLUSTER_MIN_RESOURCES) {
       continue;
     }
-
     const sampleResources = await Promise.all(
       liveResources.slice(0, 3).map((r) => enrichResource(ctx, r))
     );
-
     clusters.push({
       conceptId: concept._id,
       name: concept.name,
@@ -152,27 +138,22 @@ async function getConceptClusters(ctx: QueryCtx, workspaceId: Id<"workspace">) {
       sampleResources,
     });
   }
-
   clusters.sort((a, b) => b.resourceCount - a.resourceCount);
   return clusters.slice(0, CONCEPT_CLUSTER_LIMIT);
 }
-
 async function getRecentConnections(
   ctx: QueryCtx,
   workspaceId: Id<"workspace">
 ) {
   const cutoff = Date.now() - RECENT_CONNECTION_DAYS * DAY_MS;
-
   const links = await ctx.db
     .query("resourceLink")
     .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
     .collect();
-
   const fresh = links.filter(
     (l) => l.status === "auto" && l.createdAt >= cutoff
   );
   fresh.sort((a, b) => b.score - a.score);
-
   interface PivotEntry {
     linkId: Id<"resourceLink">;
     olderDoc: Doc<"resource">;
@@ -180,8 +161,6 @@ async function getRecentConnections(
     score: number;
     sharedConcepts: string[];
   }
-
-  // Group by the newer resource (pivot) → list of older counterparts.
   const groups = new Map<
     Id<"resource">,
     {
@@ -189,7 +168,6 @@ async function getRecentConnections(
       entries: PivotEntry[];
     }
   >();
-
   for (const link of fresh) {
     const source = await ctx.db.get(link.sourceResourceId);
     const target = await ctx.db.get(link.targetResourceId);
@@ -200,11 +178,9 @@ async function getRecentConnections(
       source._creationTime >= target._creationTime
         ? [source, target]
         : [target, source];
-
     if (newer._creationTime - older._creationTime < 14 * DAY_MS) {
       continue;
     }
-
     const existing = groups.get(newer._id);
     const entry: PivotEntry = {
       linkId: link._id,
@@ -214,8 +190,6 @@ async function getRecentConnections(
       sharedConcepts: link.sharedConcepts.slice(0, 4),
     };
     if (existing) {
-      // Skip if this older already appears under the pivot (links can be
-      // duplicated in either direction).
       if (existing.entries.some((e) => e.olderId === older._id)) {
         continue;
       }
@@ -224,8 +198,6 @@ async function getRecentConnections(
       groups.set(newer._id, { newerDoc: newer, entries: [entry] });
     }
   }
-
-  // Order groups by their best (highest-score) entry, then trim.
   const ordered = [...groups.values()]
     .map((g) => ({
       ...g,
@@ -233,8 +205,6 @@ async function getRecentConnections(
     }))
     .sort((a, b) => (b.entries[0]?.score ?? 0) - (a.entries[0]?.score ?? 0))
     .slice(0, RECENT_CONNECTION_LIMIT);
-
-  // Enrich pivots and counterparts.
   return Promise.all(
     ordered.map(async (g) => {
       const [newer, others] = await Promise.all([
@@ -256,29 +226,24 @@ async function getRecentConnections(
     })
   );
 }
-
 function hashString(s: string): number {
-  // Simple non-bitwise rolling hash — only needs to produce a stable ordering.
   let h = 0;
   for (let i = 0; i < s.length; i++) {
     h = (h * 31 + s.charCodeAt(i)) % 2_147_483_647;
   }
   return h;
 }
-
 async function getForgottenGems(
   ctx: QueryCtx,
   workspaceId: Id<"workspace">
 ): Promise<ResourceCard[]> {
   const cutoff = Date.now() - FORGOTTEN_GEM_AGE_DAYS * DAY_MS;
-
   const completedAI = await ctx.db
     .query("resourceAI")
     .withIndex("by_workspace_status", (q) =>
       q.eq("workspaceId", workspaceId).eq("status", "completed")
     )
     .collect();
-
   const candidates: Doc<"resource">[] = [];
   for (const ai of completedAI) {
     if (!ai.summary) {
@@ -293,23 +258,19 @@ async function getForgottenGems(
     }
     candidates.push(resource);
   }
-
   const dayBucket = Math.floor(Date.now() / DAY_MS);
   candidates.sort((a, b) => {
     const ha = hashString(`${a._id}-${dayBucket}`);
     const hb = hashString(`${b._id}-${dayBucket}`);
     return ha - hb;
   });
-
   const picked = candidates.slice(0, FORGOTTEN_GEM_LIMIT);
   return Promise.all(picked.map((r) => buildResourceCard(ctx, r)));
 }
-
 export const getHome = workspaceQuery({
   args: {},
   handler: async (ctx) => {
     const workspaceId = ctx.workspace._id;
-
     let plan: "free" | "basic" | "pro" = "free";
     try {
       const resolved = await resolveActingBillingAccount(
@@ -319,11 +280,9 @@ export const getHome = workspaceQuery({
       );
       plan = resolved.plan;
     } catch {
-      // No billing account yet — treat as free
+      void 0;
     }
-
     const isPaid = plan === "basic" || plan === "pro";
-
     if (!isPaid) {
       return {
         plan,
@@ -331,14 +290,12 @@ export const getHome = workspaceQuery({
         ai: null,
       };
     }
-
     const [conceptClusters, recentConnections, forgottenGems] =
       await Promise.all([
         getConceptClusters(ctx, workspaceId),
         getRecentConnections(ctx, workspaceId),
         getForgottenGems(ctx, workspaceId),
       ]);
-
     return {
       plan,
       workspace: ctx.workspace,
@@ -350,3 +307,4 @@ export const getHome = workspaceQuery({
     };
   },
 });
+export { getSuggestedForYou as getDailyDigest } from "../search/queries";

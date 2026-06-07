@@ -12,7 +12,6 @@ const SOURCE_UNION = v.union(
   v.literal("mymind"),
   v.literal("notion_oauth")
 );
-
 const OPTIONS = v.object({
   createRootCollection: v.boolean(),
   rootCollectionName: v.optional(v.string()),
@@ -20,7 +19,6 @@ const OPTIONS = v.object({
   dedupe: v.boolean(),
   cherryPickPaths: v.optional(v.array(v.string())),
 });
-
 export const startImport = workspaceMutation({
   args: {
     source: SOURCE_UNION,
@@ -34,7 +32,6 @@ export const startImport = workspaceMutation({
     if (!(args.storageId || args.connectionId)) {
       throw new ConvexError("Either storageId or connectionId is required");
     }
-
     const jobId = await ctx.db.insert("importJob", {
       workspaceId: ctx.workspace._id,
       userId: ctx.user._id,
@@ -53,15 +50,12 @@ export const startImport = workspaceMutation({
       },
       startedAt: Date.now(),
     });
-
     await ctx.scheduler.runAfter(0, internal.imports.pipeline.runImport, {
       jobId,
     });
-
     return jobId;
   },
 });
-
 export const cancelImport = workspaceMutation({
   args: { jobId: v.id("importJob") },
   handler: async (ctx, args) => {
@@ -78,7 +72,6 @@ export const cancelImport = workspaceMutation({
     });
   },
 });
-
 export const deleteImport = workspaceMutation({
   args: { jobId: v.id("importJob") },
   handler: async (ctx, args) => {
@@ -89,7 +82,6 @@ export const deleteImport = workspaceMutation({
     await ctx.db.delete(args.jobId);
   },
 });
-
 export const enrichImportJob = workspaceMutation({
   args: { jobId: v.id("importJob") },
   handler: async (ctx, args) => {
@@ -97,7 +89,6 @@ export const enrichImportJob = workspaceMutation({
     if (!job || job.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Import not found");
     }
-
     const prefix = `${job.source}:`;
     const resources = await ctx.db
       .query("resource")
@@ -105,7 +96,6 @@ export const enrichImportJob = workspaceMutation({
         q.eq("workspaceId", ctx.workspace._id)
       )
       .collect();
-
     let scheduled = 0;
     for (const resource of resources) {
       if (!resource.importedFrom?.startsWith(prefix)) {

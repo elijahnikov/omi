@@ -28,12 +28,29 @@ const IMPORT_RECORD = v.object({
     })
   ),
 });
-
 export const getJob = internalQuery({
   args: { jobId: v.id("importJob") },
   handler: async (ctx, args) => ctx.db.get(args.jobId),
 });
-
+export const listResourcesForJob = internalQuery({
+  args: { jobId: v.id("importJob") },
+  handler: async (ctx, args) => {
+    const job = await ctx.db.get(args.jobId);
+    if (!job) {
+      return [];
+    }
+    const prefix = `${job.source}:`;
+    const resources = await ctx.db
+      .query("resource")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", job.workspaceId))
+      .filter((q) => q.neq(q.field("importedFrom"), undefined))
+      .collect();
+    return resources
+      .filter((resource) => resource.importedFrom?.startsWith(prefix))
+      .map((resource) => resource._id)
+      .slice(0, 50);
+  },
+});
 export const setJobStatus = internalMutation({
   args: {
     jobId: v.id("importJob"),
@@ -55,7 +72,6 @@ export const setJobStatus = internalMutation({
     await ctx.db.patch(jobId, patch);
   },
 });
-
 export const ensureRootCollection = internalMutation({
   args: {
     jobId: v.id("importJob"),
@@ -79,7 +95,6 @@ export const ensureRootCollection = internalMutation({
     return collectionId;
   },
 });
-
 export const setTotal = internalMutation({
   args: { jobId: v.id("importJob"), total: v.number() },
   handler: async (ctx, args) => {
@@ -92,7 +107,6 @@ export const setTotal = internalMutation({
     });
   },
 });
-
 export const insertBatch = internalMutation({
   args: {
     jobId: v.id("importJob"),
@@ -104,23 +118,21 @@ export const insertBatch = internalMutation({
     if (!job || job.status === "cancelled") {
       return { imported: 0, skipped: 0, failed: 0, websiteIds: [] };
     }
-
     const { source, workspaceId, userId } = job;
     const dedupe = job.options?.dedupe ?? true;
-
     const collectionCache = new Map<string, Id<"collection">>();
     const tagCache = new Map<string, Id<"tag">>();
-
     let imported = 0;
     let skipped = 0;
     let failed = 0;
-    const errors: { item: string; error: string }[] = [];
+    const errors: {
+      item: string;
+      error: string;
+    }[] = [];
     const websiteIds: Id<"resource">[] = [];
-
     for (const rec of args.records) {
       try {
         const importedFrom = `${source}:${rec.sourceItemId}`;
-
         if (dedupe) {
           const existing = await ctx.db
             .query("resource")
@@ -133,7 +145,6 @@ export const insertBatch = internalMutation({
             continue;
           }
         }
-
         const collectionId = await resolveCollectionPath(
           ctx,
           workspaceId,
@@ -142,7 +153,6 @@ export const insertBatch = internalMutation({
           rec.collectionPath,
           collectionCache
         );
-
         const resourceId = await createResourceForImport(ctx, {
           workspaceId,
           userId,
@@ -163,7 +173,6 @@ export const insertBatch = internalMutation({
           fileSize: rec.attachment?.fileSize,
           mimeType: rec.attachment?.mimeType,
         });
-
         if (rec.tagNames && rec.tagNames.length > 0) {
           await attachTags(
             ctx,
@@ -173,11 +182,9 @@ export const insertBatch = internalMutation({
             tagCache
           );
         }
-
         if (rec.type === "website") {
           websiteIds.push(resourceId);
         }
-
         imported += 1;
       } catch (error) {
         failed += 1;
@@ -187,7 +194,6 @@ export const insertBatch = internalMutation({
         });
       }
     }
-
     const patchedCounts = {
       ...job.counts,
       parsed: job.counts.parsed + args.records.length,
@@ -195,7 +201,6 @@ export const insertBatch = internalMutation({
       skipped: job.counts.skipped + skipped,
       failed: job.counts.failed + failed,
     };
-
     if (errors.length > 0) {
       const existing = job.errorSamples ?? [];
       const merged = [...existing, ...errors].slice(0, 20);
@@ -206,11 +211,9 @@ export const insertBatch = internalMutation({
     } else {
       await ctx.db.patch(args.jobId, { counts: patchedCounts });
     }
-
     return { imported, skipped, failed, websiteIds };
   },
 });
-
 async function resolveCollectionPath(
   ctx: MutationCtx,
   workspaceId: Id<"workspace">,
@@ -222,7 +225,6 @@ async function resolveCollectionPath(
   if (!path || path.length === 0) {
     return rootCollectionId;
   }
-
   let parentId: Id<"collection"> | undefined = rootCollectionId;
   for (const name of path) {
     if (!name) {
@@ -234,7 +236,6 @@ async function resolveCollectionPath(
       parentId = cached;
       continue;
     }
-
     const siblings = await ctx.db
       .query("collection")
       .withIndex("by_workspace_parent", (q) =>
@@ -244,9 +245,7 @@ async function resolveCollectionPath(
           .eq("deletedAt", undefined)
       )
       .collect();
-
     let matched = siblings.find((c) => c.name === name)?._id;
-
     if (!matched) {
       matched = await ctx.db.insert("collection", {
         workspaceId,
@@ -256,14 +255,11 @@ async function resolveCollectionPath(
         updatedAt: Date.now(),
       });
     }
-
     cache.set(cacheKey, matched);
     parentId = matched;
   }
-
   return parentId;
 }
-
 async function attachTags(
   ctx: MutationCtx,
   workspaceId: Id<"workspace">,

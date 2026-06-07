@@ -20,7 +20,6 @@ const CLOSE_A_RE = /<\/a\s*>/i;
 const HTML_TAG_STRIP_RE = /<[^>]+>/g;
 const WHITESPACE_COLLAPSE_RE = /\s+/g;
 const UNDERSCORE_RE = /_/g;
-
 const MIME_BY_EXT: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
@@ -42,7 +41,6 @@ const MIME_BY_EXT: Record<string, string> = {
   json: "application/json",
   zip: "application/zip",
 };
-
 export const parseFabricZip: ImportParser = {
   kind: "file",
   source: "fabric",
@@ -58,7 +56,6 @@ export const parseFabricZip: ImportParser = {
       };
       return;
     }
-
     for (const [rawPath, bytes] of Object.entries(entries)) {
       if (rawPath.endsWith("/")) {
         continue;
@@ -67,34 +64,28 @@ export const parseFabricZip: ImportParser = {
       if (!rel) {
         continue;
       }
-
       if (BOOKMARKS_FILE_RE.test(rel)) {
         const text = new TextDecoder("utf-8").decode(bytes);
         yield* parseBookmarksHtml(text);
         continue;
       }
-
       if (HTML_EXT_RE.test(rel)) {
         const text = new TextDecoder("utf-8").decode(bytes);
         yield buildNoteRecord(rel, text);
         continue;
       }
-
       yield buildFileRecord(rel, bytes);
     }
   },
 };
-
 function buildNoteRecord(rel: string, html: string): ImportRecord {
   const segments = rel.split("/");
   const fileName = segments.at(-1) ?? rel;
   const titleFromFile = humanize(fileName.replace(HTML_EXT_RE, ""));
   const collectionPath =
     segments.length > 1 ? segments.slice(0, -1).filter(Boolean) : undefined;
-
   const plainText = stripHtml(html);
   const createdAt = extractCreatedAt(html);
-
   return {
     sourceItemId: hashString(`fabric:note:${rel}`),
     type: "note",
@@ -105,7 +96,6 @@ function buildNoteRecord(rel: string, html: string): ImportRecord {
     createdAt,
   };
 }
-
 function buildFileRecord(rel: string, bytes: Uint8Array): ImportRecord {
   const segments = rel.split("/");
   const fileName = segments.at(-1) ?? rel;
@@ -115,7 +105,6 @@ function buildFileRecord(rel: string, bytes: Uint8Array): ImportRecord {
   const ext = extIdx >= 0 ? fileName.slice(extIdx + 1).toLowerCase() : "";
   const mimeType = MIME_BY_EXT[ext] ?? "application/octet-stream";
   const titleBase = extIdx >= 0 ? fileName.slice(0, extIdx) : fileName;
-
   return {
     sourceItemId: hashString(`fabric:file:${rel}`),
     type: "file",
@@ -128,7 +117,6 @@ function buildFileRecord(rel: string, bytes: Uint8Array): ImportRecord {
     },
   };
 }
-
 function extractCreatedAt(html: string): number | undefined {
   const match = html.match(CREATED_AT_RE);
   if (!match?.[1]) {
@@ -137,30 +125,24 @@ function extractCreatedAt(html: string): number | undefined {
   const ts = Date.parse(match[1]);
   return Number.isNaN(ts) ? undefined : ts;
 }
-
 function stripHtml(html: string): string {
   return decodeHtml(html.replace(HTML_TAG_STRIP_RE, " "))
     .replace(WHITESPACE_COLLAPSE_RE, " ")
     .trim();
 }
-
 function humanize(raw: string): string {
   return raw.replace(UNDERSCORE_RE, " ").trim();
 }
-
 function* parseBookmarksHtml(text: string): Iterable<ImportYield> {
   const path: string[] = [];
   let pendingFolderName: string | undefined;
   let rootSkipped = false;
-
   TAG_RE.lastIndex = 0;
   let match: RegExpExecArray | null = TAG_RE.exec(text);
   let lastIndex = 0;
-
   while (match !== null) {
     const [, closing, tagNameRaw, attrs] = match;
     const tagName = tagNameRaw?.toLowerCase();
-
     if (!closing && tagName === "h3") {
       const inner = extractInner(text, TAG_RE.lastIndex, "h3");
       pendingFolderName = decodeHtml(inner).trim();
@@ -190,7 +172,6 @@ function* parseBookmarksHtml(text: string): Iterable<ImportYield> {
               .map((t) => t.trim())
               .filter(Boolean)
           : undefined;
-
         yield {
           sourceItemId: hashString(`fabric:bookmark:${href}`),
           type: "website",
@@ -202,7 +183,6 @@ function* parseBookmarksHtml(text: string): Iterable<ImportYield> {
         };
       }
     }
-
     lastIndex = TAG_RE.lastIndex;
     match = TAG_RE.exec(text);
     if (match && match.index < lastIndex) {
@@ -210,7 +190,6 @@ function* parseBookmarksHtml(text: string): Iterable<ImportYield> {
     }
   }
 }
-
 function extractInner(text: string, start: number, tagName: string): string {
   const closeRe = tagName === "h3" ? CLOSE_H3_RE : CLOSE_A_RE;
   const slice = text.slice(start);
@@ -220,7 +199,6 @@ function extractInner(text: string, start: number, tagName: string): string {
   }
   return slice.slice(0, endMatch.index);
 }
-
 function parseAttrs(attrs: string): Record<string, string> {
   const result: Record<string, string> = {};
   ATTR_RE.lastIndex = 0;
@@ -235,7 +213,6 @@ function parseAttrs(attrs: string): Record<string, string> {
   }
   return result;
 }
-
 function parseEpoch(raw: string | undefined): number | undefined {
   if (!raw) {
     return;
@@ -246,7 +223,6 @@ function parseEpoch(raw: string | undefined): number | undefined {
   }
   return n > 1e12 ? n : n * 1000;
 }
-
 function decodeHtml(s: string): string {
   return s
     .replace(AMP_ENTITY_RE, "&")

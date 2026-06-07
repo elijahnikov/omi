@@ -14,12 +14,58 @@ const MODEL_MULTIPLIER: Record<string, number> = {
   "claude-haiku-4-5": 2.5,
   "claude-sonnet-4-6": 6,
 };
-
 export function tokensToCredits(tokens: number, model: string): number {
   const multiplier = MODEL_MULTIPLIER[model] ?? 1;
   return Math.max(1, Math.ceil((tokens / 1000) * multiplier));
 }
-
+export const debitUpTo = internalMutation({
+  args: {
+    billingAccountId: v.id("billingAccount"),
+    workspaceId: v.id("workspace"),
+    actingUserId: v.id("user"),
+    reason: v.string(),
+    requestedAmount: v.number(),
+    resourceId: v.optional(v.id("resource")),
+  },
+  handler: async (ctx, args) => {
+    if (args.requestedAmount <= 0) {
+      return { debited: 0, balanceAfter: 0 };
+    }
+    const account = await ctx.db.get(args.billingAccountId);
+    if (!account) {
+      throw new ConvexError("Billing account not found");
+    }
+    const amount = Math.min(args.requestedAmount, account.creditBalance);
+    if (amount <= 0) {
+      await ctx.db.insert("creditLedger", {
+        billingAccountId: args.billingAccountId,
+        workspaceId: args.workspaceId,
+        actingUserId: args.actingUserId,
+        kind: "debit",
+        reason: `${args.reason}:underfunded`,
+        amount: 0,
+        balanceAfter: account.creditBalance,
+        resourceId: args.resourceId,
+      });
+      return { debited: 0, balanceAfter: account.creditBalance };
+    }
+    const next = account.creditBalance - amount;
+    await ctx.db.patch(args.billingAccountId, { creditBalance: next });
+    const reason =
+      amount < args.requestedAmount ? `${args.reason}:partial` : args.reason;
+    await ctx.db.insert("creditLedger", {
+      billingAccountId: args.billingAccountId,
+      workspaceId: args.workspaceId,
+      actingUserId: args.actingUserId,
+      kind: "debit",
+      reason,
+      amount: -amount,
+      balanceAfter: next,
+      resourceId: args.resourceId,
+    });
+    return { debited: amount, balanceAfter: next };
+  },
+});
 export const debit = internalMutation({
   args: {
     billingAccountId: v.id("billingAccount"),
@@ -55,7 +101,6 @@ export const debit = internalMutation({
     return { balanceAfter: next };
   },
 });
-
 export const topUp = internalMutation({
   args: {
     billingAccountId: v.id("billingAccount"),
@@ -88,13 +133,6 @@ export const topUp = internalMutation({
     return { balanceAfter: next };
   },
 });
-
-/**
- * Writes a visibility-only ledger row when a workspace has BYO API keys set
- * and the AI call was paid by the user's own provider account. Balance is
- * unchanged; the row exists so Usage dashboards can surface "actions taken
- * via BYO" alongside debited ones.
- */
 export const logByoUsage = internalMutation({
   args: {
     billingAccountId: v.id("billingAccount"),
@@ -120,7 +158,6 @@ export const logByoUsage = internalMutation({
     });
   },
 });
-
 export const reserveBrowserRender = internalMutation({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -145,7 +182,6 @@ export const reserveBrowserRender = internalMutation({
     return { allowed: true as const, billingAccountId: account._id };
   },
 });
-
 export const refundBrowserRender = internalMutation({
   args: { billingAccountId: v.id("billingAccount") },
   handler: async (ctx, args) => {
@@ -159,13 +195,6 @@ export const refundBrowserRender = internalMutation({
     });
   },
 });
-
-/**
- * Pre-flight check called from public actions before the provider is billed.
- * Short-circuits with `Insufficient credits` if the estimate exceeds balance.
- * Returns the resolved billing account so callsites can pass billingAccountId
- * straight to `debit` after the AI call returns.
- */
 export const preflight = internalQuery({
   args: {
     userId: v.id("user"),

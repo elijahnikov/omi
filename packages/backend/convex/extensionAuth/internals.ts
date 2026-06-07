@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { hashExtensionToken } from "./shared";
-
 export const getMembership = internalQuery({
   args: {
     userId: v.id("user"),
@@ -24,7 +23,6 @@ export const getMembership = internalQuery({
     return member ? { role: member.role } : null;
   },
 });
-
 export const listWorkspacesForUser = internalQuery({
   args: { userId: v.id("user") },
   handler: async (ctx, args) => {
@@ -33,7 +31,6 @@ export const listWorkspacesForUser = internalQuery({
       .withIndex("by_user_last_accessed", (q) => q.eq("userId", args.userId))
       .order("desc")
       .collect();
-
     const rows = await Promise.all(
       members.map(async (m) => {
         const ws = await ctx.db.get(m.workspaceId);
@@ -52,7 +49,6 @@ export const listWorkspacesForUser = internalQuery({
     return rows.filter((r): r is NonNullable<typeof r> => r !== null);
   },
 });
-
 export const resolveByToken = internalQuery({
   args: { token: v.string() },
   handler: async (ctx, args) => {
@@ -61,19 +57,16 @@ export const resolveByToken = internalQuery({
       .query("extensionToken")
       .withIndex("by_hash", (q) => q.eq("tokenHash", tokenHash))
       .unique();
-
     if (!row) {
       return null;
     }
     if (row.revokedAt || row.expiresAt < Date.now()) {
       return null;
     }
-
     const user = await ctx.db.get(row.userId);
     if (!user) {
       return null;
     }
-
     return {
       tokenId: row._id,
       userId: row.userId,
@@ -82,7 +75,6 @@ export const resolveByToken = internalQuery({
     };
   },
 });
-
 export const touchLastUsed = internalMutation({
   args: { tokenId: v.id("extensionToken") },
   handler: async (ctx, args) => {

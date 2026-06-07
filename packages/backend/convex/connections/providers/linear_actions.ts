@@ -1,5 +1,4 @@
 "use node";
-
 import { ConvexError, v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { action, internalAction } from "../../_generated/server";
@@ -9,7 +8,6 @@ import { linearGraphql } from "./linear";
 import type { ScopedTeam } from "./linear_internals";
 
 const TRAILING_SLASHES_RE = /\/+$/;
-
 function siteUrl(): string {
   const url = process.env.CONVEX_SITE_URL;
   if (!url) {
@@ -17,7 +15,6 @@ function siteUrl(): string {
   }
   return url.replace(TRAILING_SLASHES_RE, "");
 }
-
 export const reconcileWebhooks = internalAction({
   args: {
     connectionId: v.id("connection"),
@@ -34,7 +31,6 @@ export const reconcileWebhooks = internalAction({
     if (!conn.webhookSecret) {
       return;
     }
-
     await ctx.runAction(
       internal.connections.ensureFreshToken.ensureFreshAccessToken,
       { connectionId: args.connectionId }
@@ -50,28 +46,26 @@ export const reconcileWebhooks = internalAction({
       refreshed.encryptedAccessToken,
       refreshed.tokenKeyVersion
     );
-
     const current: ScopedTeam[] = refreshed.webhookScope.teams ?? [];
     const currentById = new Map(current.map((team) => [team.id, team]));
     const target = new Set(args.targetTeamIds);
-
     const toRegister = args.targetTeamIds.filter(
       (id) => !currentById.get(id)?.webhookId
     );
     const toUnregister = current.filter(
       (team) => !target.has(team.id) && team.webhookId !== undefined
     );
-
     const callbackUrl = `${siteUrl()}/api/integrations/linear/webhook/${args.connectionId}`;
     const registered: ScopedTeam[] = [];
-
     for (const teamId of toRegister) {
       const existing = currentById.get(teamId);
       try {
         const data = await linearGraphql<{
           webhookCreate: {
             success: boolean;
-            webhook: { id: string } | null;
+            webhook: {
+              id: string;
+            } | null;
           };
         }>(
           accessToken,
@@ -115,13 +109,16 @@ export const reconcileWebhooks = internalAction({
         });
       }
     }
-
     for (const team of toUnregister) {
       if (!team.webhookId) {
         continue;
       }
       try {
-        await linearGraphql<{ webhookDelete: { success: boolean } }>(
+        await linearGraphql<{
+          webhookDelete: {
+            success: boolean;
+          };
+        }>(
           accessToken,
           `mutation WebhookDelete($id: String!) {
             webhookDelete(id: $id) { success }
@@ -132,7 +129,6 @@ export const reconcileWebhooks = internalAction({
         console.warn("[linear] unregister webhook failed", team.id, err);
       }
     }
-
     const finalTeams: ScopedTeam[] = args.targetTeamIds.map((id) => {
       const existing = currentById.get(id);
       const newly = registered.find((team) => team.id === id);
@@ -142,7 +138,6 @@ export const reconcileWebhooks = internalAction({
         webhookId: newly?.webhookId ?? existing?.webhookId,
       };
     });
-
     await ctx.runMutation(
       internal.connections.providers.linear_internals.writeWebhookScope,
       {
@@ -154,10 +149,17 @@ export const reconcileWebhooks = internalAction({
     );
   },
 });
-
 export const listMyTeams = action({
   args: { connectionId: v.id("connection") },
-  handler: async (ctx, args): Promise<Array<{ id: string; name: string }>> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<
+    Array<{
+      id: string;
+      name: string;
+    }>
+  > => {
     const identity = await getAuthIdentity(ctx);
     if (!identity?.userId) {
       throw new ConvexError("Not authenticated");
@@ -169,7 +171,6 @@ export const listMyTeams = action({
     if (!conn) {
       throw new ConvexError("Connection not found");
     }
-
     await ctx.runAction(
       internal.connections.ensureFreshToken.ensureFreshAccessToken,
       { connectionId: args.connectionId }
@@ -185,14 +186,17 @@ export const listMyTeams = action({
       refreshed.encryptedAccessToken,
       refreshed.tokenKeyVersion
     );
-
     const data = await linearGraphql<{
-      teams: { nodes: Array<{ id: string; name: string }> };
+      teams: {
+        nodes: Array<{
+          id: string;
+          name: string;
+        }>;
+      };
     }>(accessToken, "query { teams { nodes { id name } } }");
     return data.teams.nodes;
   },
 });
-
 export const disconnectAndCleanup = internalAction({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args): Promise<void> => {

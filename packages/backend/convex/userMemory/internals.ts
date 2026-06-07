@@ -1,13 +1,11 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-
 export const getMemoryRow = internalQuery({
   args: { memoryId: v.id("userMemory") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.memoryId);
   },
 });
-
 export const setStatus = internalMutation({
   args: {
     memoryId: v.id("userMemory"),
@@ -29,7 +27,6 @@ export const setStatus = internalMutation({
     return { success: true, reason: null };
   },
 });
-
 export const upsertMemoryContent = internalMutation({
   args: {
     memoryId: v.id("userMemory"),
@@ -55,7 +52,6 @@ export const upsertMemoryContent = internalMutation({
     return { success: true, reason: null };
   },
 });
-
 export const markExtractionSkipped = internalMutation({
   args: {
     memoryId: v.id("userMemory"),
@@ -73,7 +69,6 @@ export const markExtractionSkipped = internalMutation({
     });
   },
 });
-
 export const markExtractionFailed = internalMutation({
   args: { memoryId: v.id("userMemory") },
   handler: async (ctx, args) => {
@@ -87,7 +82,6 @@ export const markExtractionFailed = internalMutation({
     });
   },
 });
-
 export const getMessagesInThreadSince = internalQuery({
   args: {
     threadId: v.id("chatThread"),
@@ -110,7 +104,6 @@ export const getMessagesInThreadSince = internalQuery({
     }));
   },
 });
-
 export const getLatestMessageAtInThread = internalQuery({
   args: { threadId: v.id("chatThread") },
   handler: async (ctx, args) => {

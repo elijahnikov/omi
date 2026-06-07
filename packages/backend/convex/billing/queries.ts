@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { protectedQuery, workspaceQuery } from "../utils";
 import { tierToBrowserRenderLimit, tierToStorageBytes } from "./pricing";
 import { resolveActingBillingAccount } from "./resolver";
-
 export const getMyBillingState = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -29,7 +28,6 @@ export const getMyBillingState = protectedQuery({
     };
   },
 });
-
 export const getActingPlan = workspaceQuery({
   args: {},
   handler: async (ctx) => {
@@ -41,9 +39,7 @@ export const getActingPlan = workspaceQuery({
     return { plan: resolved.plan, creditBalance: resolved.creditBalance };
   },
 });
-
 type UsageReasonKey = "chat" | "search" | "enrich" | "memory-extract" | "other";
-
 function bucketReason(reason: string): UsageReasonKey {
   if (reason.startsWith("chat")) {
     return "chat";
@@ -59,7 +55,6 @@ function bucketReason(reason: string): UsageReasonKey {
   }
   return "other";
 }
-
 interface Entry {
   byReason: Record<UsageReasonKey, number>;
   credits: number;
@@ -84,7 +79,6 @@ export const getMyUsageByWorkspace = protectedQuery({
         r.workspaceId !== undefined &&
         (resetAt === 0 || r._creationTime >= resetAt - 31 * 24 * 60 * 60 * 1000)
     );
-
     const byWorkspace = new Map<string, Entry>();
     for (const row of periodDebits) {
       if (!row.workspaceId) {
@@ -127,7 +121,6 @@ export const getMyUsageByWorkspace = protectedQuery({
     return results;
   },
 });
-
 export const getMyLedger = protectedQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {

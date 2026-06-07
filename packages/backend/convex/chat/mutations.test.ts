@@ -10,12 +10,14 @@ import type { Id } from "../_generated/dataModel";
 
 interface Seeded {
   accountId: Id<"billingAccount">;
-  identity: { subject: string; userId: string };
+  identity: {
+    subject: string;
+    userId: string;
+  };
   threadId: Id<"chatThread">;
   userId: Id<"user">;
   workspaceId: Id<"workspace">;
 }
-
 async function seed(
   t: ReturnType<typeof createHarness>,
   balance: number
@@ -39,12 +41,10 @@ async function seed(
   });
   return { userId, workspaceId, threadId, accountId, identity };
 }
-
 describe("recordChatUsage", () => {
   it("debits ceil((prompt + completion)/1000 * multiplier) for gpt-4.1-mini", async () => {
     const t = createHarness();
     const { workspaceId, threadId, accountId, identity } = await seed(t, 100);
-
     const result = await asUser(t, identity).mutation(
       api.chat.mutations.recordChatUsage,
       {
@@ -55,13 +55,10 @@ describe("recordChatUsage", () => {
         model: "gpt-4.1-mini",
       }
     );
-
     expect(result.debited).toBe(3);
     expect(result.byo).toBe(false);
-
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.creditBalance).toBe(97);
-
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("creditLedger")
@@ -75,11 +72,9 @@ describe("recordChatUsage", () => {
     expect(rows[0]?.reason).toBe("chat");
     expect(rows[0]?.amount).toBe(-3);
   });
-
   it("falls back to multiplier 1 for unknown models", async () => {
     const t = createHarness();
     const { workspaceId, threadId, accountId, identity } = await seed(t, 100);
-
     const result = await asUser(t, identity).mutation(
       api.chat.mutations.recordChatUsage,
       {
@@ -90,16 +85,13 @@ describe("recordChatUsage", () => {
         model: "mystery-model",
       }
     );
-
     expect(result.debited).toBe(2);
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.creditBalance).toBe(98);
   });
-
-  it("swallows insufficient-balance: writes a zero-amount 'chat:underfunded' row and leaves balance intact", async () => {
+  it("partially debits when balance is below the full chat cost", async () => {
     const t = createHarness();
     const { workspaceId, threadId, accountId, identity } = await seed(t, 1);
-
     const result = await asUser(t, identity).mutation(
       api.chat.mutations.recordChatUsage,
       {
@@ -110,13 +102,10 @@ describe("recordChatUsage", () => {
         model: "gpt-4.1-mini",
       }
     );
-
-    expect(result.debited).toBe(0);
+    expect(result.debited).toBe(1);
     expect(result.byo).toBe(false);
-
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
-    expect(account?.creditBalance).toBe(1);
-
+    expect(account?.creditBalance).toBe(0);
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("creditLedger")
@@ -126,10 +115,9 @@ describe("recordChatUsage", () => {
         .collect()
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.amount).toBe(0);
-    expect(rows[0]?.reason).toBe("chat:underfunded");
+    expect(rows[0]?.amount).toBe(-1);
+    expect(rows[0]?.reason).toBe("chat:partial");
   });
-
   it("skips the debit when the workspace has a BYO key and writes a byo-key ledger row", async () => {
     const t = createHarness();
     const { userId, workspaceId, threadId, accountId, identity } = await seed(
@@ -146,7 +134,6 @@ describe("recordChatUsage", () => {
         lastValidatedAt: Date.now(),
       })
     );
-
     const result = await asUser(t, identity).mutation(
       api.chat.mutations.recordChatUsage,
       {
@@ -157,13 +144,10 @@ describe("recordChatUsage", () => {
         model: "gpt-4.1-mini",
       }
     );
-
     expect(result.debited).toBe(0);
     expect(result.byo).toBe(true);
-
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.creditBalance).toBe(100);
-
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("creditLedger")
@@ -177,7 +161,6 @@ describe("recordChatUsage", () => {
     expect(rows[0]?.reason).toBe("chat");
     expect(rows[0]?.amount).toBe(0);
   });
-
   it("rejects when the caller is not a member of the thread's workspace", async () => {
     const t = createHarness();
     const { workspaceId, threadId } = await seed(t, 100);

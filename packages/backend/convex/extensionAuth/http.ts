@@ -5,29 +5,30 @@ import { httpAction } from "../_generated/server";
 import { rateLimiter } from "../rateLimiter";
 
 const BEARER_PREFIX = "Bearer ";
-
 class HttpError extends Error {
   readonly status: number;
-
   constructor(status: number, message: string) {
     super(message);
     this.status = status;
   }
 }
-
 function jsonResponse(body: unknown, init?: ResponseInit): Response {
   return new Response(JSON.stringify(body), {
     ...init,
     headers: { "content-type": "application/json", ...init?.headers },
   });
 }
-
 function errorResponse(err: unknown): Response {
   if (err instanceof HttpError) {
     return jsonResponse({ error: err.message }, { status: err.status });
   }
   if (err instanceof ConvexError) {
-    const data = err.data as { kind?: string; retryAfter?: number } | string;
+    const data = err.data as
+      | {
+          kind?: string;
+          retryAfter?: number;
+        }
+      | string;
     if (
       typeof data === "object" &&
       data !== null &&
@@ -46,7 +47,6 @@ function errorResponse(err: unknown): Response {
   const message = err instanceof Error ? err.message : "Unknown error";
   return jsonResponse({ error: message }, { status: 500 });
 }
-
 function readBearerToken(request: Request): string {
   const header = request.headers.get("authorization");
   if (!header?.startsWith(BEARER_PREFIX)) {
@@ -54,16 +54,13 @@ function readBearerToken(request: Request): string {
   }
   return header.slice(BEARER_PREFIX.length).trim();
 }
-
 type TokenKind = "extension" | "mcp";
-
 interface ResolvedAuth {
   defaultWorkspaceId?: Id<"workspace">;
   kind: TokenKind;
   tokenId: Id<"extensionToken">;
   userId: Id<"user">;
 }
-
 async function resolveAuth(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   request: Request,
@@ -85,7 +82,6 @@ async function resolveAuth(
   });
   return resolved;
 }
-
 async function readJson<T>(request: Request): Promise<T> {
   try {
     return (await request.json()) as T;
@@ -93,7 +89,6 @@ async function readJson<T>(request: Request): Promise<T> {
     throw new HttpError(400, "Invalid JSON body");
   }
 }
-
 async function resolveWorkspaceId(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   auth: ResolvedAuth,
@@ -114,7 +109,6 @@ async function resolveWorkspaceId(
   }
   return targetId;
 }
-
 export const meHandler = httpAction(async (ctx, request) => {
   try {
     const auth = await resolveAuth(ctx, request);
@@ -131,10 +125,13 @@ export const meHandler = httpAction(async (ctx, request) => {
     return errorResponse(err);
   }
 });
-
 export const uploadUrlHandler = httpAction(async (ctx, request) => {
   try {
-    await resolveAuth(ctx, request);
+    const auth = await resolveAuth(ctx, request);
+    await rateLimiter.limit(ctx, "extensionUploadUrl", {
+      key: auth.userId,
+      throws: true,
+    });
     const uploadUrl = await ctx.runMutation(
       internal.resource.internals.generateUploadUrlInternal,
       {}
@@ -144,14 +141,12 @@ export const uploadUrlHandler = httpAction(async (ctx, request) => {
     return errorResponse(err);
   }
 });
-
 interface CaptureWebsiteBody {
   description?: string;
   title?: string;
   url: string;
   workspaceId?: string;
 }
-
 export const captureWebsiteHandler = httpAction(async (ctx, request) => {
   try {
     const auth = await resolveAuth(ctx, request);
@@ -180,7 +175,6 @@ export const captureWebsiteHandler = httpAction(async (ctx, request) => {
     return errorResponse(err);
   }
 });
-
 interface CaptureNoteBody {
   htmlContent?: string;
   jsonContent?: string;
@@ -188,7 +182,6 @@ interface CaptureNoteBody {
   title: string;
   workspaceId?: string;
 }
-
 export const captureNoteHandler = httpAction(async (ctx, request) => {
   try {
     const auth = await resolveAuth(ctx, request);
@@ -218,7 +211,6 @@ export const captureNoteHandler = httpAction(async (ctx, request) => {
     return errorResponse(err);
   }
 });
-
 interface CaptureFileBody {
   duration?: number;
   fileName: string;
@@ -230,10 +222,8 @@ interface CaptureFileBody {
   width?: number;
   workspaceId?: string;
 }
-
 const DEFAULT_LIST_LIMIT = 30;
 const MAX_LIST_LIMIT = 100;
-
 function parseListLimit(raw: string | null): number {
   if (!raw) {
     return DEFAULT_LIST_LIMIT;
@@ -244,7 +234,6 @@ function parseListLimit(raw: string | null): number {
   }
   return Math.min(n, MAX_LIST_LIMIT);
 }
-
 function parseListType(
   raw: string | null
 ): "website" | "note" | "file" | undefined {
@@ -253,10 +242,13 @@ function parseListType(
   }
   return undefined;
 }
-
 export const listResourcesHandler = httpAction(async (ctx, request) => {
   try {
     const auth = await resolveAuth(ctx, request);
+    await rateLimiter.limit(ctx, "extensionList", {
+      key: auth.userId,
+      throws: true,
+    });
     const url = new URL(request.url);
     const search = url.searchParams.get("search") ?? undefined;
     const cursor = url.searchParams.get("cursor");
@@ -267,14 +259,12 @@ export const listResourcesHandler = httpAction(async (ctx, request) => {
       auth,
       url.searchParams.get("workspaceId") ?? undefined
     );
-
     const result = await ctx.runQuery(internal.resource.internals.listForUser, {
       workspaceId,
       paginationOpts: { numItems: limit, cursor: cursor ?? null },
       search: search?.trim() || undefined,
       type,
     });
-
     return jsonResponse({
       items: result.items,
       cursor: result.isDone ? null : result.cursor,
@@ -285,7 +275,6 @@ export const listResourcesHandler = httpAction(async (ctx, request) => {
     return errorResponse(err);
   }
 });
-
 export const captureFileHandler = httpAction(async (ctx, request) => {
   try {
     const auth = await resolveAuth(ctx, request);

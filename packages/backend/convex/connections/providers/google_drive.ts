@@ -5,7 +5,6 @@ interface GoogleUserInfo {
   name?: string;
   sub: string;
 }
-
 export const googleDrive: OAuth2ProviderDescriptor = {
   id: "google_drive",
   label: "Google Drive",

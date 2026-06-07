@@ -2,9 +2,6 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthIdentity, protectedQuery, workspaceQuery } from "../utils";
-
-// ── Workspace ────────────────────────────────────────────────────────
-
 export const getFirst = query({
   args: {},
   handler: async (ctx) => {
@@ -12,22 +9,18 @@ export const getFirst = query({
     if (!identity?.userId) {
       return null;
     }
-
     const member = await ctx.db
       .query("workspaceMember")
       .withIndex("by_user", (q) =>
         q.eq("userId", identity.userId as Id<"user">)
       )
       .first();
-
     if (!member) {
       return null;
     }
-
     return ctx.db.get(member.workspaceId);
   },
 });
-
 export const listByUser = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -36,7 +29,6 @@ export const listByUser = protectedQuery({
       .withIndex("by_user_last_accessed", (q) => q.eq("userId", ctx.user._id))
       .order("desc")
       .collect();
-
     const workspaces = await Promise.all(
       members.map(async (member) => {
         const workspace = await ctx.db.get(member.workspaceId);
@@ -46,11 +38,9 @@ export const listByUser = protectedQuery({
         return { ...workspace, role: member.role };
       })
     );
-
     return workspaces.filter((w) => w !== null);
   },
 });
-
 export const getById = workspaceQuery({
   args: {},
   handler: (ctx) => {
@@ -60,9 +50,6 @@ export const getById = workspaceQuery({
     };
   },
 });
-
-// ── Invitations ──────────────────────────────────────────────────────
-
 export const listInvitationsByWorkspace = workspaceQuery({
   args: {},
   role: ["owner", "admin"],
@@ -73,7 +60,6 @@ export const listInvitationsByWorkspace = workspaceQuery({
         q.eq("workspaceId", ctx.workspace._id).eq("status", "pending")
       )
       .collect();
-
     const enriched = await Promise.all(
       invitations.map(async (invitation) => {
         const inviter = await ctx.db.get(invitation.invitedByUserId);
@@ -83,11 +69,9 @@ export const listInvitationsByWorkspace = workspaceQuery({
         };
       })
     );
-
     return enriched;
   },
 });
-
 export const listPendingInvitationsForUser = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -97,7 +81,6 @@ export const listPendingInvitationsForUser = protectedQuery({
         q.eq("invitedEmail", ctx.user.email).eq("status", "pending")
       )
       .collect();
-
     const enriched = await Promise.all(
       invitations.map(async (invitation) => {
         const workspace = await ctx.db.get(invitation.workspaceId);
@@ -111,11 +94,9 @@ export const listPendingInvitationsForUser = protectedQuery({
         };
       })
     );
-
     return enriched;
   },
 });
-
 export const getInvitationByToken = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
@@ -139,9 +120,6 @@ export const getInvitationByToken = query({
     };
   },
 });
-
-// ── Members ──────────────────────────────────────────────────────────
-
 export const listMembers = workspaceQuery({
   args: {},
   handler: async (ctx) => {
@@ -149,7 +127,6 @@ export const listMembers = workspaceQuery({
       .query("workspaceMember")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", ctx.workspace._id))
       .collect();
-
     const enriched = await Promise.all(
       members.map(async (member) => {
         const user = await ctx.db.get(member.userId);
@@ -161,12 +138,10 @@ export const listMembers = workspaceQuery({
         };
       })
     );
-
     const roleOrder = { owner: 0, admin: 1, member: 2 } as const;
     return enriched.sort((a, b) => roleOrder[a.role] - roleOrder[b.role]);
   },
 });
-
 export const searchMembers = workspaceQuery({
   args: {
     query: v.string(),
@@ -174,12 +149,10 @@ export const searchMembers = workspaceQuery({
   },
   handler: async (ctx, args) => {
     const normalized = args.query.toLowerCase().trim();
-
     const members = await ctx.db
       .query("workspaceMember")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", ctx.workspace._id))
       .collect();
-
     const enriched = await Promise.all(
       members.map(async (member) => {
         const user = await ctx.db.get(member.userId);
@@ -194,7 +167,6 @@ export const searchMembers = workspaceQuery({
         };
       })
     );
-
     const filtered = enriched.filter((m): m is NonNullable<typeof m> => {
       if (!m) {
         return false;
@@ -207,7 +179,6 @@ export const searchMembers = workspaceQuery({
         m.email.toLowerCase().includes(normalized)
       );
     });
-
     return filtered.slice(0, args.limit);
   },
 });

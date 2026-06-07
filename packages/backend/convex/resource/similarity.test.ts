@@ -8,7 +8,6 @@ describe("computeWeightedJaccard", () => {
       sharedNames: [],
     });
   });
-
   it("returns 0 overlap when one side is empty", () => {
     const result = computeWeightedJaccard(
       [{ name: "rust", importance: 1 }],
@@ -17,7 +16,6 @@ describe("computeWeightedJaccard", () => {
     expect(result.overlap).toBe(0);
     expect(result.sharedNames).toEqual([]);
   });
-
   it("returns 1 for identical equally-weighted sets", () => {
     const concepts = [
       { name: "rust", importance: 1 },
@@ -27,7 +25,6 @@ describe("computeWeightedJaccard", () => {
     expect(result.overlap).toBe(1);
     expect(result.sharedNames.sort()).toEqual(["rust", "wasm"]);
   });
-
   it("returns 0 overlap for disjoint sets", () => {
     const result = computeWeightedJaccard(
       [{ name: "rust", importance: 2 }],
@@ -36,7 +33,6 @@ describe("computeWeightedJaccard", () => {
     expect(result.overlap).toBe(0);
     expect(result.sharedNames).toEqual([]);
   });
-
   it("weights overlap by importance: sum(min) / sum(max)", () => {
     const result = computeWeightedJaccard(
       [
@@ -51,7 +47,6 @@ describe("computeWeightedJaccard", () => {
     expect(result.overlap).toBeCloseTo(1 / 9);
     expect(result.sharedNames).toEqual(["rust"]);
   });
-
   it("matches concept names case-insensitively", () => {
     const result = computeWeightedJaccard(
       [{ name: "Rust", importance: 1 }],
@@ -60,7 +55,6 @@ describe("computeWeightedJaccard", () => {
     expect(result.overlap).toBe(1);
     expect(result.sharedNames).toEqual(["rust"]);
   });
-
   it("does not count a name shared when one side has zero importance", () => {
     const result = computeWeightedJaccard(
       [{ name: "rust", importance: 0 }],

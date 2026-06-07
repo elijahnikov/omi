@@ -1,5 +1,4 @@
 "use node";
-
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -16,11 +15,9 @@ const STATE_NONCE_BYTES = 24;
 const PKCE_VERIFIER_BYTES = 32;
 const STATE_TTL_MS = 10 * 60 * 1000;
 const NAME_MAX_LEN = 80;
-
 const BASE64_PADDING_RE = /=+$/;
 const BASE64_PLUS_RE = /\+/g;
 const BASE64_SLASH_RE = /\//g;
-
 function base64Url(bytes: Uint8Array): string {
   const binary = String.fromCharCode(...bytes);
   return btoa(binary)
@@ -28,13 +25,11 @@ function base64Url(bytes: Uint8Array): string {
     .replace(BASE64_SLASH_RE, "_")
     .replace(BASE64_PADDING_RE, "");
 }
-
 function randomBase64Url(byteLen: number): string {
   const bytes = new Uint8Array(byteLen);
   crypto.getRandomValues(bytes);
   return base64Url(bytes);
 }
-
 async function pkceChallenge(verifier: string): Promise<string> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
@@ -42,11 +37,9 @@ async function pkceChallenge(verifier: string): Promise<string> {
   );
   return base64Url(new Uint8Array(digest));
 }
-
 interface ProtectedResourceMetadata {
   authorization_servers?: string[];
 }
-
 interface AuthorizationServerMetadata {
   authorization_endpoint: string;
   issuer: string;
@@ -54,13 +47,10 @@ interface AuthorizationServerMetadata {
   scopes_supported?: string[];
   token_endpoint: string;
 }
-
 const TRAILING_SLASH_RE = /\/$/;
-
 function trimTrailingSlash(s: string): string {
   return s.replace(TRAILING_SLASH_RE, "");
 }
-
 async function fetchJson<T>(url: string): Promise<T | null> {
   try {
     const res = await fetch(url, {
@@ -74,12 +64,6 @@ async function fetchJson<T>(url: string): Promise<T | null> {
     return null;
   }
 }
-
-/**
- * RFC 9728 (protected resource metadata) → RFC 8414 (authorization server
- * metadata). Falls back to inferring `/.well-known/oauth-authorization-server`
- * at the MCP origin if the protected-resource doc is missing.
- */
 async function discoverAuthServer(
   mcpUrl: string
 ): Promise<AuthorizationServerMetadata> {
@@ -88,7 +72,6 @@ async function discoverAuthServer(
   const protectedDoc = await fetchJson<ProtectedResourceMetadata>(protectedUrl);
   const authServer = protectedDoc?.authorization_servers?.[0] ?? origin;
   const trimmed = trimTrailingSlash(authServer);
-
   const candidates = [
     `${trimmed}/.well-known/oauth-authorization-server`,
     `${trimmed}/.well-known/openid-configuration`,
@@ -103,12 +86,10 @@ async function discoverAuthServer(
     `Could not discover OAuth metadata for ${mcpUrl} (looked under ${trimmed}).`
   );
 }
-
 interface DynamicClientRegistration {
   client_id: string;
   client_secret?: string;
 }
-
 async function dynamicallyRegisterClient(
   registrationEndpoint: string,
   redirectUri: string,
@@ -133,9 +114,7 @@ async function dynamicallyRegisterClient(
   }
   return (await res.json()) as DynamicClientRegistration;
 }
-
 const CONVEX_SITE_TRAILING_RE = /\/+$/;
-
 function callbackRedirectUri(): string {
   const base = process.env.CONVEX_SITE_URL;
   if (!base) {
@@ -143,7 +122,6 @@ function callbackRedirectUri(): string {
   }
   return `${base.replace(CONVEX_SITE_TRAILING_RE, "")}/api/mcp-client/oauth/callback`;
 }
-
 export const startOauthConnect = action({
   args: {
     catalogId: v.optional(v.string()),
@@ -157,7 +135,6 @@ export const startOauthConnect = action({
       throw new ConvexError("Unauthorized");
     }
     const userId = identity.userId as Id<"user">;
-
     const catalogEntry = args.catalogId
       ? findCatalogEntry(args.catalogId)
       : undefined;
@@ -169,10 +146,8 @@ export const startOauthConnect = action({
     if (!name || name.length > NAME_MAX_LEN) {
       throw new ConvexError(`Server name must be 1–${NAME_MAX_LEN} characters`);
     }
-
     const meta = await discoverAuthServer(url);
     const redirectUri = callbackRedirectUri();
-
     if (!meta.registration_endpoint) {
       throw new ConvexError(
         "MCP server's authorization server does not support dynamic client registration"
@@ -188,12 +163,10 @@ export const startOauthConnect = action({
       registered.client_secret
         ? encryptToken(registered.client_secret)
         : undefined;
-
     const state = randomBase64Url(STATE_NONCE_BYTES);
     const verifier = randomBase64Url(PKCE_VERIFIER_BYTES);
     const challenge = await pkceChallenge(verifier);
     const scope = catalogEntry?.oauthScope;
-
     await ctx.runMutation(internal.mcpClient.internals.insertOauthState, {
       state,
       userId,
@@ -211,7 +184,6 @@ export const startOauthConnect = action({
       returnTo: args.returnTo,
       expiresAt: Date.now() + STATE_TTL_MS,
     });
-
     const authUrl = new URL(meta.authorization_endpoint);
     authUrl.searchParams.set("response_type", "code");
     authUrl.searchParams.set("client_id", clientId);
@@ -222,11 +194,9 @@ export const startOauthConnect = action({
     if (scope) {
       authUrl.searchParams.set("scope", scope);
     }
-
     return { authorizationUrl: authUrl.toString() };
   },
 });
-
 interface TokenResponse {
   access_token: string;
   expires_in?: number;
@@ -234,7 +204,6 @@ interface TokenResponse {
   scope?: string;
   token_type?: string;
 }
-
 async function exchangeCodeForTokens(
   tokenEndpoint: string,
   code: string,
@@ -269,7 +238,6 @@ async function exchangeCodeForTokens(
   }
   return (await res.json()) as TokenResponse;
 }
-
 async function refreshTokens(
   tokenEndpoint: string,
   refreshToken: string,
@@ -300,13 +268,17 @@ async function refreshTokens(
   }
   return (await res.json()) as TokenResponse;
 }
-
 export const completeOauthCallback = internalAction({
   args: {
     state: v.string(),
     code: v.string(),
   },
-  handler: async (ctx, args): Promise<{ returnTo: string }> => {
+  handler: async (
+    ctx,
+    args
+  ): Promise<{
+    returnTo: string;
+  }> => {
     const stored = await ctx.runQuery(
       internal.mcpClient.internals.getOauthState,
       { state: args.state }
@@ -323,7 +295,6 @@ export const completeOauthCallback = internalAction({
     if (!stored.oauthClientId) {
       throw new ConvexError("Missing OAuth client ID for this connection");
     }
-
     const clientSecret =
       stored.encryptedOauthClientSecret && stored.tokenKeyVersion !== undefined
         ? decryptToken(
@@ -331,7 +302,6 @@ export const completeOauthCallback = internalAction({
             stored.tokenKeyVersion
           )
         : undefined;
-
     const tokens = await exchangeCodeForTokens(
       stored.tokenEndpoint,
       args.code,
@@ -340,15 +310,9 @@ export const completeOauthCallback = internalAction({
       clientSecret,
       stored.pkceVerifier
     );
-
-    // PKCE verifier and authorization code are now spent; delete the state
-    // row so a stuck server (e.g. tools/list 404) can't leave it orphaned and
-    // confuse a retry.
     await ctx.runMutation(internal.mcpClient.internals.deleteOauthState, {
       id: stored._id,
     });
-
-    // Probe initialize + tools/list with the new access token.
     const { McpRpcError, mcpInitialize, mcpToolsList } = await import("./rpc");
     let instructions: string | undefined;
     let sessionId: string | undefined;
@@ -360,7 +324,7 @@ export const completeOauthCallback = internalAction({
       instructions = initResult.instructions?.trim() || undefined;
       sessionId = initResult.sessionId;
     } catch {
-      // some servers skip initialize; continue
+      void 0;
     }
     let tools: Awaited<ReturnType<typeof mcpToolsList>>;
     try {
@@ -385,7 +349,6 @@ export const completeOauthCallback = internalAction({
       ),
     }));
     const enabledTools = cachedTools.map((t) => t.name);
-
     const access = encryptToken(tokens.access_token);
     const refresh = tokens.refresh_token
       ? encryptToken(tokens.refresh_token)
@@ -393,7 +356,6 @@ export const completeOauthCallback = internalAction({
     const accessTokenExpiresAt = tokens.expires_in
       ? Date.now() + tokens.expires_in * 1000
       : undefined;
-
     await ctx.runMutation(internal.mcpClient.internals.insertOauthServer, {
       userId: stored.userId,
       catalogId: stored.catalogId,
@@ -412,11 +374,9 @@ export const completeOauthCallback = internalAction({
       enabledTools,
       instructions,
     });
-
     return { returnTo: stored.returnTo };
   },
 });
-
 export const refreshAccessToken = internalAction({
   args: { serverId: v.id("mcpServer") },
   handler: async (ctx, args): Promise<void> => {
@@ -434,7 +394,6 @@ export const refreshAccessToken = internalAction({
     ) {
       throw new ConvexError("Server has no refresh token");
     }
-
     const refreshTokenPlain = decryptToken(
       server.encryptedRefreshToken,
       server.tokenKeyVersion
@@ -442,14 +401,12 @@ export const refreshAccessToken = internalAction({
     const clientSecret = server.encryptedOauthClientSecret
       ? decryptToken(server.encryptedOauthClientSecret, server.tokenKeyVersion)
       : undefined;
-
     const tokens = await refreshTokens(
       server.oauthTokenEndpoint,
       refreshTokenPlain,
       server.oauthClientId,
       clientSecret
     );
-
     const access = encryptToken(tokens.access_token);
     const newRefresh = tokens.refresh_token
       ? encryptToken(tokens.refresh_token)
@@ -457,7 +414,6 @@ export const refreshAccessToken = internalAction({
     const accessTokenExpiresAt = tokens.expires_in
       ? Date.now() + tokens.expires_in * 1000
       : undefined;
-
     await ctx.runMutation(internal.mcpClient.internals.patchRefreshedTokens, {
       serverId: args.serverId,
       encryptedAccessToken: access.ciphertext,

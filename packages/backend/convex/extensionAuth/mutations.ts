@@ -7,7 +7,6 @@ import {
 } from "./shared";
 
 const MAX_ACTIVE_TOKENS_PER_USER = 10;
-
 export const mintExtensionToken = protectedMutation({
   args: {
     label: v.string(),
@@ -17,30 +16,25 @@ export const mintExtensionToken = protectedMutation({
     if (trimmedLabel.length === 0 || trimmedLabel.length > 80) {
       throw new ConvexError("Label must be 1–80 characters");
     }
-
     const existing = await ctx.db
       .query("extensionToken")
       .withIndex("by_user", (q) =>
         q.eq("userId", ctx.user._id).eq("revokedAt", undefined)
       )
       .collect();
-
     if (existing.length >= MAX_ACTIVE_TOKENS_PER_USER) {
       throw new ConvexError(
         `You already have ${MAX_ACTIVE_TOKENS_PER_USER} active extension tokens. Revoke one to create another.`
       );
     }
-
     const mostRecentMember = await ctx.db
       .query("workspaceMember")
       .withIndex("by_user_last_accessed", (q) => q.eq("userId", ctx.user._id))
       .order("desc")
       .first();
-
     const plaintext = generateExtensionToken();
     const tokenHash = await hashExtensionToken(plaintext);
     const now = Date.now();
-
     await ctx.db.insert("extensionToken", {
       userId: ctx.user._id,
       defaultWorkspaceId: mostRecentMember?.workspaceId,
@@ -49,7 +43,6 @@ export const mintExtensionToken = protectedMutation({
       createdAt: now,
       expiresAt: now + DEFAULT_TOKEN_TTL_MS,
     });
-
     return {
       token: plaintext,
       userId: ctx.user._id,
@@ -58,7 +51,6 @@ export const mintExtensionToken = protectedMutation({
     };
   },
 });
-
 export const revokeExtensionToken = protectedMutation({
   args: {
     tokenId: v.id("extensionToken"),

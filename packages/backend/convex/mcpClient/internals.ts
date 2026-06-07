@@ -7,7 +7,6 @@ const toolDefinitionValidator = v.object({
   description: v.optional(v.string()),
   inputSchema: v.string(),
 });
-
 export const insertBearerServer = internalMutation({
   args: {
     userId: v.id("user"),
@@ -40,7 +39,6 @@ export const insertBearerServer = internalMutation({
     });
   },
 });
-
 export const insertOauthServer = internalMutation({
   args: {
     userId: v.id("user"),
@@ -87,7 +85,6 @@ export const insertOauthServer = internalMutation({
     });
   },
 });
-
 export const patchCachedTools = internalMutation({
   args: {
     serverId: v.id("mcpServer"),
@@ -112,7 +109,6 @@ export const patchCachedTools = internalMutation({
     await ctx.db.patch(args.serverId, patch);
   },
 });
-
 export const patchRefreshedTokens = internalMutation({
   args: {
     serverId: v.id("mcpServer"),
@@ -131,7 +127,6 @@ export const patchRefreshedTokens = internalMutation({
     });
   },
 });
-
 export const markServerError = internalMutation({
   args: {
     serverId: v.id("mcpServer"),
@@ -145,14 +140,12 @@ export const markServerError = internalMutation({
     });
   },
 });
-
 export const getServerForCall = internalQuery({
   args: { serverId: v.id("mcpServer") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.serverId);
   },
 });
-
 export const insertOauthState = internalMutation({
   args: {
     state: v.string(),
@@ -175,7 +168,6 @@ export const insertOauthState = internalMutation({
     await ctx.db.insert("mcpOauthState", args);
   },
 });
-
 export const getOauthState = internalQuery({
   args: { state: v.string() },
   handler: async (ctx, args) => {
@@ -185,14 +177,12 @@ export const getOauthState = internalQuery({
       .unique();
   },
 });
-
 export const deleteOauthState = internalMutation({
   args: { id: v.id("mcpOauthState") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
   },
 });
-
 export const listEnabledToolsForUser = internalQuery({
   args: { userId: v.id("user") },
   handler: async (ctx, args) => {
@@ -202,7 +192,6 @@ export const listEnabledToolsForUser = internalQuery({
         q.eq("userId", args.userId).eq("status", "active")
       )
       .collect();
-
     const out: Array<{
       serverId: Id<"mcpServer">;
       serverName: string;
@@ -227,7 +216,6 @@ export const listEnabledToolsForUser = internalQuery({
     return out;
   },
 });
-
 function parseInputSchema(serialized: string): unknown {
   try {
     return JSON.parse(serialized);
