@@ -51,6 +51,7 @@ const PLANS: Record<Plan, PlanInfo> = {
       "500 AI actions / month",
       "100 MB file storage",
       "Up to 3 workspaces",
+      "100 web captures / month",
       "Auto-summaries, tagging, semantic search, and chat — within your credit budget",
       "All imports and connections (Notion, GitHub, Linear, Fabric, MyMind, Evernote, bookmarks)",
       "Bring your own API key (skips credit charges for chat and search)",
@@ -61,11 +62,12 @@ const PLANS: Record<Plan, PlanInfo> = {
     tagline: "For active personal libraries.",
     pricing: { monthly: "$5 / mo", yearly: "$50 / yr" },
     features: [
+      "Everything in Free",
       "3,000 AI actions / month",
       "5 GB file storage",
       "Unlimited workspaces",
+      "2,000 web captures / month",
       "Home-page AI insights: concept clusters, recent connections, forgotten gems",
-      "Everything in Free",
     ],
   },
   pro: {
@@ -73,10 +75,12 @@ const PLANS: Record<Plan, PlanInfo> = {
     tagline: "For heavy users.",
     pricing: { monthly: "$12 / mo", yearly: "$120 / yr" },
     features: [
+      "Everything in Basic",
       "10,000 AI actions / month",
       "25 GB file storage",
       "Unlimited workspaces",
-      "Everything in Basic",
+      "Unlimited web captures",
+      "Continuous sync (GitHub, Linear, and more)",
     ],
   },
 };
