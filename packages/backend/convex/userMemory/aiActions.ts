@@ -117,15 +117,15 @@ export const extractUserMemory = internalAction({
             internal.billing.resolver.resolveActing,
             { userId: row.userId, workspaceId: row.workspaceId }
           );
-          await ctx.runMutation(internal.billing.credits.debit, {
+          await ctx.runMutation(internal.billing.credits.debitUpTo, {
             billingAccountId: resolved.billingAccountId,
             workspaceId: row.workspaceId,
             actingUserId: row.userId,
             reason: "memory-extract",
-            amount: MEMORY_EXTRACT_COST,
+            requestedAmount: MEMORY_EXTRACT_COST,
           });
-        } catch {
-          // Swallow billing errors — don't undo a successful extraction.
+        } catch (billingError) {
+          console.warn("[extractUserMemory] billing failed", billingError);
         }
       } else {
         await ctx.runMutation(

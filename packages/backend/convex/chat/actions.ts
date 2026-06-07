@@ -72,7 +72,6 @@ export const searchChunks = action({
       filter: (q) => q.eq("workspaceId", args.workspaceId),
     });
 
-    const seen = new Set<string>();
     const chunks: Array<{
       chunkId: string;
       resourceId: string;
@@ -84,6 +83,8 @@ export const searchChunks = action({
     }> = [];
 
     const maxResults = args.limit ?? 10;
+    const maxChunksPerResource = 2;
+    const chunksPerResource = new Map<string, number>();
 
     for (const result of results) {
       if (chunks.length >= maxResults) {
@@ -98,10 +99,11 @@ export const searchChunks = action({
         continue;
       }
 
-      if (seen.has(chunk.resourceId)) {
+      const perResourceCount = chunksPerResource.get(chunk.resourceId) ?? 0;
+      if (perResourceCount >= maxChunksPerResource) {
         continue;
       }
-      seen.add(chunk.resourceId);
+      chunksPerResource.set(chunk.resourceId, perResourceCount + 1);
 
       const resource = await ctx.runQuery(
         internal.resource.aiInternals.getResourceById,

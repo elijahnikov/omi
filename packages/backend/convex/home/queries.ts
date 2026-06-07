@@ -350,3 +350,5 @@ export const getHome = workspaceQuery({
     };
   },
 });
+
+export { getSuggestedForYou as getDailyDigest } from "../search/queries";

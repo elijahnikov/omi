@@ -512,9 +512,6 @@ export default defineSchema({
       v.literal("error"),
       v.literal("paused")
     ),
-    // Legacy plaintext token (will be cleared by encryptTokens migration)
-    accessToken: v.optional(v.string()),
-    refreshToken: v.optional(v.string()),
     // Encrypted at rest via connections/tokens.ts (AES-256-GCM, base64-encoded)
     encryptedAccessToken: v.optional(v.string()),
     encryptedRefreshToken: v.optional(v.string()),

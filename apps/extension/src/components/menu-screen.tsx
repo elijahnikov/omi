@@ -37,7 +37,7 @@ function safeDomain(url: string): string {
 
 function getWebAppUrl(): string {
   const fromEnv = import.meta.env.VITE_SITE_URL as string | undefined;
-  return (fromEnv ?? "https://app.omi.com").replace(TRAILING_SLASH_RE, "");
+  return (fromEnv ?? "https://app.omi.ac").replace(TRAILING_SLASH_RE, "");
 }
 
 export function MenuScreen({ onDisconnect }: { onDisconnect: () => void }) {

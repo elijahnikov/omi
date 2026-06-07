@@ -96,7 +96,7 @@ describe("recordChatUsage", () => {
     expect(account?.creditBalance).toBe(98);
   });
 
-  it("swallows insufficient-balance: writes a zero-amount 'chat:underfunded' row and leaves balance intact", async () => {
+  it("partially debits when balance is below the full chat cost", async () => {
     const t = createHarness();
     const { workspaceId, threadId, accountId, identity } = await seed(t, 1);
 
@@ -111,11 +111,11 @@ describe("recordChatUsage", () => {
       }
     );
 
-    expect(result.debited).toBe(0);
+    expect(result.debited).toBe(1);
     expect(result.byo).toBe(false);
 
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
-    expect(account?.creditBalance).toBe(1);
+    expect(account?.creditBalance).toBe(0);
 
     const rows = await t.run(async (ctx) =>
       ctx.db
@@ -126,8 +126,8 @@ describe("recordChatUsage", () => {
         .collect()
     );
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.amount).toBe(0);
-    expect(rows[0]?.reason).toBe("chat:underfunded");
+    expect(rows[0]?.amount).toBe(-1);
+    expect(rows[0]?.reason).toBe("chat:partial");
   });
 
   it("skips the debit when the workspace has a BYO key and writes a byo-key ledger row", async () => {

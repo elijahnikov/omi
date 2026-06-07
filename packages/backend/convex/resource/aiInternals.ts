@@ -112,6 +112,16 @@ export const setResourceAIStatus = internalMutation({
   },
 });
 
+export const getResourceAI = internalQuery({
+  args: { resourceId: v.id("resource") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("resourceAI")
+      .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
+      .unique();
+  },
+});
+
 export const updateResourceAI = internalMutation({
   args: {
     resourceId: v.id("resource"),

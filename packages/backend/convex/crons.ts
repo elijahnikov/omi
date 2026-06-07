@@ -31,4 +31,11 @@ crons.interval(
   {}
 );
 
+crons.daily(
+  "health monitoring heartbeat",
+  { hourUTC: 6, minuteUTC: 0 },
+  internal.healthMonitoring.heartbeat,
+  {}
+);
+
 export default crons;

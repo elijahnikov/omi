@@ -26,11 +26,17 @@ const limits = {
     period: MINUTE,
     capacity: 30,
   },
-  llmTokens: {
+  extensionList: {
     kind: "token bucket",
-    rate: 40_000,
+    rate: 60,
     period: MINUTE,
-    shards: 10,
+    capacity: 60,
+  },
+  extensionUploadUrl: {
+    kind: "token bucket",
+    rate: 30,
+    period: MINUTE,
+    capacity: 30,
   },
   resourceUpload: {
     kind: "token bucket",

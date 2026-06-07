@@ -134,7 +134,11 @@ export const meHandler = httpAction(async (ctx, request) => {
 
 export const uploadUrlHandler = httpAction(async (ctx, request) => {
   try {
-    await resolveAuth(ctx, request);
+    const auth = await resolveAuth(ctx, request);
+    await rateLimiter.limit(ctx, "extensionUploadUrl", {
+      key: auth.userId,
+      throws: true,
+    });
     const uploadUrl = await ctx.runMutation(
       internal.resource.internals.generateUploadUrlInternal,
       {}
@@ -257,6 +261,10 @@ function parseListType(
 export const listResourcesHandler = httpAction(async (ctx, request) => {
   try {
     const auth = await resolveAuth(ctx, request);
+    await rateLimiter.limit(ctx, "extensionList", {
+      key: auth.userId,
+      throws: true,
+    });
     const url = new URL(request.url);
     const search = url.searchParams.get("search") ?? undefined;
     const cursor = url.searchParams.get("cursor");

@@ -91,7 +91,7 @@ export const tables = {
     seats: v.optional(v.union(v.null(), v.number())),
     billingInterval: v.optional(v.union(v.null(), v.string())),
     stripeScheduleId: v.optional(v.union(v.null(), v.string())),
-  }),
+  }).index("by_referenceId", ["referenceId"]),
 };
 
 const schema = defineSchema(tables);

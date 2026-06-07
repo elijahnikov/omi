@@ -31,6 +31,12 @@ export {
 } from "./pdf";
 export { createOpenAIProvider } from "./providers";
 export {
+  buildRerankText,
+  type RerankDocument,
+  type RerankResult,
+  rerankDocuments,
+} from "./rerank";
+export {
   type ConceptResult,
   type EnrichmentResult,
   enrichmentSchema,

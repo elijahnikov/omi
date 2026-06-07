@@ -14,7 +14,8 @@
     "./schemas": "./src/schemas.ts",
     "./concepts": "./src/concepts.ts",
     "./chunking": "./src/chunking.ts",
-    "./pdf": "./src/pdf.ts"
+    "./pdf": "./src/pdf.ts",
+    "./rerank": "./src/rerank.ts"
   },
   "license": "MIT",
   "scripts": {

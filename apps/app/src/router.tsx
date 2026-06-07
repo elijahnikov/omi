@@ -7,6 +7,11 @@ import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query
 import { ConvexError } from "convex/values";
 import { ErrorState } from "./components/common/error-state";
 import { NotFoundState } from "./components/common/not-found-state";
+import {
+  getSentryDsn,
+  getSentrySampleRates,
+  shouldInitSentry,
+} from "./lib/sentry-config";
 import { routeTree } from "./routeTree.gen";
 
 const SILENCED_QUERY_ERROR_PATTERN =
@@ -114,20 +119,25 @@ export function getRouter() {
   });
 
   if (!router.isServer) {
-    Sentry.init({
-      dsn: "https://99fa688b748190ad4189d2ff367dc40e@o4511441117642752.ingest.us.sentry.io/4511441136058368",
-      environment: import.meta.env.DEV ? "development" : "production",
-      sendDefaultPii: true,
-      integrations: [
-        Sentry.tanstackRouterBrowserTracingIntegration(router),
-        Sentry.browserProfilingIntegration(),
-      ],
-      tracesSampleRate: 1.0,
-      profileSessionSampleRate: 1.0,
-      profileLifecycle: "trace",
-      enableLogs: true,
-      tunnel: "/api/sentry-tunnel",
-    });
+    const dsn = getSentryDsn();
+    if (shouldInitSentry(dsn)) {
+      const isDev = import.meta.env.DEV;
+      const sampleRates = getSentrySampleRates(isDev);
+      Sentry.init({
+        dsn,
+        environment: isDev ? "development" : "production",
+        sendDefaultPii: false,
+        integrations: [
+          Sentry.tanstackRouterBrowserTracingIntegration(router),
+          Sentry.browserProfilingIntegration(),
+        ],
+        tracesSampleRate: sampleRates.tracesSampleRate,
+        profileSessionSampleRate: sampleRates.profileSessionSampleRate,
+        profileLifecycle: "trace",
+        enableLogs: true,
+        tunnel: "/api/sentry-tunnel",
+      });
+    }
   }
 
   return router;

@@ -5,6 +5,26 @@ const REMOVED_PROVIDERS = new Set(["readwise", "raindrop"]);
 const REMOVED_SOURCES = new Set(["readwise_api", "raindrop_oauth"]);
 
 /**
+ * Verify all OAuth connections have encrypted tokens (run after encryptTokens migration).
+ * internal.connections.migrations.verifyEncryptedTokens
+ */
+export const verifyEncryptedTokens = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const connections = await ctx.db.query("connection").collect();
+    const missing = connections.filter(
+      (c) => c.authType === "oauth2" && !c.encryptedAccessToken
+    );
+    return {
+      ok: missing.length === 0,
+      total: connections.length,
+      missingCount: missing.length,
+      missingIds: missing.map((c) => c._id),
+    };
+  },
+});
+
+/**
  * Migrate legacy per-connection sync fields into connectionSyncBinding rows.
  * Run via dashboard before deploying schema that removes legacy fields:
  * internal.connections.migrations.migrateToSyncBindings

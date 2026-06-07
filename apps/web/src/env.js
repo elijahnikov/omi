@@ -16,7 +16,7 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().url().default("https://app.omi.co"),
+    NEXT_PUBLIC_APP_URL: z.string().url().default("https://app.omi.ac"),
   },
 
   /**

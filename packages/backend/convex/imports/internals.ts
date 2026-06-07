@@ -34,6 +34,26 @@ export const getJob = internalQuery({
   handler: async (ctx, args) => ctx.db.get(args.jobId),
 });
 
+export const listResourcesForJob = internalQuery({
+  args: { jobId: v.id("importJob") },
+  handler: async (ctx, args) => {
+    const job = await ctx.db.get(args.jobId);
+    if (!job) {
+      return [];
+    }
+    const prefix = `${job.source}:`;
+    const resources = await ctx.db
+      .query("resource")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", job.workspaceId))
+      .filter((q) => q.neq(q.field("importedFrom"), undefined))
+      .collect();
+    return resources
+      .filter((resource) => resource.importedFrom?.startsWith(prefix))
+      .map((resource) => resource._id)
+      .slice(0, 50);
+  },
+});
+
 export const setJobStatus = internalMutation({
   args: {
     jobId: v.id("importJob"),

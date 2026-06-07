@@ -49,3 +49,23 @@ jobs:
 
       - name: Test
         run: bun run test
+
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_CONVEX_URL: https://placeholder.convex.cloud
+      VITE_CONVEX_SITE_URL: https://placeholder.convex.site
+      VITE_SITE_URL: https://app.omi.ac
+      NEXT_PUBLIC_APP_URL: https://app.omi.ac
+      SKIP_ENV_VALIDATION: "true"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup
+        uses: ./tooling/github/setup
+
+      - name: Build app
+        run: bun run build --filter=@omi/app
+
+      - name: Build web
+        run: bun run build --filter=@omi/web

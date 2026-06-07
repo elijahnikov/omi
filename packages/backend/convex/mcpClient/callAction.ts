@@ -247,19 +247,6 @@ export const callTool = action({
         args.toolName,
         cleanedArgs
       );
-      console.log(
-        "[mcp:callTool]",
-        args.toolName,
-        "raw:",
-        args.args,
-        "cleaned:",
-        cleanedArgs,
-        "→",
-        {
-          isError: result.isError ?? false,
-          contentPreview: JSON.stringify(result.content).slice(0, 800),
-        }
-      );
       return result;
     } catch (err) {
       const message =

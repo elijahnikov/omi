@@ -41,9 +41,11 @@ export const getAuthIdForUser = query({
 export const getLatestSubscriptionForReference = query({
   args: { referenceId: v.string() },
   handler: async (ctx, args) => {
-    const rows = await ctx.db.query("subscription").collect();
-    const matches = rows.filter((r) => r.referenceId === args.referenceId);
-    const active = matches.find(
+    const rows = await ctx.db
+      .query("subscription")
+      .withIndex("by_referenceId", (q) => q.eq("referenceId", args.referenceId))
+      .collect();
+    const active = rows.find(
       (r) => r.status === "active" || r.status === "trialing"
     );
     return active ?? null;

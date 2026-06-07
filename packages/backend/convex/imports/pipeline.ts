@@ -156,6 +156,12 @@ export const runImport = internalAction({
         status: "completed",
         completedAt: Date.now(),
       });
+
+      await ctx.scheduler.runAfter(
+        0,
+        internal.resource.suggestOrganizationActions.suggestForImportJob,
+        { importJobId: args.jobId }
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       await ctx.runMutation(internal.imports.internals.setJobStatus, {

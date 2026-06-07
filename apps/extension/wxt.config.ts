@@ -41,7 +41,7 @@ export default defineConfig({
       },
     },
     externally_connectable: {
-      matches: ["https://app.omi.com/*", "http://localhost:*/*"],
+      matches: ["https://app.omi.ac/*", "http://localhost:*/*"],
     },
   },
   vite: () => ({

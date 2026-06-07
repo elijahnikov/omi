@@ -55,8 +55,6 @@ export const finalizeDisconnect = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.connectionId, {
       status: "revoked",
-      accessToken: undefined,
-      refreshToken: undefined,
       encryptedAccessToken: undefined,
       encryptedRefreshToken: undefined,
       tokenKeyVersion: undefined,

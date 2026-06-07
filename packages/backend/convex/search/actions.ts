@@ -2,6 +2,7 @@
 
 import { generateEmbedding } from "@omi/ai/embeddings";
 import { createOpenAIProvider } from "@omi/ai/providers";
+import { buildRerankText, rerankDocuments } from "@omi/ai/rerank";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -777,7 +778,36 @@ export const hybridSearch = action({
         sorted = [...scored].sort((a, b) => b.score - a.score);
     }
 
-    const top = sorted.slice(0, limit);
+    let top = sorted.slice(0, limit);
+
+    const cohereKey = process.env.COHERE_API_KEY;
+    if (cohereKey && sort === "relevance" && hasFreeText && top.length > 1) {
+      try {
+        const rerankPool = sorted.slice(0, Math.min(limit * 2, 30));
+        const reranked = await rerankDocuments(
+          cohereKey,
+          rawQuery,
+          rerankPool.map((entry, index) => ({
+            id: String(index),
+            text: buildRerankText({
+              title: entry.resource.title,
+              summary: entry.resource.summary,
+              snippet: entry.matchReasons.find(
+                (reason) => reason.type === "chunk"
+              )?.content,
+            }),
+          })),
+          limit
+        );
+        top = reranked
+          .map((result: { index: number }) => rerankPool[result.index])
+          .filter(
+            (entry): entry is (typeof sorted)[number] => entry !== undefined
+          );
+      } catch (error) {
+        console.warn("[hybridSearch] rerank failed", error);
+      }
+    }
 
     const results: SearchResult[] = top.map((entry) => {
       const sharedConcepts = Array.from(

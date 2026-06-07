@@ -174,18 +174,17 @@ export const recordChatUsage = workspaceMutation({
     const amount = tokensToCredits(totalTokens, args.model);
 
     if (amount <= 0 || resolved.creditBalance < amount) {
-      // Swallow: stream already ran. Record a best-effort zero-amount row so
-      // the ledger shows the action happened.
-      await ctx.db.insert("creditLedger", {
+      await ctx.runMutation(internal.billing.credits.debitUpTo, {
         billingAccountId: resolved.billingAccountId,
         workspaceId: ctx.workspace._id,
         actingUserId: ctx.user._id,
-        kind: "debit",
-        reason: "chat:underfunded",
-        amount: 0,
-        balanceAfter: resolved.creditBalance,
+        reason: "chat",
+        requestedAmount: amount,
       });
-      return { debited: 0, byo: false as const };
+      return {
+        debited: Math.min(amount, resolved.creditBalance),
+        byo: false as const,
+      };
     }
 
     await ctx.runMutation(internal.billing.credits.debit, {

@@ -1,29 +1,24 @@
-# Create T3 App
+# omi marketing site
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+Next.js marketing site for [omi.ac](https://omi.ac). CTAs point to the main app at **https://app.omi.ac**.
 
-## What's next? How do I make an app with this?
+## Dev
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+```bash
+# From repo root
+bun run dev --filter=@omi/web
+```
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+Runs on http://localhost:3001.
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+## Build
 
-## Learn More
+```bash
+bun run build --filter=@omi/web
+```
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+Set `NEXT_PUBLIC_APP_URL=https://app.omi.ac` in production.
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+## Deploy
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Deployed via Vercel. CI runs `bun run build` on every PR.

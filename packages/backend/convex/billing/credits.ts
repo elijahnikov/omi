@@ -20,6 +20,55 @@ export function tokensToCredits(tokens: number, model: string): number {
   return Math.max(1, Math.ceil((tokens / 1000) * multiplier));
 }
 
+export const debitUpTo = internalMutation({
+  args: {
+    billingAccountId: v.id("billingAccount"),
+    workspaceId: v.id("workspace"),
+    actingUserId: v.id("user"),
+    reason: v.string(),
+    requestedAmount: v.number(),
+    resourceId: v.optional(v.id("resource")),
+  },
+  handler: async (ctx, args) => {
+    if (args.requestedAmount <= 0) {
+      return { debited: 0, balanceAfter: 0 };
+    }
+    const account = await ctx.db.get(args.billingAccountId);
+    if (!account) {
+      throw new ConvexError("Billing account not found");
+    }
+    const amount = Math.min(args.requestedAmount, account.creditBalance);
+    if (amount <= 0) {
+      await ctx.db.insert("creditLedger", {
+        billingAccountId: args.billingAccountId,
+        workspaceId: args.workspaceId,
+        actingUserId: args.actingUserId,
+        kind: "debit",
+        reason: `${args.reason}:underfunded`,
+        amount: 0,
+        balanceAfter: account.creditBalance,
+        resourceId: args.resourceId,
+      });
+      return { debited: 0, balanceAfter: account.creditBalance };
+    }
+    const next = account.creditBalance - amount;
+    await ctx.db.patch(args.billingAccountId, { creditBalance: next });
+    const reason =
+      amount < args.requestedAmount ? `${args.reason}:partial` : args.reason;
+    await ctx.db.insert("creditLedger", {
+      billingAccountId: args.billingAccountId,
+      workspaceId: args.workspaceId,
+      actingUserId: args.actingUserId,
+      kind: "debit",
+      reason,
+      amount: -amount,
+      balanceAfter: next,
+      resourceId: args.resourceId,
+    });
+    return { debited: amount, balanceAfter: next };
+  },
+});
+
 export const debit = internalMutation({
   args: {
     billingAccountId: v.id("billingAccount"),

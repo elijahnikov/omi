@@ -42,8 +42,6 @@ export const insertConnection = internalMutation({
       await ctx.db.patch(sameAccount._id, {
         authType: args.authType,
         status: "active",
-        accessToken: undefined,
-        refreshToken: undefined,
         encryptedAccessToken: args.encryptedAccessToken,
         encryptedRefreshToken: args.encryptedRefreshToken,
         tokenKeyVersion: args.tokenKeyVersion,
@@ -90,8 +88,6 @@ export const updateTokenAfterRefresh = internalMutation({
       throw new ConvexError("Connection not found");
     }
     await ctx.db.patch(args.connectionId, {
-      accessToken: undefined,
-      refreshToken: undefined,
       encryptedAccessToken: args.encryptedAccessToken,
       encryptedRefreshToken:
         args.encryptedRefreshToken ?? connection.encryptedRefreshToken,

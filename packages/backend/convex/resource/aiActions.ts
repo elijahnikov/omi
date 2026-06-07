@@ -330,7 +330,17 @@ export const processResourceAI = internalAction({
         }
       );
 
+      await ctx.scheduler.runAfter(
+        0,
+        internal.resource.suggestOrganizationActions.suggest,
+        {
+          resourceId: args.resourceId,
+          workspaceId: content.workspaceId,
+        }
+      );
+
       const CHUNK_MIN_LENGTH = 2000;
+      const SYNCED_CHUNK_MIN_LENGTH = 500;
       const MAX_CHUNKS = 100;
 
       let chunkableText: string | undefined;
@@ -339,11 +349,16 @@ export const processResourceAI = internalAction({
         chunkableText = content.articleContent ?? undefined;
       } else if (content.type === "note") {
         chunkableText = content.plainTextContent ?? undefined;
+      } else if (content.type === "synced") {
+        chunkableText = content.markdownContent ?? undefined;
       } else if (extractedPdfText) {
         chunkableText = extractedPdfText;
       }
 
-      if (chunkableText && chunkableText.length > CHUNK_MIN_LENGTH) {
+      const minLength =
+        content.type === "synced" ? SYNCED_CHUNK_MIN_LENGTH : CHUNK_MIN_LENGTH;
+
+      if (chunkableText && chunkableText.length > minLength) {
         const contentHash = computeHash(chunkableText);
 
         const existingHash = await ctx.runQuery(

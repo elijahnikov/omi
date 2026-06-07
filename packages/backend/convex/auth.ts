@@ -63,9 +63,16 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
 );
 
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
+  const origins = new Set<string>([
+    siteUrl ?? "http://localhost:3000",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://omi.ac",
+    "https://app.omi.ac",
+  ]);
   return {
     baseURL: siteUrl,
-    trustedOrigins: [siteUrl ?? "http://localhost:3000"],
+    trustedOrigins: [...origins],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
       enabled: true,

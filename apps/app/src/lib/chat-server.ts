@@ -34,6 +34,8 @@ export interface RAGContext {
     type: string;
     summary?: string;
     content?: string;
+    imageUrl?: string;
+    pdfText?: string;
   } | null;
 }
 
@@ -116,16 +118,51 @@ export async function buildRAGContext(
             )?.articleContent
           : undefined;
 
+      const fileContent =
+        resource.type === "file" && "file" in resource
+          ? (resource.file as
+              | {
+                  mimeType?: string;
+                  extractedText?: string;
+                  fileUrl?: string | null;
+                }
+              | undefined)
+          : undefined;
+
       scopedResource = {
         title: resource.title,
         type: resource.type,
         summary: resource.resourceAI?.summary,
         content: (noteContent ?? websiteContent)?.slice(0, 4000),
+        imageUrl:
+          fileContent?.mimeType?.startsWith("image/") && fileContent.fileUrl
+            ? fileContent.fileUrl
+            : undefined,
+        pdfText:
+          fileContent?.mimeType === "application/pdf"
+            ? fileContent.extractedText?.slice(0, 4000)
+            : undefined,
       };
     }
   }
 
   return { chunks, scopedResource };
+}
+
+export function buildUserMessageContent(
+  text: string,
+  ragContext: RAGContext
+):
+  | string
+  | Array<{ type: "text"; text: string } | { type: "image"; image: URL }> {
+  const imageUrl = ragContext.scopedResource?.imageUrl;
+  if (imageUrl) {
+    return [
+      { type: "text", text },
+      { type: "image", image: new URL(imageUrl) },
+    ];
+  }
+  return text;
 }
 
 export interface ExternalToolSummary {
@@ -202,7 +239,7 @@ Never call \`proposeCollection\` without first calling \`searchLibrary\` in the 
   if (ragContext.scopedResource) {
     const r = ragContext.scopedResource;
     sections.push(
-      `\n## Current Resource\nTitle: ${r.title}\nType: ${r.type}${r.summary ? `\nSummary: ${r.summary}` : ""}${r.content ? `\nContent:\n${r.content}` : ""}`
+      `\n## Current Resource\nTitle: ${r.title}\nType: ${r.type}${r.summary ? `\nSummary: ${r.summary}` : ""}${r.pdfText ? `\nPDF text:\n${r.pdfText}` : ""}${r.content ? `\nContent:\n${r.content}` : ""}${r.imageUrl ? "\nAn image version of this resource is attached to the user's message." : ""}`
     );
   }
 

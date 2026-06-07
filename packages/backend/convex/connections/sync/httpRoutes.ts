@@ -46,7 +46,7 @@ export const webhookHandler = httpAction(async (ctx, request) => {
 
   if (parsed.kind === "verification") {
     console.warn(
-      `[webhook] ${providerId} verification token (set as ${providerId.toUpperCase()}_WEBHOOK_TOKEN env var): ${parsed.verificationToken}`
+      `[webhook] ${providerId} verification challenge received; set ${providerId.toUpperCase()}_WEBHOOK_TOKEN env var from provider dashboard`
     );
     return new Response(
       JSON.stringify({ verification_token: parsed.verificationToken }),
@@ -144,7 +144,7 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
 
   if (parsed.kind === "verification") {
     console.warn(
-      `[webhook] ${providerId} verification token: ${parsed.verificationToken}`
+      `[webhook] ${providerId} verification challenge received for connection ${connectionId}`
     );
     return new Response(null, { status: 200 });
   }

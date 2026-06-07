@@ -13,10 +13,17 @@ import {
   meHandler,
   uploadUrlHandler,
 } from "./extensionAuth/http";
+import { healthHandler } from "./health";
 import { mcpHandler } from "./mcp/server";
 import { oauthCallbackHandler as mcpClientOauthCallbackHandler } from "./mcpClient/oauthHttp";
 
 const http = httpRouter();
+
+http.route({
+  path: "/health",
+  method: "GET",
+  handler: healthHandler,
+});
 
 authComponent.registerRoutes(http, createAuth);
 

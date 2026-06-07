@@ -44,8 +44,6 @@ export const disconnect = protectedMutation({
 
     await ctx.db.patch(args.connectionId, {
       status: "revoked",
-      accessToken: undefined,
-      refreshToken: undefined,
       encryptedAccessToken: undefined,
       encryptedRefreshToken: undefined,
       tokenKeyVersion: undefined,

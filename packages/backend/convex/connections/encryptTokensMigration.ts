@@ -1,30 +1,13 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery } from "../_generated/server";
+import { internalMutation } from "../_generated/server";
 
 /**
- * Query/mutation half of the encryptTokens migration. The action runner lives in
- * encryptTokensMigrationAction.ts (Node runtime) since encryption uses node:crypto.
+ * Legacy migration helpers. Plaintext token columns were removed from schema after
+ * encryptTokensMigrationAction:run completed in production.
+ *
+ * Before deploy: npx convex run connections/encryptTokensMigrationAction:run
+ * After deploy: npx convex run connections/migrations:verifyEncryptedTokens
  */
-
-export const listPlaintextRows = internalQuery({
-  args: { cursor: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    const result = await ctx.db
-      .query("connection")
-      .paginate({ cursor: args.cursor ?? null, numItems: 50 });
-    const rows = result.page.map((c) => ({
-      _id: c._id,
-      accessToken: c.accessToken,
-      refreshToken: c.refreshToken,
-      hasEncrypted: Boolean(c.encryptedAccessToken),
-    }));
-    return {
-      rows,
-      isDone: result.isDone,
-      continueCursor: result.continueCursor,
-    };
-  },
-});
 
 export const writeEncryptedTokens = internalMutation({
   args: {
@@ -38,8 +21,6 @@ export const writeEncryptedTokens = internalMutation({
       encryptedAccessToken: args.encryptedAccessToken,
       encryptedRefreshToken: args.encryptedRefreshToken,
       tokenKeyVersion: args.tokenKeyVersion,
-      accessToken: undefined,
-      refreshToken: undefined,
     });
   },
 });
