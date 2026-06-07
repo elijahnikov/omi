@@ -7,7 +7,6 @@ import {
   query,
 } from "../_generated/server";
 import { getAuthIdentity } from "../utils";
-
 export const getWorkspaceProvider = query({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args) => {
@@ -45,7 +44,6 @@ export const getWorkspaceProvider = query({
     };
   },
 });
-
 export const getProviderRowInternal = internalQuery({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args) => {
@@ -63,7 +61,6 @@ export const getProviderRowInternal = internalQuery({
     };
   },
 });
-
 export const upsertKeyInternal = internalMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -101,11 +98,6 @@ export const upsertKeyInternal = internalMutation({
     });
   },
 });
-
-/**
- * Admin-only. Removes the BYO key; the workspace falls back to the platform
- * default and resumes credit-metered billing on the next chat turn.
- */
 export const removeWorkspaceKey = mutation({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args) => {

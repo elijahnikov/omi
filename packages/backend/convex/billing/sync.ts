@@ -6,15 +6,12 @@ import { tierToAllotment } from "./pricing";
 export { TIER_ALLOTMENT, tierToAllotment } from "./pricing";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
 const planValidator = v.union(
   v.literal("free"),
   v.literal("basic"),
   v.literal("pro")
 );
-
 const cadenceValidator = v.union(v.literal("monthly"), v.literal("yearly"));
-
 async function getPersonalAccountId(
   ctx: MutationCtx,
   userId: Id<"user">
@@ -28,7 +25,6 @@ async function getPersonalAccountId(
   }
   return user.personalBillingAccountId;
 }
-
 async function getAccountByStripeCustomerId(
   ctx: MutationCtx,
   stripeCustomerId: string
@@ -41,7 +37,6 @@ async function getAccountByStripeCustomerId(
     .unique();
   return row?._id ?? null;
 }
-
 export const syncSubscriptionActive = internalMutation({
   args: {
     userId: v.id("user"),
@@ -66,7 +61,6 @@ export const syncSubscriptionActive = internalMutation({
     });
   },
 });
-
 export const syncSubscriptionCanceled = internalMutation({
   args: { stripeCustomerId: v.string() },
   handler: async (ctx, args) => {
@@ -87,7 +81,6 @@ export const syncSubscriptionCanceled = internalMutation({
     });
   },
 });
-
 export const topUpForPeriod = internalMutation({
   args: {
     billingAccountId: v.id("billingAccount"),
@@ -129,7 +122,6 @@ export const topUpForPeriod = internalMutation({
     return { skipped: false as const, balanceAfter: allotment, resetAt };
   },
 });
-
 export const touchCurrentPeriodEnd = internalMutation({
   args: {
     stripeCustomerId: v.string(),
@@ -148,7 +140,6 @@ export const touchCurrentPeriodEnd = internalMutation({
     });
   },
 });
-
 export const resetDueCredits = internalMutation({
   args: {},
   handler: async (ctx) => {

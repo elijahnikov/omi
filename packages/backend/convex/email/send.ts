@@ -1,5 +1,4 @@
 "use node";
-
 import {
   type EmailProps,
   type EmailTemplateId,
@@ -30,9 +29,7 @@ async function sendRendered<Id extends EmailTemplateId>(
     replyTo: args.replyTo,
   });
 }
-
 const supportReplyTo = () => [senders.supportReplyTo];
-
 export const sendVerification = internalAction({
   args: { to: v.string(), url: v.string(), name: v.optional(v.string()) },
   handler: (ctx, a) =>
@@ -44,7 +41,6 @@ export const sendVerification = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendWelcome = internalAction({
   args: { to: v.string(), name: v.optional(v.string()), appUrl: v.string() },
   handler: (ctx, a) =>
@@ -56,7 +52,6 @@ export const sendWelcome = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendPasswordReset = internalAction({
   args: { to: v.string(), url: v.string(), name: v.optional(v.string()) },
   handler: (ctx, a) =>
@@ -68,7 +63,6 @@ export const sendPasswordReset = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendEmailChange = internalAction({
   args: {
     to: v.string(),
@@ -85,7 +79,6 @@ export const sendEmailChange = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendBillingSubscriptionStarted = internalAction({
   args: {
     to: v.string(),
@@ -108,7 +101,6 @@ export const sendBillingSubscriptionStarted = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendBillingSubscriptionCanceled = internalAction({
   args: {
     to: v.string(),
@@ -131,7 +123,6 @@ export const sendBillingSubscriptionCanceled = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendBillingPaymentFailed = internalAction({
   args: {
     to: v.string(),
@@ -152,7 +143,6 @@ export const sendBillingPaymentFailed = internalAction({
       replyTo: supportReplyTo(),
     }),
 });
-
 export const sendWorkspaceInvitation = internalAction({
   args: {
     to: v.string(),

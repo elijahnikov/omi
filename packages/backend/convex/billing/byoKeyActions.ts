@@ -1,5 +1,4 @@
 "use node";
-
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { ConvexError, v } from "convex/values";
 import { internal } from "../_generated/api";
@@ -11,7 +10,6 @@ import { defaultModelFor, isValidModelFor } from "./byoModels";
 const ALGO = "aes-256-gcm";
 const IV_LEN = 12;
 const AUTH_TAG_LEN = 16;
-
 function getEncryptionKey(): Buffer {
   const raw = process.env.BYO_KEY_ENCRYPTION_KEY;
   if (!raw) {
@@ -25,7 +23,6 @@ function getEncryptionKey(): Buffer {
   }
   return key;
 }
-
 export function encryptKey(plaintext: string): string {
   const key = getEncryptionKey();
   const iv = randomBytes(IV_LEN);
@@ -37,7 +34,6 @@ export function encryptKey(plaintext: string): string {
   const authTag = cipher.getAuthTag();
   return Buffer.concat([iv, authTag, encrypted]).toString("base64");
 }
-
 export function decryptKey(ciphertext: string): string {
   const key = getEncryptionKey();
   const buf = Buffer.from(ciphertext, "base64");
@@ -52,21 +48,18 @@ export function decryptKey(ciphertext: string): string {
   ]);
   return decrypted.toString("utf8");
 }
-
 async function verifyOpenAIKey(apiKey: string): Promise<boolean> {
   const res = await fetch("https://api.openai.com/v1/models", {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
   return res.ok;
 }
-
 async function verifyGoogleKey(apiKey: string): Promise<boolean> {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
   );
   return res.ok;
 }
-
 async function verifyAnthropicKey(apiKey: string): Promise<boolean> {
   const res = await fetch("https://api.anthropic.com/v1/models", {
     headers: {
@@ -76,12 +69,6 @@ async function verifyAnthropicKey(apiKey: string): Promise<boolean> {
   });
   return res.ok;
 }
-
-/**
- * Admin-only. Validates the key against the provider's API before persisting;
- * encrypts with the AES-GCM env key. Upserts the row — replacing any existing
- * provider config for the workspace.
- */
 export const setWorkspaceKey = action({
   args: {
     workspaceId: v.id("workspace"),
@@ -99,7 +86,6 @@ export const setWorkspaceKey = action({
       throw new ConvexError("Not authenticated");
     }
     const userId = identity.userId as Id<"user">;
-
     const trimmed = args.apiKey.trim();
     if (trimmed.length < 10) {
       throw new ConvexError("API key looks invalid (too short)");
@@ -122,7 +108,6 @@ export const setWorkspaceKey = action({
         "API key failed verification with the provider. Double-check the key and try again."
       );
     }
-
     const encryptedApiKey = encryptKey(trimmed);
     await ctx.runMutation(internal.billing.byoKey.upsertKeyInternal, {
       workspaceId: args.workspaceId,
@@ -131,11 +116,9 @@ export const setWorkspaceKey = action({
       model: args.model ?? defaultModelFor(args.provider),
       createdByUserId: userId,
     });
-
     return { ok: true as const };
   },
 });
-
 type ResolvedProvider =
   | {
       provider: "platform";
@@ -147,7 +130,6 @@ type ResolvedProvider =
       model: string;
       apiKey: string;
     };
-
 export const resolveAIProvider = action({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args): Promise<ResolvedProvider> => {

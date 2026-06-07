@@ -1,10 +1,5 @@
 "use node";
-
 import { internalAction } from "../_generated/server";
-
-/**
- * @deprecated Plaintext token columns removed from schema. Run verifyEncryptedTokens instead.
- */
 export const run = internalAction({
   args: {},
   handler: (): Promise<{

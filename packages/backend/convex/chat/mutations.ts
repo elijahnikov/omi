@@ -3,7 +3,6 @@ import { internal } from "../_generated/api";
 import { tokensToCredits } from "../billing/credits";
 import { resolveActingBillingAccount } from "../billing/resolver";
 import { workspaceMutation } from "../utils";
-
 export const createThread = workspaceMutation({
   args: {
     resourceId: v.optional(v.id("resource")),
@@ -17,7 +16,6 @@ export const createThread = workspaceMutation({
     });
   },
 });
-
 export const deleteThread = workspaceMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -31,11 +29,9 @@ export const deleteThread = workspaceMutation({
     ) {
       throw new ConvexError("Thread not found");
     }
-
     await ctx.db.patch(args.threadId, { deletedAt: Date.now() });
   },
 });
-
 export const saveUserMessage = workspaceMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -50,20 +46,16 @@ export const saveUserMessage = workspaceMutation({
     ) {
       throw new ConvexError("Thread not found");
     }
-
     const now = Date.now();
-
     await ctx.db.insert("chatMessage", {
       threadId: args.threadId,
       role: "user",
       content: args.content,
       createdAt: now,
     });
-
     await ctx.db.patch(args.threadId, { lastMessageAt: now });
   },
 });
-
 export const updateThreadTitle = workspaceMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -78,11 +70,9 @@ export const updateThreadTitle = workspaceMutation({
     ) {
       throw new ConvexError("Thread not found");
     }
-
     await ctx.db.patch(args.threadId, { title: args.title });
   },
 });
-
 export const saveAssistantMessage = workspaceMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -109,7 +99,6 @@ export const saveAssistantMessage = workspaceMutation({
     ) {
       throw new ConvexError("Thread not found");
     }
-
     await ctx.db.insert("chatMessage", {
       threadId: args.threadId,
       role: "assistant",
@@ -120,16 +109,6 @@ export const saveAssistantMessage = workspaceMutation({
     });
   },
 });
-
-/**
- * Called from the TanStack Start chat handler's `onFinish` callback with the
- * token usage the provider returned for that turn. Skips the debit when the
- * workspace has a BYO API key set (logs a zero-amount `kind:"byo-key"` row
- * for usage visibility instead). Swallows insufficient-balance errors — by
- * the time the stream has finished, we've already paid OpenAI and can't
- * un-stream the response; balance is allowed to drift marginally negative
- * on the last turn of a period, same tolerance the enrichment path uses.
- */
 export const recordChatUsage = workspaceMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -146,20 +125,17 @@ export const recordChatUsage = workspaceMutation({
     ) {
       throw new ConvexError("Thread not found");
     }
-
     const byo = await ctx.db
       .query("workspaceAIProvider")
       .withIndex("by_workspaceId", (q) =>
         q.eq("workspaceId", ctx.workspace._id)
       )
       .unique();
-
     const resolved = await resolveActingBillingAccount(
       ctx,
       ctx.user._id,
       ctx.workspace._id
     );
-
     if (byo) {
       await ctx.runMutation(internal.billing.credits.logByoUsage, {
         billingAccountId: resolved.billingAccountId,
@@ -169,10 +145,8 @@ export const recordChatUsage = workspaceMutation({
       });
       return { debited: 0, byo: true as const };
     }
-
     const totalTokens = args.promptTokens + args.completionTokens;
     const amount = tokensToCredits(totalTokens, args.model);
-
     if (amount <= 0 || resolved.creditBalance < amount) {
       await ctx.runMutation(internal.billing.credits.debitUpTo, {
         billingAccountId: resolved.billingAccountId,
@@ -186,7 +160,6 @@ export const recordChatUsage = workspaceMutation({
         byo: false as const,
       };
     }
-
     await ctx.runMutation(internal.billing.credits.debit, {
       billingAccountId: resolved.billingAccountId,
       workspaceId: ctx.workspace._id,
@@ -197,11 +170,6 @@ export const recordChatUsage = workspaceMutation({
     return { debited: amount, byo: false as const };
   },
 });
-
-/**
- * Records token usage for an inline-AI editor command (e.g. /improve, /continue).
- * Mirrors `recordChatUsage` but is not scoped to a chat thread.
- */
 export const recordInlineAIUsage = workspaceMutation({
   args: {
     promptTokens: v.number(),
@@ -215,13 +183,11 @@ export const recordInlineAIUsage = workspaceMutation({
         q.eq("workspaceId", ctx.workspace._id)
       )
       .unique();
-
     const resolved = await resolveActingBillingAccount(
       ctx,
       ctx.user._id,
       ctx.workspace._id
     );
-
     if (byo) {
       await ctx.runMutation(internal.billing.credits.logByoUsage, {
         billingAccountId: resolved.billingAccountId,
@@ -231,10 +197,8 @@ export const recordInlineAIUsage = workspaceMutation({
       });
       return { debited: 0, byo: true as const };
     }
-
     const totalTokens = args.promptTokens + args.completionTokens;
     const amount = tokensToCredits(totalTokens, args.model);
-
     if (amount <= 0 || resolved.creditBalance < amount) {
       await ctx.db.insert("creditLedger", {
         billingAccountId: resolved.billingAccountId,
@@ -247,7 +211,6 @@ export const recordInlineAIUsage = workspaceMutation({
       });
       return { debited: 0, byo: false as const };
     }
-
     await ctx.runMutation(internal.billing.credits.debit, {
       billingAccountId: resolved.billingAccountId,
       workspaceId: ctx.workspace._id,
@@ -258,14 +221,6 @@ export const recordInlineAIUsage = workspaceMutation({
     return { debited: amount, byo: false as const };
   },
 });
-
-/**
- * Generic patch for a persisted tool part's `output` field. Looks up the
- * containing chatMessage by `toolCallId` within `threadId` and shallow-merges
- * `outputPatch` into the part's `output`. Used by interactive tool result UIs
- * (e.g. ProposeCollectionCard) to record side effects after the user confirms,
- * without requiring a tool-specific mutation per use case.
- */
 export const updateToolPartOutput = workspaceMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -281,24 +236,26 @@ export const updateToolPartOutput = workspaceMutation({
     ) {
       throw new ConvexError("Thread not found");
     }
-
     const messages = await ctx.db
       .query("chatMessage")
       .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
       .collect();
-
     for (const message of messages) {
       if (!message.toolParts) {
         continue;
       }
       const idx = (
-        message.toolParts as Array<{ toolCallId?: string }>
+        message.toolParts as Array<{
+          toolCallId?: string;
+        }>
       ).findIndex((p) => p?.toolCallId === args.toolCallId);
       if (idx === -1) {
         continue;
       }
       const target = message.toolParts[idx] as
-        | { output?: Record<string, unknown> }
+        | {
+            output?: Record<string, unknown>;
+          }
         | undefined;
       if (!target) {
         continue;
@@ -311,7 +268,6 @@ export const updateToolPartOutput = workspaceMutation({
       await ctx.db.patch(message._id, { toolParts: updated });
       return { found: true };
     }
-
     return { found: false };
   },
 });

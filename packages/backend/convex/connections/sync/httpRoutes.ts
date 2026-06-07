@@ -5,7 +5,6 @@ import { getProvider, isProviderId } from "../providers/registry";
 
 const PREFIX = "/api/integrations/";
 const SUFFIX = "/webhook";
-
 function parseProvider(pathname: string): string | null {
   if (!pathname.startsWith(PREFIX)) {
     return null;
@@ -20,19 +19,16 @@ function parseProvider(pathname: string): string | null {
   }
   return provider;
 }
-
 export const webhookHandler = httpAction(async (ctx, request) => {
   const url = new URL(request.url);
   const providerId = parseProvider(url.pathname);
   if (!(providerId && isProviderId(providerId))) {
     return new Response("Not found", { status: 404 });
   }
-
   const descriptor = getProvider(providerId);
   if (!descriptor.sync?.parseWebhook) {
     return new Response("Provider does not accept webhooks", { status: 400 });
   }
-
   let parsed: Awaited<ReturnType<typeof descriptor.sync.parseWebhook>>;
   try {
     parsed = await descriptor.sync.parseWebhook(request);
@@ -43,7 +39,6 @@ export const webhookHandler = httpAction(async (ctx, request) => {
   if (!parsed) {
     return new Response("Bad signature", { status: 401 });
   }
-
   if (parsed.kind === "verification") {
     console.warn(
       `[webhook] ${providerId} verification challenge received; set ${providerId.toUpperCase()}_WEBHOOK_TOKEN env var from provider dashboard`
@@ -53,7 +48,6 @@ export const webhookHandler = httpAction(async (ctx, request) => {
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   }
-
   for (const event of parsed.events) {
     if (!event.connectionLookupKey) {
       console.warn(
@@ -74,7 +68,6 @@ export const webhookHandler = httpAction(async (ctx, request) => {
       continue;
     }
     const connectionId = conn._id as Id<"connection">;
-
     const isNew: boolean = await ctx.runMutation(
       internal.connections.sync.internals.recordSyncEvent,
       { connectionId, providerEventId: event.eventId }
@@ -82,7 +75,6 @@ export const webhookHandler = httpAction(async (ctx, request) => {
     if (!isNew) {
       continue;
     }
-
     await ctx.scheduler.runAfter(
       0,
       internal.connections.sync.worker.applyWebhookEvent,
@@ -95,13 +87,10 @@ export const webhookHandler = httpAction(async (ctx, request) => {
       }
     );
   }
-
   return new Response(null, { status: 204 });
 });
-
 const PER_CONN_PREFIX_RE =
   /^\/api\/integrations\/([^/]+)\/webhook\/([^/]+)\/?$/;
-
 export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
   const url = new URL(request.url);
   const match = url.pathname.match(PER_CONN_PREFIX_RE);
@@ -113,12 +102,10 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
   if (!isProviderId(providerId)) {
     return new Response("Unknown provider", { status: 404 });
   }
-
   const descriptor = getProvider(providerId);
   if (!descriptor.sync?.parseWebhook) {
     return new Response("Provider does not accept webhooks", { status: 400 });
   }
-
   const connectionId = connectionIdParam as Id<"connection">;
   const conn = await ctx.runQuery(
     internal.connections.sync.internals.getConnectionForWebhook,
@@ -130,7 +117,6 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
   if (!conn.webhookSecret) {
     return new Response("Connection has no webhook secret", { status: 400 });
   }
-
   let parsed: Awaited<ReturnType<typeof descriptor.sync.parseWebhook>>;
   try {
     parsed = await descriptor.sync.parseWebhook(request, conn.webhookSecret);
@@ -141,14 +127,12 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
   if (!parsed) {
     return new Response("Bad signature", { status: 401 });
   }
-
   if (parsed.kind === "verification") {
     console.warn(
       `[webhook] ${providerId} verification challenge received for connection ${connectionId}`
     );
     return new Response(null, { status: 200 });
   }
-
   for (const event of parsed.events) {
     const isNew: boolean = await ctx.runMutation(
       internal.connections.sync.internals.recordSyncEvent,
@@ -157,7 +141,6 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
     if (!isNew) {
       continue;
     }
-
     await ctx.scheduler.runAfter(
       0,
       internal.connections.sync.worker.applyWebhookEvent,
@@ -170,6 +153,5 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
       }
     );
   }
-
   return new Response(null, { status: 204 });
 });

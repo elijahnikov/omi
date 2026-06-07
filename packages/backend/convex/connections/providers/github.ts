@@ -1,3 +1,4 @@
+import { timingSafeEqualHex } from "../../utils";
 import type {
   OAuth2ProviderDescriptor,
   ProviderSync,
@@ -8,48 +9,44 @@ import type {
 
 const GITHUB_API = "https://api.github.com";
 const USER_AGENT = "omi-app";
-
 interface GitHubUser {
   avatar_url?: string;
   id: number;
   login: string;
   name?: string | null;
 }
-
 interface GitHubAuthor {
   login?: string;
 }
-
 interface GitHubIssueOrPr {
   body: string | null;
   draft?: boolean;
   html_url: string;
   id: number;
   merged?: boolean;
-  // present on PR payloads
   merged_at?: string | null;
   number: number;
-  pull_request?: { merged_at?: string | null } | unknown;
+  pull_request?:
+    | {
+        merged_at?: string | null;
+      }
+    | unknown;
   state: "open" | "closed";
   title: string;
   user?: GitHubAuthor | null;
 }
-
 interface GitHubRepository {
-  full_name: string; // "owner/name"
+  full_name: string;
 }
-
 interface GitHubWebhookPayload {
   action?: string;
   hook_id?: number;
   issue?: GitHubIssueOrPr;
   pull_request?: GitHubIssueOrPr;
   repository?: GitHubRepository;
-  zen?: string; // present on `ping` events
+  zen?: string;
 }
-
 type IssueOrPrKind = "issue" | "pr";
-
 async function ghFetchText(
   url: string,
   accessToken: string,
@@ -71,7 +68,6 @@ async function ghFetchText(
   }
   return response.text();
 }
-
 async function ghFetch<T>(
   url: string,
   accessToken: string,
@@ -95,7 +91,6 @@ async function ghFetch<T>(
   }
   return (await response.json()) as T;
 }
-
 async function verifyHmacSha256(
   body: string,
   signatureHeader: string | null,
@@ -125,14 +120,8 @@ async function verifyHmacSha256(
   if (hex.length !== expected.length) {
     return false;
   }
-  let mismatch = 0;
-  for (let i = 0; i < hex.length; i += 1) {
-    // biome-ignore lint/suspicious/noBitwiseOperators: <>
-    mismatch |= hex.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return timingSafeEqualHex(hex, expected);
 }
-
 function externalIdFor(
   kind: IssueOrPrKind,
   repoFullName: string,
@@ -140,11 +129,13 @@ function externalIdFor(
 ): string {
   return `${kind}:${repoFullName}/${number}`;
 }
-
 const EXTERNAL_ID_RE = /^(issue|pr):([^/]+)\/([^/]+)\/(\d+)$/;
-function parseExternalId(
-  externalId: string
-): { kind: IssueOrPrKind; owner: string; repo: string; number: number } | null {
+function parseExternalId(externalId: string): {
+  kind: IssueOrPrKind;
+  owner: string;
+  repo: string;
+  number: number;
+} | null {
   const match = externalId.match(EXTERNAL_ID_RE);
   if (!match) {
     return null;
@@ -156,14 +147,12 @@ function parseExternalId(
     number: Number(match[4]),
   };
 }
-
 interface GitHubRawItem {
   diffPatch?: string;
   kind: IssueOrPrKind;
   payload: GitHubIssueOrPr;
   repoFullName: string;
 }
-
 function prState(pr: GitHubIssueOrPr): string {
   if (pr.merged || pr.merged_at) {
     return "merged";
@@ -173,16 +162,11 @@ function prState(pr: GitHubIssueOrPr): string {
   }
   return pr.state;
 }
-
 const githubSync: ProviderSync = {
   kind: "webhook",
-
-  // biome-ignore lint/correctness/useYield: intentional empty generator
-  // biome-ignore lint/suspicious/useAwait: <>
   async *pollDelta() {
-    return;
+    yield* [];
   },
-
   async parseWebhook(req, secret): Promise<WebhookParseResult | null> {
     const body = await req.text();
     let payload: GitHubWebhookPayload;
@@ -191,7 +175,6 @@ const githubSync: ProviderSync = {
     } catch {
       return null;
     }
-
     if (!secret) {
       console.warn("[github] webhook handler missing per-connection secret");
       return null;
@@ -204,22 +187,17 @@ const githubSync: ProviderSync = {
     if (!ok) {
       return null;
     }
-
     const eventType = req.headers.get("X-GitHub-Event");
     const deliveryId =
       req.headers.get("X-GitHub-Delivery") ?? `${Date.now()}:${Math.random()}`;
-
     if (eventType === "ping" || payload.zen) {
       return { kind: "events", events: [] };
     }
-
     const repoFullName = payload.repository?.full_name;
     if (!repoFullName) {
       return { kind: "events", events: [] };
     }
-
     const events: WebhookEvent[] = [];
-
     if (eventType === "issues" && payload.issue) {
       const isDelete = payload.action === "deleted";
       events.push({
@@ -249,10 +227,8 @@ const githubSync: ProviderSync = {
         } satisfies GitHubRawItem,
       });
     }
-
     return { kind: "events", events };
   },
-
   async fetchOne(ctx, externalId): Promise<unknown | null> {
     const parsed = parseExternalId(externalId);
     if (!parsed) {
@@ -286,14 +262,12 @@ const githubSync: ProviderSync = {
       return null;
     }
   },
-
   toResource(rawItem): ResourceUpsert {
     const item = rawItem as GitHubRawItem;
     const { kind, repoFullName, payload, diffPatch } = item;
     const author = payload.user?.login ?? "unknown";
     const state = kind === "pr" ? prState(payload) : payload.state;
     const subtitle = `${kind === "pr" ? "PR" : "Issue"} #${payload.number} · ${state} · @${author} · ${repoFullName}`;
-
     return {
       externalId: externalIdFor(kind, repoFullName, payload.number),
       externalUrl: payload.html_url,
@@ -310,7 +284,6 @@ const githubSync: ProviderSync = {
     };
   },
 };
-
 export const github: OAuth2ProviderDescriptor = {
   id: "github",
   label: "GitHub",

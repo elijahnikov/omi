@@ -8,11 +8,9 @@ const RATE_LIMIT_MS = 350;
 const BACKOFF_MS = 5000;
 const MAX_RETRIES = 3;
 const MAX_DEPTH = 3;
-
 const AMP_RE = /&/g;
 const LT_RE = /</g;
 const GT_RE = />/g;
-
 interface RichText {
   annotations?: {
     bold?: boolean;
@@ -24,14 +22,12 @@ interface RichText {
   href?: string | null;
   plain_text?: string;
 }
-
 interface NotionParent {
   database_id?: string;
   page_id?: string;
   type?: string;
   workspace?: boolean;
 }
-
 interface NotionPage {
   archived?: boolean;
   created_time?: string;
@@ -41,42 +37,66 @@ interface NotionPage {
   parent?: NotionParent;
   properties?: Record<
     string,
-    { type?: string; title?: RichText[]; rich_text?: RichText[] }
+    {
+      type?: string;
+      title?: RichText[];
+      rich_text?: RichText[];
+    }
   >;
   url?: string;
 }
-
 interface SearchResponse {
   has_more: boolean;
   next_cursor: string | null;
   results: NotionPage[];
 }
-
 interface NotionBlock {
-  bulleted_list_item?: { rich_text?: RichText[] };
-  callout?: { rich_text?: RichText[] };
-  code?: { rich_text?: RichText[]; language?: string };
+  bulleted_list_item?: {
+    rich_text?: RichText[];
+  };
+  callout?: {
+    rich_text?: RichText[];
+  };
+  code?: {
+    rich_text?: RichText[];
+    language?: string;
+  };
   divider?: Record<string, never>;
   has_children?: boolean;
-  heading_1?: { rich_text?: RichText[] };
-  heading_2?: { rich_text?: RichText[] };
-  heading_3?: { rich_text?: RichText[] };
+  heading_1?: {
+    rich_text?: RichText[];
+  };
+  heading_2?: {
+    rich_text?: RichText[];
+  };
+  heading_3?: {
+    rich_text?: RichText[];
+  };
   id: string;
-  numbered_list_item?: { rich_text?: RichText[] };
-  paragraph?: { rich_text?: RichText[] };
-  quote?: { rich_text?: RichText[] };
-  to_do?: { rich_text?: RichText[]; checked?: boolean };
-  toggle?: { rich_text?: RichText[] };
+  numbered_list_item?: {
+    rich_text?: RichText[];
+  };
+  paragraph?: {
+    rich_text?: RichText[];
+  };
+  quote?: {
+    rich_text?: RichText[];
+  };
+  to_do?: {
+    rich_text?: RichText[];
+    checked?: boolean;
+  };
+  toggle?: {
+    rich_text?: RichText[];
+  };
   type: string;
   [key: string]: unknown;
 }
-
 interface BlockChildrenResponse {
   has_more: boolean;
   next_cursor: string | null;
   results: NotionBlock[];
 }
-
 export const parseNotionApi: ImportParser = {
   kind: "token",
   source: "notion_oauth",
@@ -109,7 +129,6 @@ export const parseNotionApi: ImportParser = {
     } while (cursor);
   },
 };
-
 async function searchPages(
   token: string,
   cursor: string | null
@@ -126,7 +145,6 @@ async function searchPages(
     body: JSON.stringify(body),
   });
 }
-
 async function buildPageRecord(
   token: string,
   page: NotionPage
@@ -142,7 +160,6 @@ async function buildPageRecord(
   const updatedAt = page.last_edited_time
     ? Date.parse(page.last_edited_time)
     : undefined;
-
   return {
     sourceItemId: `notion:${page.id}`,
     type: "note",
@@ -155,7 +172,6 @@ async function buildPageRecord(
     updatedAt: Number.isNaN(updatedAt) ? undefined : updatedAt,
   };
 }
-
 function extractTitle(page: NotionPage): string {
   if (!page.properties) {
     return "";
@@ -167,7 +183,6 @@ function extractTitle(page: NotionPage): string {
   }
   return "";
 }
-
 function derivePath(page: NotionPage): string[] | undefined {
   const parent = page.parent;
   if (!parent) {
@@ -184,7 +199,6 @@ function derivePath(page: NotionPage): string[] | undefined {
   }
   return;
 }
-
 async function fetchBlockChildren(
   token: string,
   blockId: string,
@@ -219,11 +233,9 @@ async function fetchBlockChildren(
   } while (cursor);
   return out;
 }
-
 function blocksToHtml(blocks: NotionBlock[]): string {
   return blocks.map((b) => renderBlock(b)).join("\n");
 }
-
 function renderBlock(block: NotionBlock): string {
   const children = Array.isArray(block.children)
     ? (block.children as NotionBlock[])
@@ -260,7 +272,6 @@ function renderBlock(block: NotionBlock): string {
       return childHtml;
   }
 }
-
 function blocksToPlainText(blocks: NotionBlock[]): string {
   const lines: string[] = [];
   for (const block of blocks) {
@@ -280,7 +291,6 @@ function blocksToPlainText(blocks: NotionBlock[]): string {
   }
   return lines.join("\n");
 }
-
 function extractBlockText(block: NotionBlock): string {
   const rt =
     block.paragraph?.rich_text ??
@@ -296,21 +306,18 @@ function extractBlockText(block: NotionBlock): string {
     block.toggle?.rich_text;
   return richTextToPlain(rt);
 }
-
 function richTextToPlain(rt: RichText[] | undefined): string {
   if (!rt) {
     return "";
   }
   return rt.map((r) => r.plain_text ?? "").join("");
 }
-
 function richTextToHtml(rt: RichText[] | undefined): string {
   if (!rt) {
     return "";
   }
   return rt.map((r) => renderRichText(r)).join("");
 }
-
 function renderRichText(r: RichText): string {
   let text = escapeHtml(r.plain_text ?? "");
   const ann = r.annotations;
@@ -334,25 +341,25 @@ function renderRichText(r: RichText): string {
   }
   return text;
 }
-
 function wrap(tag: string, inner: string): string {
   if (!inner) {
     return "";
   }
   return `<${tag}>${inner}</${tag}>`;
 }
-
 function escapeHtml(s: string): string {
   return s
     .replace(AMP_RE, "&amp;")
     .replace(LT_RE, "&lt;")
     .replace(GT_RE, "&gt;");
 }
-
 async function notionFetch<T>(
   token: string,
   path: string,
-  init: { method: "GET" | "POST"; body?: string }
+  init: {
+    method: "GET" | "POST";
+    body?: string;
+  }
 ): Promise<T | null> {
   const url = `${NOTION_BASE}${path}`;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -383,7 +390,6 @@ async function notionFetch<T>(
   }
   return null;
 }
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -1,8 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-
 export default defineSchema({
-  // USER
   user: defineTable({
     username: v.string(),
     email: v.string(),
@@ -13,8 +11,6 @@ export default defineSchema({
     personalBillingAccountId: v.optional(v.id("billingAccount")),
     welcomeEmailSentAt: v.optional(v.number()),
   }).index("by_email", ["email"]),
-
-  // BILLING ACCOUNT
   billingAccount: defineTable({
     type: v.union(v.literal("individual")),
     ownerUserId: v.id("user"),
@@ -35,8 +31,6 @@ export default defineSchema({
   })
     .index("by_owner_user", ["ownerUserId"])
     .index("by_stripe_customer", ["stripeCustomerId"]),
-
-  // CREDIT LEDGER (append-only, per billingAccount; source of truth for usage)
   creditLedger: defineTable({
     billingAccountId: v.id("billingAccount"),
     workspaceId: v.optional(v.id("workspace")),
@@ -54,8 +48,6 @@ export default defineSchema({
   })
     .index("by_account_time", ["billingAccountId"])
     .index("by_workspace_time", ["workspaceId"]),
-
-  // WORKSPACE AI PROVIDER
   workspaceAIProvider: defineTable({
     workspaceId: v.id("workspace"),
     provider: v.union(
@@ -68,8 +60,6 @@ export default defineSchema({
     createdByUserId: v.id("user"),
     lastValidatedAt: v.number(),
   }).index("by_workspaceId", ["workspaceId"]),
-
-  // WORKSPACE
   workspace: defineTable({
     name: v.string(),
     ownerId: v.id("user"),
@@ -80,8 +70,6 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_deleted_at", ["deletedAt"]),
-
-  // WORKSPACE MEMBER
   workspaceMember: defineTable({
     workspaceId: v.id("workspace"),
     userId: v.id("user"),
@@ -92,8 +80,6 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_last_accessed", ["userId", "lastAccessedAt"])
     .index("by_workspace_user", ["workspaceId", "userId"]),
-
-  // WORKSPACE INVITATION
   workspaceInvitation: defineTable({
     workspaceId: v.id("workspace"),
     invitedEmail: v.string(),
@@ -106,8 +92,6 @@ export default defineSchema({
       v.literal("declined"),
       v.literal("revoked")
     ),
-    // Random token for the email accept link. Optional so invitations created
-    // before this flow existed (accepted in-app by id) remain valid.
     token: v.optional(v.string()),
     expiresAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -118,8 +102,6 @@ export default defineSchema({
     .index("by_invited_user", ["invitedUserId", "status"])
     .index("by_workspace_email", ["workspaceId", "invitedEmail"])
     .index("by_token", ["token"]),
-
-  // RESOURCE (base table)
   resource: defineTable({
     workspaceId: v.id("workspace"),
     createdBy: v.id("user"),
@@ -139,13 +121,10 @@ export default defineSchema({
     collectionId: v.optional(v.id("collection")),
     importedFrom: v.optional(v.string()),
     dailyNoteDate: v.optional(v.string()),
-    // Back-pointers to a synced third-party item; set on resources created by a connection
     sourceConnectionId: v.optional(v.id("connection")),
     sourceProviderId: v.optional(v.string()),
     sourceExternalId: v.optional(v.string()),
     sourceExternalUrl: v.optional(v.string()),
-    // Bumped only by sync writes (not by local edits). Used by the editor to
-    // remount when remote content changes, without remounting on local typing.
     syncedAt: v.optional(v.number()),
   })
     .index("by_workspace", ["workspaceId", "deletedAt"])
@@ -192,8 +171,6 @@ export default defineSchema({
       searchField: "title",
       filterFields: ["workspaceId", "type", "deletedAt"],
     }),
-
-  // WEBSITE RESOURCE
   websiteResource: defineTable({
     resourceId: v.id("resource"),
     url: v.string(),
@@ -245,16 +222,12 @@ export default defineSchema({
   })
     .index("by_resource", ["resourceId"])
     .index("by_domain", ["resourceId", "domain"]),
-
-  // NOTE RESOURCE
   noteResource: defineTable({
     resourceId: v.id("resource"),
     htmlContent: v.optional(v.string()),
     jsonContent: v.optional(v.string()),
     plainTextContent: v.optional(v.string()),
   }).index("by_resource", ["resourceId"]),
-
-  // RESOURCE CONTENT (editor content for all resource types)
   resourceContent: defineTable({
     resourceId: v.id("resource"),
     htmlContent: v.optional(v.string()),
@@ -262,8 +235,6 @@ export default defineSchema({
     plainTextContent: v.optional(v.string()),
     markdownContent: v.optional(v.string()),
   }).index("by_resource", ["resourceId"]),
-
-  // SYNCED RESOURCE (third-party items kept in sync via OAuth connections)
   syncedResource: defineTable({
     resourceId: v.id("resource"),
     providerId: v.string(),
@@ -273,8 +244,6 @@ export default defineSchema({
     diffPatch: v.optional(v.string()),
     subtitle: v.optional(v.string()),
   }).index("by_resource", ["resourceId"]),
-
-  // FILE RESOURCE
   fileResource: defineTable({
     resourceId: v.id("resource"),
     storageId: v.id("_storage"),
@@ -289,8 +258,6 @@ export default defineSchema({
   })
     .index("by_resource", ["resourceId"])
     .index("by_mime_type", ["resourceId", "mimeType"]),
-
-  // RESOURCE AI
   resourceAI: defineTable({
     resourceId: v.id("resource"),
     workspaceId: v.id("workspace"),
@@ -314,8 +281,6 @@ export default defineSchema({
   })
     .index("by_resource", ["resourceId"])
     .index("by_workspace_status", ["workspaceId", "status"]),
-
-  // RESOURCE EMBEDDING
   resourceEmbedding: defineTable({
     resourceId: v.id("resource"),
     workspaceId: v.id("workspace"),
@@ -330,8 +295,6 @@ export default defineSchema({
       dimensions: 1536,
       filterFields: ["workspaceId"],
     }),
-
-  // RESOURCE CHUNK (content chunks with per-chunk embeddings for RAG)
   resourceChunk: defineTable({
     resourceId: v.id("resource"),
     workspaceId: v.id("workspace"),
@@ -357,8 +320,6 @@ export default defineSchema({
       dimensions: 1536,
       filterFields: ["workspaceId"],
     }),
-
-  // USER RESOURCE PIN (per-user pins, not workspace-wide)
   userResourcePin: defineTable({
     userId: v.id("user"),
     resourceId: v.id("resource"),
@@ -367,8 +328,6 @@ export default defineSchema({
   })
     .index("by_user_workspace", ["userId", "workspaceId"])
     .index("by_user_resource", ["userId", "resourceId"]),
-
-  // USER COLLECTION PIN (per-user folder pins)
   userCollectionPin: defineTable({
     userId: v.id("user"),
     collectionId: v.id("collection"),
@@ -377,8 +336,6 @@ export default defineSchema({
   })
     .index("by_user_workspace", ["userId", "workspaceId"])
     .index("by_user_collection", ["userId", "collectionId"]),
-
-  // CONCEPT (AI-extracted canonical concepts with embeddings for dedup)
   concept: defineTable({
     workspaceId: v.id("workspace"),
     name: v.string(),
@@ -391,8 +348,6 @@ export default defineSchema({
       dimensions: 1536,
       filterFields: ["workspaceId"],
     }),
-
-  // RESOURCE CONCEPT (junction: resource <-> concept with importance weight)
   resourceConcept: defineTable({
     resourceId: v.id("resource"),
     conceptId: v.id("concept"),
@@ -402,8 +357,6 @@ export default defineSchema({
     .index("by_resource", ["resourceId"])
     .index("by_concept", ["conceptId"])
     .index("by_workspace", ["workspaceId"]),
-
-  // RESOURCE LINK (scored bidirectional links between resources)
   resourceLink: defineTable({
     workspaceId: v.id("workspace"),
     sourceResourceId: v.id("resource"),
@@ -420,8 +373,6 @@ export default defineSchema({
     .index("by_target", ["targetResourceId", "status"])
     .index("by_workspace", ["workspaceId"])
     .index("by_source_target", ["sourceResourceId", "targetResourceId"]),
-
-  // TAG
   tag: defineTable({
     workspaceId: v.id("workspace"),
     name: v.string(),
@@ -439,8 +390,6 @@ export default defineSchema({
       dimensions: 1536,
       filterFields: ["workspaceId"],
     }),
-
-  // COLLECTION (folder)
   collection: defineTable({
     workspaceId: v.id("workspace"),
     parentId: v.optional(v.id("collection")),
@@ -454,8 +403,6 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId", "deletedAt"])
     .index("by_workspace_parent", ["workspaceId", "parentId", "deletedAt"])
     .index("by_workspace_name", ["workspaceId", "deletedAt", "name"]),
-
-  // RESOURCE TAG (junction)
   resourceTag: defineTable({
     resourceId: v.id("resource"),
     tagId: v.id("tag"),
@@ -464,8 +411,6 @@ export default defineSchema({
     .index("by_resource", ["resourceId"])
     .index("by_tag", ["tagId"])
     .index("by_workspace_tag", ["workspaceId", "tagId"]),
-
-  // CHAT THREAD
   chatThread: defineTable({
     workspaceId: v.id("workspace"),
     userId: v.id("user"),
@@ -481,8 +426,6 @@ export default defineSchema({
       "lastMessageAt",
     ])
     .index("by_workspace_resource", ["workspaceId", "resourceId", "deletedAt"]),
-
-  // USER MEMORY (per user + workspace profile used as persistent chat context)
   userMemory: defineTable({
     workspaceId: v.id("workspace"),
     userId: v.id("user"),
@@ -494,8 +437,6 @@ export default defineSchema({
     lastErrorAt: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_user_workspace", ["workspaceId", "userId"]),
-
-  // CONNECTION (per-user third-party account: OAuth or API token)
   connection: defineTable({
     userId: v.id("user"),
     provider: v.union(
@@ -512,7 +453,6 @@ export default defineSchema({
       v.literal("error"),
       v.literal("paused")
     ),
-    // Encrypted at rest via connections/tokens.ts (AES-256-GCM, base64-encoded)
     encryptedAccessToken: v.optional(v.string()),
     encryptedRefreshToken: v.optional(v.string()),
     tokenKeyVersion: v.optional(v.number()),
@@ -520,9 +460,7 @@ export default defineSchema({
     scope: v.optional(v.string()),
     providerAccountId: v.optional(v.string()),
     providerAccountLabel: v.optional(v.string()),
-    // HMAC secret used to verify provider webhook deliveries
     webhookSecret: v.optional(v.string()),
-    // Operational webhook state (hook IDs merged across bindings)
     webhookScope: v.optional(v.any()),
     webhookSubscriptionId: v.optional(v.string()),
     lastError: v.optional(v.string()),
@@ -530,8 +468,6 @@ export default defineSchema({
     createdAt: v.number(),
     disconnectedAt: v.optional(v.number()),
   }).index("by_user_provider", ["userId", "provider", "status"]),
-
-  // Per-workspace sync configuration for a user connection
   connectionSyncBinding: defineTable({
     connectionId: v.id("connection"),
     workspaceId: v.id("workspace"),
@@ -547,17 +483,12 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_connection_workspace", ["connectionId", "workspaceId"])
     .index("by_syncEnabled", ["syncEnabled"]),
-
-  // SYNC CURSOR (per-connection incremental cursor, scoped by provider sub-source)
   syncCursor: defineTable({
     connectionId: v.id("connection"),
-    // Logical scope key — e.g. "repo:owner/name", "database:<id>", "drive:changes", "all"
     scopeKey: v.string(),
     cursor: v.string(),
     updatedAt: v.number(),
   }).index("by_connection_scope", ["connectionId", "scopeKey"]),
-
-  // SYNC JOB (run record of a backfill / delta / webhook batch)
   syncJob: defineTable({
     connectionId: v.id("connection"),
     bindingId: v.optional(v.id("connectionSyncBinding")),
@@ -587,15 +518,11 @@ export default defineSchema({
   })
     .index("by_connection_status", ["connectionId", "status"])
     .index("by_connection_started", ["connectionId", "startedAt"]),
-
-  // SYNC EVENT (idempotency record for webhook deliveries; TTL-cleaned)
   syncEvent: defineTable({
     connectionId: v.id("connection"),
     providerEventId: v.string(),
     receivedAt: v.number(),
   }).index("by_connection_event", ["connectionId", "providerEventId"]),
-
-  // IMPORT JOB (per-workspace data migration job from a third-party source)
   importJob: defineTable({
     workspaceId: v.id("workspace"),
     userId: v.id("user"),
@@ -648,16 +575,8 @@ export default defineSchema({
   })
     .index("by_workspace", ["workspaceId", "startedAt"])
     .index("by_user", ["userId", "startedAt"]),
-
-  // MCP SERVER (outbound: an external MCP server Omi's chat connects to as a
-  // client to invoke the server's tools — Linear, Google Calendar, Gmail,
-  // custom internal MCPs, etc.). User-scoped: a connected server's tools are
-  // available in every workspace the user chats in. Per-workspace scoping
-  // can land later as an additive `availableInWorkspaceIds` array.
   mcpServer: defineTable({
     userId: v.id("user"),
-    // Legacy: rows created before MCP servers became user-scoped carried a
-    // `workspaceId` here. New rows omit it; the field is read nowhere.
     workspaceId: v.optional(v.id("workspace")),
     name: v.string(),
     catalogId: v.optional(v.string()),
@@ -685,29 +604,17 @@ export default defineSchema({
       v.object({
         name: v.string(),
         description: v.optional(v.string()),
-        // JSON-encoded JSON Schema. Stored stringified because Convex rejects
-        // documents containing top-level `$`-prefixed keys ($schema, $ref,
-        // $defs are common in JSON Schema).
         inputSchema: v.string(),
       })
     ),
     enabledTools: v.array(v.string()),
-    // Optional server-authored guidance from the MCP `initialize` response.
-    // Injected into the chat system prompt only when this server is connected,
-    // so per-server quirks don't bloat the prompt for everyone.
     instructions: v.optional(v.string()),
     toolsLastFetchedAt: v.number(),
     lastConnectedAt: v.number(),
   }).index("by_user_status", ["userId", "status"]),
-
-  // MCP OAUTH STATE (ephemeral state during the OAuth dance: PKCE verifier,
-  // dynamically-registered client credentials, return URL). Rows are written
-  // when the user clicks "Connect" and consumed in the OAuth callback;
-  // expired rows are reaped lazily by the callback handler.
   mcpOauthState: defineTable({
     state: v.string(),
     userId: v.id("user"),
-    // Legacy: pre-refactor rows carried `workspaceId`. New rows omit it.
     workspaceId: v.optional(v.id("workspace")),
     catalogId: v.optional(v.string()),
     name: v.string(),
@@ -723,12 +630,6 @@ export default defineSchema({
     returnTo: v.string(),
     expiresAt: v.number(),
   }).index("by_state", ["state"]),
-
-  // EXTENSION TOKEN (long-lived bearer tokens for the browser extension and
-  // MCP clients). `kind` discriminates: 'extension' for the browser extension,
-  // 'mcp' for external MCP clients (Claude Desktop, Cursor, etc.). Absent
-  // means 'extension' for backwards compatibility with rows minted before the
-  // discriminator existed.
   extensionToken: defineTable({
     userId: v.id("user"),
     defaultWorkspaceId: v.optional(v.id("workspace")),
@@ -742,8 +643,6 @@ export default defineSchema({
   })
     .index("by_user", ["userId", "revokedAt"])
     .index("by_hash", ["tokenHash"]),
-
-  // RESOURCE SHARE (public read-only link for a resource)
   resourceShare: defineTable({
     resourceId: v.id("resource"),
     workspaceId: v.id("workspace"),
@@ -753,8 +652,6 @@ export default defineSchema({
   })
     .index("by_resource", ["resourceId"])
     .index("by_slug", ["slug"]),
-
-  // RESOURCE COMMENT (multi-user discussion thread on a resource)
   resourceComment: defineTable({
     workspaceId: v.id("workspace"),
     resourceId: v.id("resource"),
@@ -767,16 +664,12 @@ export default defineSchema({
   })
     .index("by_resource", ["resourceId", "deletedAt", "createdAt"])
     .index("by_workspace_author", ["workspaceId", "authorId"]),
-
-  // RESOURCE COMMENT READ (per-user last-seen marker for unread dot)
   resourceCommentRead: defineTable({
     userId: v.id("user"),
     resourceId: v.id("resource"),
     workspaceId: v.id("workspace"),
     lastSeenAt: v.number(),
   }).index("by_user_resource", ["userId", "resourceId"]),
-
-  // CHAT MESSAGE
   chatMessage: defineTable({
     threadId: v.id("chatThread"),
     role: v.union(v.literal("user"), v.literal("assistant")),

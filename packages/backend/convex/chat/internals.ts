@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-
 export const createThread = internalMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -16,7 +15,6 @@ export const createThread = internalMutation({
     });
   },
 });
-
 export const saveMessage = internalMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -36,7 +34,6 @@ export const saveMessage = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-
     await ctx.db.insert("chatMessage", {
       threadId: args.threadId,
       role: args.role,
@@ -44,11 +41,9 @@ export const saveMessage = internalMutation({
       citations: args.citations,
       createdAt: now,
     });
-
     await ctx.db.patch(args.threadId, { lastMessageAt: now });
   },
 });
-
 export const getThreadMessages = internalQuery({
   args: {
     threadId: v.id("chatThread"),
@@ -60,7 +55,6 @@ export const getThreadMessages = internalQuery({
       .collect();
   },
 });
-
 export const validateMembership = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -71,31 +65,25 @@ export const validateMembership = internalQuery({
     if (!workspace) {
       return null;
     }
-
     const user = await ctx.db.get(args.userId);
     if (!user) {
       return null;
     }
-
     if (workspace.ownerId === user._id) {
       return { user, workspace };
     }
-
     const member = await ctx.db
       .query("workspaceMember")
       .withIndex("by_workspace_user", (q) =>
         q.eq("workspaceId", args.workspaceId).eq("userId", args.userId)
       )
       .unique();
-
     if (!member) {
       return null;
     }
-
     return { user, workspace };
   },
 });
-
 export const maybeSetThreadTitle = internalMutation({
   args: {
     threadId: v.id("chatThread"),
@@ -106,12 +94,10 @@ export const maybeSetThreadTitle = internalMutation({
     if (!thread || thread.title) {
       return;
     }
-
     const title = args.content.slice(0, 60).trim();
     await ctx.db.patch(args.threadId, { title });
   },
 });
-
 export const titleSearch = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -128,7 +114,6 @@ export const titleSearch = internalQuery({
           .eq("deletedAt", undefined)
       )
       .take(args.limit);
-
     return results.map((r) => ({
       _id: r._id,
       title: r.title,
@@ -137,7 +122,6 @@ export const titleSearch = internalQuery({
     }));
   },
 });
-
 export const getThreadById = internalQuery({
   args: {
     threadId: v.id("chatThread"),
@@ -146,7 +130,6 @@ export const getThreadById = internalQuery({
     return await ctx.db.get(args.threadId);
   },
 });
-
 export const getUserByAuthId = internalQuery({
   args: {
     userId: v.id("user"),

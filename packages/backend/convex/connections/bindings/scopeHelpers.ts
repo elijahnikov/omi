@@ -1,23 +1,26 @@
 interface GitHubScopeSelection {
-  repos?: Array<{ hookId?: number; name: string }>;
+  repos?: Array<{
+    hookId?: number;
+    name: string;
+  }>;
   starsEnabled?: boolean;
   starsSnapshot?: string[];
 }
-
 interface LinearScopeSelection {
-  teams?: Array<{ id: string; name: string; webhookId?: string }>;
+  teams?: Array<{
+    id: string;
+    name: string;
+    webhookId?: string;
+  }>;
 }
-
 export function githubRepoNames(scope: unknown): string[] {
   const s = scope as GitHubScopeSelection | undefined;
   return s?.repos?.map((r) => r.name) ?? [];
 }
-
 export function linearTeamIds(scope: unknown): string[] {
   const s = scope as LinearScopeSelection | undefined;
   return s?.teams?.map((team) => team.id) ?? [];
 }
-
 export function mergeGithubRepos(scopes: unknown[]): string[] {
   const repos = new Set<string>();
   for (const scope of scopes) {
@@ -27,7 +30,6 @@ export function mergeGithubRepos(scopes: unknown[]): string[] {
   }
   return [...repos];
 }
-
 export function mergeLinearTeams(scopes: unknown[]): string[] {
   const teams = new Set<string>();
   for (const scope of scopes) {
@@ -37,9 +39,7 @@ export function mergeLinearTeams(scopes: unknown[]): string[] {
   }
   return [...teams];
 }
-
 const GITHUB_EXTERNAL_ID_RE = /^(?:issue|pr|star):([^/]+)\/([^/]+)/;
-
 export function githubRepoFromExternalId(externalId: string): string | null {
   const match = externalId.match(GITHUB_EXTERNAL_ID_RE);
   if (!match) {
@@ -47,7 +47,6 @@ export function githubRepoFromExternalId(externalId: string): string | null {
   }
   return `${match[1]}/${match[2]}`;
 }
-
 export function bindingIncludesGithubExternalId(
   scope: unknown,
   externalId: string
@@ -62,14 +61,12 @@ export function bindingIncludesGithubExternalId(
   }
   return githubRepoNames(scope).includes(repo);
 }
-
 export function bindingIncludesLinearTeam(
   scope: unknown,
   teamId: string
 ): boolean {
   return linearTeamIds(scope).includes(teamId);
 }
-
 export function findScopeConflicts(
   existingScopes: unknown[],
   newScope: unknown,
@@ -104,5 +101,4 @@ export function findScopeConflicts(
   }
   return null;
 }
-
 export type { GitHubScopeSelection, LinearScopeSelection };

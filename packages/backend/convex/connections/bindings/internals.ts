@@ -7,7 +7,6 @@ import {
   mergeGithubRepos,
   mergeLinearTeams,
 } from "./scopeHelpers";
-
 export const listBindingsForConnectionInternal = internalQuery({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {
@@ -19,14 +18,12 @@ export const listBindingsForConnectionInternal = internalQuery({
       .collect();
   },
 });
-
 export const getBindingInternal = internalQuery({
   args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.bindingId);
   },
 });
-
 export const deleteBindingsForConnection = internalMutation({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {
@@ -41,7 +38,6 @@ export const deleteBindingsForConnection = internalMutation({
     }
   },
 });
-
 export async function getActiveBindingsForConnection(
   ctx: QueryCtx | MutationCtx,
   connectionId: Id<"connection">
@@ -52,7 +48,6 @@ export async function getActiveBindingsForConnection(
     .collect();
   return bindings.filter((b) => b.syncEnabled && !b.syncPaused);
 }
-
 export async function assertScopeNoConflicts(
   ctx: QueryCtx | MutationCtx,
   connectionId: Id<"connection">,
@@ -72,7 +67,6 @@ export async function assertScopeNoConflicts(
     throw new ConvexError(conflict);
   }
 }
-
 export function mergedWebhookTargetRepos(
   bindings: Doc<"connectionSyncBinding">[]
 ): string[] {
@@ -80,7 +74,6 @@ export function mergedWebhookTargetRepos(
     bindings.filter((b) => b.syncEnabled).map((b) => b.scopeSelection)
   );
 }
-
 export function mergedWebhookTargetTeamIds(
   bindings: Doc<"connectionSyncBinding">[]
 ): string[] {

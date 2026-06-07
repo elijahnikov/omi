@@ -5,10 +5,8 @@ interface StatePayload {
   userId: string;
   workspaceId?: string;
 }
-
 const encoder = new TextEncoder();
 const BASE64_PADDING_RE = /=+$/;
-
 function base64UrlEncode(bytes: ArrayBuffer | Uint8Array): string {
   const buffer = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   let binary = "";
@@ -20,7 +18,6 @@ function base64UrlEncode(bytes: ArrayBuffer | Uint8Array): string {
     .replaceAll("/", "_")
     .replace(BASE64_PADDING_RE, "");
 }
-
 function base64UrlDecode(value: string): Uint8Array<ArrayBuffer> {
   const padded = value.replaceAll("-", "+").replaceAll("_", "/");
   const padLength = (4 - (padded.length % 4)) % 4;
@@ -32,7 +29,6 @@ function base64UrlDecode(value: string): Uint8Array<ArrayBuffer> {
   }
   return bytes;
 }
-
 async function importKey(secret: string): Promise<CryptoKey> {
   return await crypto.subtle.importKey(
     "raw",
@@ -42,7 +38,6 @@ async function importKey(secret: string): Promise<CryptoKey> {
     ["sign", "verify"]
   );
 }
-
 function getSecret(): string {
   const secret = process.env.OAUTH_STATE_SECRET;
   if (!secret || secret.length < 16) {
@@ -52,14 +47,12 @@ function getSecret(): string {
   }
   return secret;
 }
-
 export async function signState(payload: StatePayload): Promise<string> {
   const body = base64UrlEncode(encoder.encode(JSON.stringify(payload)));
   const key = await importKey(getSecret());
   const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
   return `${body}.${base64UrlEncode(signature)}`;
 }
-
 export async function verifyState(value: string): Promise<StatePayload | null> {
   const dot = value.indexOf(".");
   if (dot < 0) {
@@ -84,7 +77,6 @@ export async function verifyState(value: string): Promise<StatePayload | null> {
     return null;
   }
 }
-
 export function newNonce(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return base64UrlEncode(bytes);

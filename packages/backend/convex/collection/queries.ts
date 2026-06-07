@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { workspaceQuery } from "../utils";
-
 export const get = workspaceQuery({
   args: { collectionId: v.id("collection") },
   handler: async (ctx, args) => {
@@ -12,8 +11,6 @@ export const get = workspaceQuery({
     ) {
       return null;
     }
-
-    // Walk up parentId chain to build breadcrumbs
     const breadcrumbs: Array<{
       _id: typeof collection._id;
       name: string;
@@ -34,7 +31,6 @@ export const get = workspaceQuery({
       });
       current = parent;
     }
-
     return {
       _id: collection._id,
       name: collection.name,
@@ -48,7 +44,6 @@ export const get = workspaceQuery({
     };
   },
 });
-
 export const listChildren = workspaceQuery({
   args: { parentId: v.optional(v.id("collection")) },
   handler: (ctx, args) => {
@@ -63,7 +58,6 @@ export const listChildren = workspaceQuery({
       .collect();
   },
 });
-
 export const listAll = workspaceQuery({
   args: {},
   handler: (ctx) => {
@@ -75,7 +69,6 @@ export const listAll = workspaceQuery({
       .collect();
   },
 });
-
 export const listPinned = workspaceQuery({
   args: {},
   handler: async (ctx) => {
@@ -85,7 +78,6 @@ export const listPinned = workspaceQuery({
         q.eq("userId", ctx.user._id).eq("workspaceId", ctx.workspace._id)
       )
       .collect();
-
     const collections = await Promise.all(
       pins.map(async (pin) => {
         const collection = await ctx.db.get(pin.collectionId);
@@ -95,7 +87,6 @@ export const listPinned = workspaceQuery({
         return collection;
       })
     );
-
     return collections.filter((c) => c !== null);
   },
 });

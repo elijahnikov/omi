@@ -6,11 +6,9 @@ interface ScopedRepo {
   hookId?: number;
   name: string;
 }
-
 interface GitHubWebhookScope {
   repos?: ScopedRepo[];
 }
-
 export const getConnectionForGithub = internalQuery({
   args: { connectionId: v.id("connection") },
   handler: async (
@@ -37,7 +35,6 @@ export const getConnectionForGithub = internalQuery({
     };
   },
 });
-
 export const writeWebhookScope = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -49,7 +46,6 @@ export const writeWebhookScope = internalMutation({
     });
   },
 });
-
 export const finalizeDisconnect = internalMutation({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {
@@ -63,7 +59,6 @@ export const finalizeDisconnect = internalMutation({
     });
   },
 });
-
 export const listActiveGithubStarBindings = internalQuery({
   args: {},
   handler: async (
@@ -91,7 +86,9 @@ export const listActiveGithubStarBindings = internalQuery({
         continue;
       }
       const scope = binding.scopeSelection as
-        | { starsEnabled?: boolean }
+        | {
+            starsEnabled?: boolean;
+          }
         | undefined;
       if (!scope?.starsEnabled) {
         continue;
@@ -104,7 +101,6 @@ export const listActiveGithubStarBindings = internalQuery({
     return out;
   },
 });
-
 export const writeBindingScopeSelection = internalMutation({
   args: {
     bindingId: v.id("connectionSyncBinding"),
@@ -116,7 +112,6 @@ export const writeBindingScopeSelection = internalMutation({
     });
   },
 });
-
 export const getBindingForGithubStars = internalQuery({
   args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args) => {

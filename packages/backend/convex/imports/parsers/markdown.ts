@@ -13,7 +13,6 @@ const TAG_SPLIT_RE = /[, ]/;
 const INLINE_TAG_RE = /(?:^|\s)#([a-z0-9_\-/]+)/gi;
 const ROOT_DIR_RE = /^[^/]+\//;
 const LEADING_HASH_RE = /^#/;
-
 export const parseMarkdownZip: ImportParser = {
   kind: "file",
   source: "markdown_zip",
@@ -29,9 +28,7 @@ export const parseMarkdownZip: ImportParser = {
       };
       return;
     }
-
     const decoder = new TextDecoder("utf-8");
-
     for (const [path, bytes] of Object.entries(entries)) {
       if (!isMarkdownFile(path)) {
         continue;
@@ -42,7 +39,6 @@ export const parseMarkdownZip: ImportParser = {
       if (shouldSkipPath(path)) {
         continue;
       }
-
       const content = decoder.decode(bytes);
       const record = parseMarkdownFile(path, content);
       if (record) {
@@ -51,40 +47,32 @@ export const parseMarkdownZip: ImportParser = {
     }
   },
 };
-
 function isMarkdownFile(path: string): boolean {
   return MARKDOWN_EXT_RE.test(path);
 }
-
 function shouldSkipPath(path: string): boolean {
   const segments = path.split("/");
   return segments.some(
     (s) => s === ".obsidian" || s === ".trash" || s === "node_modules"
   );
 }
-
 function parseMarkdownFile(path: string, content: string): ImportRecord | null {
   const { frontmatter, body } = splitFrontmatter(content);
   const rel = path.replace(ROOT_DIR_RE, "");
   const fileName = rel.split("/").pop() ?? rel;
   const titleFromFile = fileName.replace(MARKDOWN_EXT_RE, "");
-
   const title =
     (frontmatter.title as string | undefined)?.trim() ||
     firstHeading(body) ||
     titleFromFile;
-
   const tagNames = collectTags(frontmatter, body);
   const collectionPath = rel.includes("/")
     ? rel.split("/").slice(0, -1)
     : undefined;
-
   const createdAt =
     parseFrontmatterDate(frontmatter.created) ??
     parseFrontmatterDate(frontmatter.date);
-
   const html = markdownToHtml(body);
-
   return {
     sourceItemId: hashString(path),
     type: "note",
@@ -96,7 +84,6 @@ function parseMarkdownFile(path: string, content: string): ImportRecord | null {
     createdAt,
   };
 }
-
 function splitFrontmatter(content: string): {
   frontmatter: Record<string, unknown>;
   body: string;
@@ -112,13 +99,11 @@ function splitFrontmatter(content: string): {
   const body = content.slice(end + 4).replace(LEADING_NEWLINE_RE, "");
   return { frontmatter: parseSimpleYaml(yaml), body };
 }
-
 function parseSimpleYaml(yaml: string): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   const lines = yaml.split(FRONTMATTER_SPLIT_RE);
   let currentKey: string | null = null;
   let currentList: string[] | null = null;
-
   for (const line of lines) {
     if (line.trim() === "") {
       continue;
@@ -154,7 +139,6 @@ function parseSimpleYaml(yaml: string): Record<string, unknown> {
   }
   return result;
 }
-
 function stripQuotes(s: string): string {
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
@@ -164,12 +148,10 @@ function stripQuotes(s: string): string {
   }
   return s;
 }
-
 function firstHeading(body: string): string | undefined {
   const match = body.match(HEADING_RE);
   return match?.[1]?.trim();
 }
-
 function collectTags(
   frontmatter: Record<string, unknown>,
   body: string
@@ -198,7 +180,6 @@ function collectTags(
   }
   return Array.from(tags);
 }
-
 function parseFrontmatterDate(raw: unknown): number | undefined {
   if (typeof raw !== "string") {
     return;

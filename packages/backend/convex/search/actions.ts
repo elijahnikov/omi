@@ -1,8 +1,6 @@
 "use node";
-
 import { generateEmbedding } from "@omi/ai/embeddings";
 import { createOpenAIProvider } from "@omi/ai/providers";
-import { buildRerankText, rerankDocuments } from "@omi/ai/rerank";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
@@ -21,7 +19,6 @@ const SIGNAL_WEIGHTS = {
   concept: 0.8,
   tag: 0.5,
 } as const;
-
 const CONCEPT_MATCH_THRESHOLD = 0.5;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -30,10 +27,14 @@ const CONCEPT_FANOUT = 10;
 const MAX_QUERY_LENGTH = 400;
 const BOOST_MAX_MULTIPLIER = 1.3;
 const BOOST_PER_IMPORTANCE = 0.15;
-
 type MatchReason =
-  | { type: "title" }
-  | { type: "semantic"; score: number }
+  | {
+      type: "title";
+    }
+  | {
+      type: "semantic";
+      score: number;
+    }
   | {
       type: "chunk";
       chunkIndex: number;
@@ -47,18 +48,32 @@ type MatchReason =
       conceptName: string;
       importance: number;
     }
-  | { type: "tag"; tagId: Id<"tag">; tagName: string }
-  | { type: "personalized"; conceptName: string };
-
+  | {
+      type: "tag";
+      tagId: Id<"tag">;
+      tagName: string;
+    }
+  | {
+      type: "personalized";
+      conceptName: string;
+    };
 interface EnrichedResource {
   _creationTime: number;
   _id: Id<"resource">;
   aiStatus?: "pending" | "processing" | "completed" | "failed";
   category?: string;
   collectionId?: Id<"collection">;
-  concepts: Array<{ _id: Id<"concept">; name: string; importance: number }>;
+  concepts: Array<{
+    _id: Id<"concept">;
+    name: string;
+    importance: number;
+  }>;
   createdBy: Id<"user">;
-  creator?: { _id: Id<"user">; username: string; image?: string } | null;
+  creator?: {
+    _id: Id<"user">;
+    username: string;
+    image?: string;
+  } | null;
   deletedAt?: number;
   description?: string;
   file?: {
@@ -72,7 +87,9 @@ interface EnrichedResource {
   isFavorite: boolean;
   isPinned: boolean;
   language?: string;
-  note?: { plainTextContent?: string } | null;
+  note?: {
+    plainTextContent?: string;
+  } | null;
   sentiment?: string;
   summary?: string;
   synced?: {
@@ -82,7 +99,11 @@ interface EnrichedResource {
     markdownContent?: string;
     subtitle?: string;
   } | null;
-  tags: Array<{ _id: Id<"tag">; name: string; color?: string }>;
+  tags: Array<{
+    _id: Id<"tag">;
+    name: string;
+    color?: string;
+  }>;
   title: string;
   type: "website" | "note" | "file" | "synced";
   updatedAt: number;
@@ -99,7 +120,6 @@ interface EnrichedResource {
   } | null;
   workspaceId: Id<"workspace">;
 }
-
 export interface SearchResult {
   aiStatus?: "pending" | "processing" | "completed" | "failed";
   bestSnippet: string | null;
@@ -110,7 +130,6 @@ export interface SearchResult {
   sharedConcepts: string[];
   titleHtml: string;
 }
-
 export interface HybridSearchResponse {
   embeddingReady: boolean;
   results: SearchResult[];
@@ -124,10 +143,8 @@ export interface HybridSearchResponse {
   };
   usedFallback: boolean;
 }
-
 type ListOp = "is" | "isNot";
 type DateOp = "before" | "after" | "between";
-
 interface FiltersArg {
   collectionId?: Id<"collection"> | null;
   collectionIdOp?: ListOp;
@@ -151,14 +168,12 @@ interface FiltersArg {
   types?: Array<"website" | "note" | "file" | "synced">;
   typesOp?: ListOp;
 }
-
 const listOpValidator = v.union(v.literal("is"), v.literal("isNot"));
 const dateOpValidator = v.union(
   v.literal("before"),
   v.literal("after"),
   v.literal("between")
 );
-
 const filtersValidator = v.object({
   types: v.optional(
     v.array(v.union(v.literal("website"), v.literal("note"), v.literal("file")))
@@ -184,7 +199,6 @@ const filtersValidator = v.object({
   dateTo: v.optional(v.number()),
   dateOp: v.optional(dateOpValidator),
 });
-
 const sortValidator = v.union(
   v.literal("relevance"),
   v.literal("newest"),
@@ -192,7 +206,6 @@ const sortValidator = v.union(
   v.literal("recently-updated"),
   v.literal("alphabetical")
 );
-
 export const hybridSearch = action({
   args: {
     workspaceId: v.id("workspace"),
@@ -206,7 +219,6 @@ export const hybridSearch = action({
     if (!identity?.userId) {
       throw new Error("Unauthorized");
     }
-
     const membership = await ctx.runQuery(
       internal.search.internals.validateMembership,
       {
@@ -217,18 +229,15 @@ export const hybridSearch = action({
     if (!membership) {
       throw new Error("Not authorized");
     }
-
     await rateLimiter.limit(ctx, "hybridSearch", {
       key: identity.userId,
       throws: true,
     });
-
     const filters: FiltersArg = args.filters ?? {};
     const sort = args.sort ?? "relevance";
     const limit = Math.min(args.limit ?? DEFAULT_LIMIT, MAX_LIMIT);
     const rawQuery = args.query.slice(0, MAX_QUERY_LENGTH).trim();
     const queryTokens = extractQueryTokens(rawQuery);
-
     const hasFreeText = rawQuery.length > 0;
     const hasAnyFilter =
       (filters.conceptIds?.length ?? 0) > 0 ||
@@ -245,7 +254,6 @@ export const hybridSearch = action({
       filters.dateTo !== undefined ||
       Boolean(filters.sentiment) ||
       Boolean(filters.language);
-
     if (!(hasFreeText || hasAnyFilter)) {
       return {
         results: [],
@@ -261,23 +269,18 @@ export const hybridSearch = action({
         usedFallback: true,
       };
     }
-
     const apiKey = process.env.OPENAI_API_KEY;
-
     const embeddingReady = (await ctx.runQuery(
       internal.search.internals.hasEmbeddings,
       { workspaceId: args.workspaceId }
     )) as boolean;
-
     const canSemantic = Boolean(apiKey) && embeddingReady && hasFreeText;
     const usedFallback = !canSemantic;
-
     const titleRanks = new Map<Id<"resource">, number>();
     const semanticRanks = new Map<Id<"resource">, number>();
     const chunkRanks = new Map<Id<"resource">, number>();
     const conceptRanks = new Map<Id<"resource">, number>();
     const tagRanks = new Map<Id<"resource">, number>();
-
     const semanticScores = new Map<Id<"resource">, number>();
     const chunkHitByResource = new Map<
       Id<"resource">,
@@ -298,9 +301,11 @@ export const hybridSearch = action({
     >();
     const tagHitsByResource = new Map<
       Id<"resource">,
-      Array<{ tagId: Id<"tag">; tagName: string }>
+      Array<{
+        tagId: Id<"tag">;
+        tagName: string;
+      }>
     >();
-
     const titleHitsPromise = hasFreeText
       ? ctx.runQuery(internal.search.internals.titleSearch, {
           workspaceId: args.workspaceId,
@@ -308,9 +313,11 @@ export const hybridSearch = action({
           limit: SIGNAL_FANOUT,
         })
       : Promise.resolve(
-          [] as Array<{ resourceId: Id<"resource">; rank: number }>
+          [] as Array<{
+            resourceId: Id<"resource">;
+            rank: number;
+          }>
         );
-
     const tagHitsPromise = hasFreeText
       ? ctx.runQuery(internal.search.internals.tagSearch, {
           workspaceId: args.workspaceId,
@@ -325,7 +332,6 @@ export const hybridSearch = action({
             rank: number;
           }>
         );
-
     let queryEmbedding: number[] | null = null;
     if (canSemantic) {
       const billingAccount = await ctx.runQuery(
@@ -354,7 +360,6 @@ export const hybridSearch = action({
         queryEmbedding = null;
       }
     }
-
     const semanticHitsPromise =
       canSemantic && queryEmbedding
         ? ctx.vectorSearch("resourceEmbedding", "by_embedding", {
@@ -363,9 +368,11 @@ export const hybridSearch = action({
             filter: (q) => q.eq("workspaceId", args.workspaceId),
           })
         : Promise.resolve(
-            [] as Array<{ _id: Id<"resourceEmbedding">; _score: number }>
+            [] as Array<{
+              _id: Id<"resourceEmbedding">;
+              _score: number;
+            }>
           );
-
     const chunkHitsPromise =
       canSemantic && queryEmbedding
         ? ctx.vectorSearch("resourceChunk", "by_embedding", {
@@ -374,9 +381,11 @@ export const hybridSearch = action({
             filter: (q) => q.eq("workspaceId", args.workspaceId),
           })
         : Promise.resolve(
-            [] as Array<{ _id: Id<"resourceChunk">; _score: number }>
+            [] as Array<{
+              _id: Id<"resourceChunk">;
+              _score: number;
+            }>
           );
-
     const conceptVectorHitsPromise =
       canSemantic && queryEmbedding
         ? ctx.vectorSearch("concept", "by_embedding", {
@@ -384,8 +393,12 @@ export const hybridSearch = action({
             limit: CONCEPT_FANOUT,
             filter: (q) => q.eq("workspaceId", args.workspaceId),
           })
-        : Promise.resolve([] as Array<{ _id: Id<"concept">; _score: number }>);
-
+        : Promise.resolve(
+            [] as Array<{
+              _id: Id<"concept">;
+              _score: number;
+            }>
+          );
     const [titleHits, tagHits, semanticHits, chunkHits, conceptVectorHits] =
       await Promise.all([
         titleHitsPromise,
@@ -394,13 +407,11 @@ export const hybridSearch = action({
         chunkHitsPromise,
         conceptVectorHitsPromise,
       ]);
-
     for (const hit of titleHits) {
       if (!titleRanks.has(hit.resourceId)) {
         titleRanks.set(hit.resourceId, hit.rank);
       }
     }
-
     for (const hit of tagHits) {
       if (!tagRanks.has(hit.resourceId)) {
         tagRanks.set(hit.resourceId, hit.rank);
@@ -411,7 +422,6 @@ export const hybridSearch = action({
       }
       tagHitsByResource.set(hit.resourceId, list);
     }
-
     const [semanticResourceIds, chunkDocs] = await Promise.all([
       semanticHits.length > 0
         ? ctx.runQuery(internal.search.internals.getResourceIdsForEmbeddings, {
@@ -427,11 +437,12 @@ export const hybridSearch = action({
               resourceId: Id<"resource">;
               chunkIndex: number;
               content: string;
-              metadata?: { pageNumber?: number };
+              metadata?: {
+                pageNumber?: number;
+              };
             } | null>
           ),
     ]);
-
     let semanticRank = 0;
     for (let i = 0; i < semanticHits.length; i++) {
       const hit = semanticHits[i];
@@ -445,7 +456,6 @@ export const hybridSearch = action({
         semanticRank += 1;
       }
     }
-
     let chunkRank = 0;
     for (let i = 0; i < chunkHits.length; i++) {
       const hit = chunkHits[i];
@@ -466,14 +476,12 @@ export const hybridSearch = action({
       });
       chunkRank += 1;
     }
-
     const matchedConceptIds: Id<"concept">[] = [];
     for (const hit of conceptVectorHits) {
       if (hit._score >= CONCEPT_MATCH_THRESHOLD) {
         matchedConceptIds.push(hit._id);
       }
     }
-
     if (matchedConceptIds.length > 0) {
       const conceptHits = await ctx.runQuery(
         internal.search.internals.listResourcesForConcepts,
@@ -498,7 +506,6 @@ export const hybridSearch = action({
         }
       }
     }
-
     const candidates = new Set<Id<"resource">>();
     for (const id of titleRanks.keys()) {
       candidates.add(id);
@@ -515,7 +522,6 @@ export const hybridSearch = action({
     for (const id of tagRanks.keys()) {
       candidates.add(id);
     }
-
     if ((filters.conceptIds?.length ?? 0) > 0) {
       const extra = await ctx.runQuery(
         internal.search.internals.listResourcesForConcepts,
@@ -542,7 +548,6 @@ export const hybridSearch = action({
         }
       }
     }
-
     const hasOtherFilter =
       (filters.types?.length ?? 0) > 0 ||
       (filters.createdBy?.length ?? 0) > 0 ||
@@ -558,7 +563,6 @@ export const hybridSearch = action({
     const hasConceptOrTagFilter =
       (filters.conceptIds?.length ?? 0) > 0 ||
       (filters.tagIds?.length ?? 0) > 0;
-
     if (
       !hasFreeText &&
       hasOtherFilter &&
@@ -588,7 +592,6 @@ export const hybridSearch = action({
         candidates.add(id);
       }
     }
-
     if ((filters.tagIds?.length ?? 0) > 0) {
       const tagSets = (await ctx.runQuery(
         internal.search.internals.listResourcesForTags,
@@ -633,13 +636,11 @@ export const hybridSearch = action({
         }
       }
     }
-
     const candidateIds = Array.from(candidates);
     const enriched = (await ctx.runQuery(
       internal.search.internals.enrichResources,
       { resourceIds: candidateIds }
     )) as EnrichedResource[];
-
     const memoryContent = (await ctx.runQuery(
       internal.search.internals.getUserMemoryContent,
       {
@@ -648,29 +649,23 @@ export const hybridSearch = action({
       }
     )) as string | null;
     const boostTerms = extractBoostTerms(memoryContent);
-
     const scored: Array<{
       resource: EnrichedResource;
       score: number;
       matchReasons: MatchReason[];
     }> = [];
-
     for (const resource of enriched) {
       const id = resource._id as Id<"resource">;
-
       if (!passesFilters(resource, filters)) {
         continue;
       }
-
       const matchReasons: MatchReason[] = [];
       let score = 0;
-
       const tRank = titleRanks.get(id);
       if (tRank !== undefined) {
         score += SIGNAL_WEIGHTS.title * (1 / (RRF_K + tRank + 1));
         matchReasons.push({ type: "title" });
       }
-
       const sRank = semanticRanks.get(id);
       if (sRank !== undefined) {
         score += SIGNAL_WEIGHTS.semantic * (1 / (RRF_K + sRank + 1));
@@ -679,7 +674,6 @@ export const hybridSearch = action({
           matchReasons.push({ type: "semantic", score: semScore });
         }
       }
-
       const cRank = chunkRanks.get(id);
       if (cRank !== undefined) {
         score += SIGNAL_WEIGHTS.chunk * (1 / (RRF_K + cRank + 1));
@@ -694,7 +688,6 @@ export const hybridSearch = action({
           });
         }
       }
-
       const conRank = conceptRanks.get(id);
       if (conRank !== undefined) {
         score += SIGNAL_WEIGHTS.concept * (1 / (RRF_K + conRank + 1));
@@ -708,7 +701,6 @@ export const hybridSearch = action({
           });
         }
       }
-
       const tagRank = tagRanks.get(id);
       if (tagRank !== undefined) {
         score += SIGNAL_WEIGHTS.tag * (1 / (RRF_K + tagRank + 1));
@@ -721,11 +713,9 @@ export const hybridSearch = action({
           });
         }
       }
-
       if (score === 0 && hasFreeText) {
         continue;
       }
-
       if (boostTerms.length > 0 && resource.concepts) {
         let multiplier = 1;
         const alreadyBoosted = new Set<string>();
@@ -748,10 +738,8 @@ export const hybridSearch = action({
         }
         score *= multiplier;
       }
-
       scored.push({ resource, score, matchReasons });
     }
-
     let sorted: typeof scored;
     switch (sort) {
       case "newest":
@@ -777,58 +765,30 @@ export const hybridSearch = action({
       default:
         sorted = [...scored].sort((a, b) => b.score - a.score);
     }
-
-    let top = sorted.slice(0, limit);
-
-    const cohereKey = process.env.COHERE_API_KEY;
-    if (cohereKey && sort === "relevance" && hasFreeText && top.length > 1) {
-      try {
-        const rerankPool = sorted.slice(0, Math.min(limit * 2, 30));
-        const reranked = await rerankDocuments(
-          cohereKey,
-          rawQuery,
-          rerankPool.map((entry, index) => ({
-            id: String(index),
-            text: buildRerankText({
-              title: entry.resource.title,
-              summary: entry.resource.summary,
-              snippet: entry.matchReasons.find(
-                (reason) => reason.type === "chunk"
-              )?.content,
-            }),
-          })),
-          limit
-        );
-        top = reranked
-          .map((result: { index: number }) => rerankPool[result.index])
-          .filter(
-            (entry): entry is (typeof sorted)[number] => entry !== undefined
-          );
-      } catch (error) {
-        console.warn("[hybridSearch] rerank failed", error);
-      }
-    }
-
+    const top = sorted.slice(0, limit);
     const results: SearchResult[] = top.map((entry) => {
       const sharedConcepts = Array.from(
         new Set(
           entry.matchReasons
             .filter(
-              (r): r is Extract<MatchReason, { type: "concept" }> =>
-                r.type === "concept"
+              (
+                r
+              ): r is Extract<
+                MatchReason,
+                {
+                  type: "concept";
+                }
+              > => r.type === "concept"
             )
             .map((r) => r.conceptName)
         )
       );
-
       const bestSnippet = computeBestSnippet(
         entry.resource,
         queryTokens,
         entry.matchReasons
       );
-
       const titleHtml = highlight(entry.resource.title, queryTokens);
-
       return {
         resourceId: entry.resource._id,
         resource: entry.resource,
@@ -840,7 +800,6 @@ export const hybridSearch = action({
         aiStatus: entry.resource.aiStatus,
       };
     });
-
     return {
       results,
       stats: {
@@ -856,7 +815,6 @@ export const hybridSearch = action({
     };
   },
 });
-
 function passesFilters(
   resource: EnrichedResource,
   filters: FiltersArg
@@ -956,19 +914,24 @@ function passesFilters(
   }
   return true;
 }
-
 function computeBestSnippet(
   resource: EnrichedResource,
   tokens: string[],
   matchReasons: MatchReason[]
 ): string | null {
   const chunkReason = matchReasons.find(
-    (r): r is Extract<MatchReason, { type: "chunk" }> => r.type === "chunk"
+    (
+      r
+    ): r is Extract<
+      MatchReason,
+      {
+        type: "chunk";
+      }
+    > => r.type === "chunk"
   );
   if (chunkReason) {
     return buildSnippet(chunkReason.content, tokens);
   }
-
   switch (resource.type) {
     case "website": {
       const article = resource.website?.articleContent;
@@ -1005,7 +968,6 @@ function computeBestSnippet(
     default:
       break;
   }
-
   if (resource.summary) {
     return buildSnippet(resource.summary, tokens);
   }

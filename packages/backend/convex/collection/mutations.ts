@@ -1,7 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { workspaceMutation } from "../utils";
-
 export const create = workspaceMutation({
   args: {
     name: v.string(),
@@ -19,7 +18,6 @@ export const create = workspaceMutation({
         throw new ConvexError("Parent collection not found");
       }
     }
-
     return ctx.db.insert("collection", {
       workspaceId: ctx.workspace._id,
       parentId: args.parentId,
@@ -30,7 +28,6 @@ export const create = workspaceMutation({
     });
   },
 });
-
 export const rename = workspaceMutation({
   args: {
     collectionId: v.id("collection"),
@@ -47,7 +44,6 @@ export const rename = workspaceMutation({
     });
   },
 });
-
 export const updateIcon = workspaceMutation({
   args: {
     collectionId: v.id("collection"),
@@ -66,7 +62,6 @@ export const updateIcon = workspaceMutation({
     });
   },
 });
-
 export const move = workspaceMutation({
   args: {
     collectionId: v.id("collection"),
@@ -77,8 +72,6 @@ export const move = workspaceMutation({
     if (!collection || collection.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Collection not found");
     }
-
-    // Validate no circular reference
     if (args.newParentId) {
       let current = await ctx.db.get(args.newParentId);
       while (current) {
@@ -93,14 +86,12 @@ export const move = workspaceMutation({
         current = await ctx.db.get(current.parentId);
       }
     }
-
     await ctx.db.patch(args.collectionId, {
       parentId: args.newParentId,
       updatedAt: Date.now(),
     });
   },
 });
-
 export const togglePin = workspaceMutation({
   args: {
     collectionId: v.id("collection"),
@@ -114,19 +105,16 @@ export const togglePin = workspaceMutation({
     ) {
       throw new ConvexError("Collection not found");
     }
-
     const existing = await ctx.db
       .query("userCollectionPin")
       .withIndex("by_user_collection", (q) =>
         q.eq("userId", ctx.user._id).eq("collectionId", args.collectionId)
       )
       .unique();
-
     if (existing) {
       await ctx.db.delete(existing._id);
       return { pinned: false };
     }
-
     await ctx.db.insert("userCollectionPin", {
       userId: ctx.user._id,
       collectionId: args.collectionId,
@@ -136,7 +124,6 @@ export const togglePin = workspaceMutation({
     return { pinned: true };
   },
 });
-
 export const remove = workspaceMutation({
   args: { collectionId: v.id("collection") },
   handler: async (ctx, args) => {
@@ -144,10 +131,7 @@ export const remove = workspaceMutation({
     if (!collection || collection.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Collection not found");
     }
-
     const now = Date.now();
-
-    // Move contained resources to root
     const resources = await ctx.db
       .query("resource")
       .withIndex("by_workspace_collection", (q) =>
@@ -157,12 +141,9 @@ export const remove = workspaceMutation({
           .eq("deletedAt", undefined)
       )
       .collect();
-
     for (const resource of resources) {
       await ctx.db.patch(resource._id, { collectionId: undefined });
     }
-
-    // Cascade soft-delete to child collections
     const softDeleteChildren = async (parentId: typeof args.collectionId) => {
       const children = await ctx.db
         .query("collection")
@@ -173,9 +154,7 @@ export const remove = workspaceMutation({
             .eq("deletedAt", undefined)
         )
         .collect();
-
       for (const child of children) {
-        // Move child's resources to root
         const childResources = await ctx.db
           .query("resource")
           .withIndex("by_workspace_collection", (q) =>
@@ -185,21 +164,17 @@ export const remove = workspaceMutation({
               .eq("deletedAt", undefined)
           )
           .collect();
-
         for (const resource of childResources) {
           await ctx.db.patch(resource._id, { collectionId: undefined });
         }
-
         await ctx.db.patch(child._id, { deletedAt: now });
         await softDeleteChildren(child._id);
       }
     };
-
     await softDeleteChildren(args.collectionId);
     await ctx.db.patch(args.collectionId, { deletedAt: now });
   },
 });
-
 export const moveMany = workspaceMutation({
   args: {
     collectionIds: v.array(v.id("collection")),
@@ -216,10 +191,8 @@ export const moveMany = workspaceMutation({
         throw new ConvexError("Parent collection not found");
       }
     }
-
     const now = Date.now();
     const selectedSet = new Set(args.collectionIds);
-
     for (const collectionId of args.collectionIds) {
       const collection = await ctx.db.get(collectionId);
       if (!collection || collection.workspaceId !== ctx.workspace._id) {
@@ -228,7 +201,6 @@ export const moveMany = workspaceMutation({
       if (args.newParentId === collectionId) {
         continue;
       }
-
       if (args.newParentId) {
         let circular = false;
         let current = await ctx.db.get(args.newParentId);
@@ -250,7 +222,6 @@ export const moveMany = workspaceMutation({
           continue;
         }
       }
-
       await ctx.db.patch(collectionId, {
         parentId: args.newParentId,
         updatedAt: now,
@@ -258,14 +229,12 @@ export const moveMany = workspaceMutation({
     }
   },
 });
-
 export const removeMany = workspaceMutation({
   args: {
     collectionIds: v.array(v.id("collection")),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-
     const softDeleteChildren = async (parentId: Id<"collection">) => {
       const children = await ctx.db
         .query("collection")
@@ -276,7 +245,6 @@ export const removeMany = workspaceMutation({
             .eq("deletedAt", undefined)
         )
         .collect();
-
       for (const child of children) {
         const childResources = await ctx.db
           .query("resource")
@@ -287,16 +255,13 @@ export const removeMany = workspaceMutation({
               .eq("deletedAt", undefined)
           )
           .collect();
-
         for (const resource of childResources) {
           await ctx.db.patch(resource._id, { collectionId: undefined });
         }
-
         await ctx.db.patch(child._id, { deletedAt: now });
         await softDeleteChildren(child._id);
       }
     };
-
     for (const collectionId of args.collectionIds) {
       const collection = await ctx.db.get(collectionId);
       if (!collection || collection.workspaceId !== ctx.workspace._id) {
@@ -305,7 +270,6 @@ export const removeMany = workspaceMutation({
       if (collection.deletedAt) {
         continue;
       }
-
       const resources = await ctx.db
         .query("resource")
         .withIndex("by_workspace_collection", (q) =>
@@ -318,13 +282,11 @@ export const removeMany = workspaceMutation({
       for (const resource of resources) {
         await ctx.db.patch(resource._id, { collectionId: undefined });
       }
-
       await softDeleteChildren(collectionId);
       await ctx.db.patch(collectionId, { deletedAt: now });
     }
   },
 });
-
 export const createWithResources = workspaceMutation({
   args: {
     name: v.string(),
@@ -340,7 +302,6 @@ export const createWithResources = workspaceMutation({
       createdBy: ctx.user._id,
       updatedAt: Date.now(),
     });
-
     let movedCount = 0;
     for (const resourceId of args.resourceIds) {
       const resource = await ctx.db.get(resourceId);
@@ -357,7 +318,6 @@ export const createWithResources = workspaceMutation({
       });
       movedCount += 1;
     }
-
     return { collectionId, movedCount };
   },
 });

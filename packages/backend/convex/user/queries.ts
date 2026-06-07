@@ -1,7 +1,6 @@
 import type { Id } from "../_generated/dataModel";
 import { query } from "../_generated/server";
 import { getAuthIdentity } from "../utils";
-
 export const currentUser = query({
   args: {},
   handler: async (ctx) => {

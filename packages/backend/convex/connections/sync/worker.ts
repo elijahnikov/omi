@@ -1,5 +1,4 @@
 "use node";
-
 import type { GenericActionCtx } from "convex/server";
 import { v } from "convex/values";
 import { internal } from "../../_generated/api";
@@ -19,7 +18,6 @@ const providerValidator = v.union(
   v.literal("github"),
   v.literal("linear")
 );
-
 interface PreparedRun {
   bindingId: Id<"connectionSyncBinding">;
   connectionId: Id<"connection">;
@@ -28,9 +26,7 @@ interface PreparedRun {
   sync: ProviderSync;
   workspaceId: Id<"workspace">;
 }
-
 type ActionCtx = GenericActionCtx<DataModel>;
-
 async function prepareBinding(
   ctx: ActionCtx,
   bindingId: Id<"connectionSyncBinding">
@@ -75,13 +71,16 @@ async function prepareBinding(
     },
   };
 }
-
 async function applyUpserts(
   ctx: ActionCtx,
   jobId: Id<"syncJob">,
   run: PreparedRun,
   upserts: ResourceUpsert[]
-): Promise<{ created: number; updated: number; failed: number }> {
+): Promise<{
+  created: number;
+  updated: number;
+  failed: number;
+}> {
   let created = 0;
   let updated = 0;
   let failed = 0;
@@ -124,7 +123,6 @@ async function applyUpserts(
   }
   return { created, updated, failed };
 }
-
 export const runDelta = internalAction({
   args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args): Promise<void> => {
@@ -141,13 +139,11 @@ export const runDelta = internalAction({
         kind: "delta",
       }
     );
-
     const cursorResult = await ctx.runQuery(
       internal.connections.sync.internals.getSyncCursor,
       { connectionId: run.connectionId, scopeKey: "delta" }
     );
     const cursor: string | undefined = cursorResult ?? undefined;
-
     try {
       for await (const batch of run.sync.pollDelta({ ...run.ctx, cursor })) {
         const upserts = batch.items.map((raw) =>
@@ -182,7 +178,6 @@ export const runDelta = internalAction({
     }
   },
 });
-
 function extractLinearTeamId(
   rawItemJson: string | undefined
 ): string | undefined {
@@ -191,14 +186,18 @@ function extractLinearTeamId(
   }
   try {
     const raw = JSON.parse(rawItemJson) as {
-      issue?: { team?: { id?: string }; teamId?: string };
+      issue?: {
+        team?: {
+          id?: string;
+        };
+        teamId?: string;
+      };
     };
     return raw.issue?.team?.id ?? raw.issue?.teamId;
   } catch {
     return undefined;
   }
 }
-
 export const applyWebhookEvent = internalAction({
   args: {
     connectionId: v.id("connection"),
@@ -222,17 +221,14 @@ export const applyWebhookEvent = internalAction({
     if (bindingIds.length === 0) {
       return;
     }
-
     const firstBindingId = bindingIds[0];
     if (!firstBindingId) {
       return;
     }
-
     await ctx.runMutation(
       internal.connections.sync.internals.markWebhookReceived,
       { bindingIds }
     );
-
     const sampleBinding = await ctx.runQuery(
       internal.connections.sync.internals.getActiveBindingForSync,
       { bindingId: firstBindingId }
@@ -240,23 +236,19 @@ export const applyWebhookEvent = internalAction({
     if (!sampleBinding) {
       return;
     }
-
     const descriptor = getProvider(sampleBinding.provider);
     if (!descriptor.sync) {
       return;
     }
-
     await ctx.runAction(
       internal.connections.ensureFreshToken.ensureFreshAccessToken,
       { connectionId: args.connectionId }
     );
-
     for (const bindingId of bindingIds) {
       const run = await prepareBinding(ctx, bindingId);
       if (!run) {
         continue;
       }
-
       if (args.kind === "delete") {
         await ctx.runMutation(
           internal.connections.sync.internals.tombstoneSyncedResource,
@@ -264,14 +256,20 @@ export const applyWebhookEvent = internalAction({
         );
         continue;
       }
-
       let raw: unknown = args.rawItemJson
         ? JSON.parse(args.rawItemJson)
         : undefined;
       const needsGithubRefetch =
         run.providerId === "github" &&
         args.externalId.startsWith("pr:") &&
-        !(raw && (raw as { diffPatch?: string }).diffPatch);
+        !(
+          raw &&
+          (
+            raw as {
+              diffPatch?: string;
+            }
+          ).diffPatch
+        );
       if (!raw || needsGithubRefetch) {
         if (!run.sync.fetchOne) {
           throw new Error(

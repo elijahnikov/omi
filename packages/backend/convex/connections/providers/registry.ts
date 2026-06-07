@@ -15,7 +15,6 @@ const providers: Partial<Record<ProviderId, ProviderDescriptor>> = {
   github,
   linear,
 };
-
 export function getProvider(id: ProviderId): ProviderDescriptor {
   const descriptor = providers[id];
   if (!descriptor) {
@@ -23,7 +22,6 @@ export function getProvider(id: ProviderId): ProviderDescriptor {
   }
   return descriptor;
 }
-
 export function getOAuth2Provider(id: ProviderId): OAuth2ProviderDescriptor {
   const descriptor = getProvider(id);
   if (descriptor.authType !== "oauth2") {
@@ -31,7 +29,6 @@ export function getOAuth2Provider(id: ProviderId): OAuth2ProviderDescriptor {
   }
   return descriptor;
 }
-
 export function getApiTokenProvider(
   id: ProviderId
 ): ApiTokenProviderDescriptor {
@@ -41,11 +38,9 @@ export function getApiTokenProvider(
   }
   return descriptor;
 }
-
 export function isProviderId(value: string): value is ProviderId {
   return value in providers;
 }
-
 export function listProviders(): ProviderDescriptor[] {
   return Object.values(providers).filter(
     (p): p is ProviderDescriptor => p !== undefined

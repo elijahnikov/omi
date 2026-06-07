@@ -7,7 +7,10 @@ import { tokensToCredits } from "./credits";
 async function seedAccount(
   t: ReturnType<typeof createHarness>,
   balance = 100
-): Promise<{ userId: Id<"user">; accountId: Id<"billingAccount"> }> {
+): Promise<{
+  userId: Id<"user">;
+  accountId: Id<"billingAccount">;
+}> {
   const { userId } = await seedUser(t);
   const accountId = await t.run(async (ctx) => {
     const id = await ctx.db.insert("billingAccount", {
@@ -21,27 +24,22 @@ async function seedAccount(
   });
   return { userId, accountId };
 }
-
 describe("tokensToCredits", () => {
   it("multiplies tokens by the model's multiplier and ceils", () => {
     expect(tokensToCredits(2500, "gpt-4.1-mini")).toBe(5);
     expect(tokensToCredits(1000, "gpt-4.1-mini")).toBe(2);
   });
-
   it("falls back to multiplier 1 for unknown models", () => {
     expect(tokensToCredits(1500, "mystery-model")).toBe(2);
   });
-
   it("floors at 1 credit minimum", () => {
     expect(tokensToCredits(0, "gpt-4o-mini")).toBe(1);
     expect(tokensToCredits(10, "gpt-4o-mini")).toBe(1);
   });
-
   it("charges Gemini Flash at 1x (cost savings retained as margin)", () => {
     expect(tokensToCredits(4500, "gemini-2.5-flash")).toBe(5);
   });
 });
-
 describe("billing/credits debit", () => {
   it("decrements balance and appends a ledger row", async () => {
     const t = createHarness();
@@ -52,7 +50,6 @@ describe("billing/credits debit", () => {
         ownerId: userId,
       })
     );
-
     await t.mutation(internal.billing.credits.debit, {
       billingAccountId: accountId,
       workspaceId,
@@ -60,10 +57,8 @@ describe("billing/credits debit", () => {
       reason: "chat",
       amount: 10,
     });
-
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.creditBalance).toBe(90);
-
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("creditLedger")
@@ -77,7 +72,6 @@ describe("billing/credits debit", () => {
     expect(rows[0]?.kind).toBe("debit");
     expect(rows[0]?.balanceAfter).toBe(90);
   });
-
   it("throws and writes nothing when balance is insufficient", async () => {
     const t = createHarness();
     const { userId, accountId } = await seedAccount(t, 5);
@@ -87,7 +81,6 @@ describe("billing/credits debit", () => {
         ownerId: userId,
       })
     );
-
     await expect(
       t.mutation(internal.billing.credits.debit, {
         billingAccountId: accountId,
@@ -97,10 +90,8 @@ describe("billing/credits debit", () => {
         amount: 10,
       })
     ).rejects.toThrow(/Insufficient credits/);
-
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.creditBalance).toBe(5);
-
     const rows = await t.run(async (ctx) =>
       ctx.db
         .query("creditLedger")
@@ -112,7 +103,6 @@ describe("billing/credits debit", () => {
     expect(rows).toHaveLength(0);
   });
 });
-
 describe("preflight", () => {
   it("throws when estimate exceeds balance", async () => {
     const t = createHarness();
@@ -124,7 +114,6 @@ describe("preflight", () => {
       })
     ).rejects.toThrow(/Insufficient credits/);
   });
-
   it("returns the resolved account when balance covers the estimate", async () => {
     const t = createHarness();
     const { userId, accountId } = await seedAccount(t, 50);

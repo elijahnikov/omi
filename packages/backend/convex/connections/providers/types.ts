@@ -1,12 +1,9 @@
 export type ProviderId = "notion" | "google_drive" | "github" | "linear";
-
 export type AuthType = "oauth2" | "api_token";
-
 export interface ProviderAccountInfo {
   providerAccountId?: string;
   providerAccountLabel?: string;
 }
-
 export interface ResourceUpsert {
   description?: string;
   externalId: string;
@@ -36,7 +33,6 @@ export interface ResourceUpsert {
     articleContent?: string;
   };
 }
-
 export interface WebhookEvent {
   connectionLookupKey?: string;
   eventId: string;
@@ -44,40 +40,40 @@ export interface WebhookEvent {
   kind: "upsert" | "delete";
   rawItem?: unknown;
 }
-
 export type WebhookParseResult =
-  | { kind: "verification"; verificationToken: string }
-  | { kind: "events"; events: WebhookEvent[] };
-
+  | {
+      kind: "verification";
+      verificationToken: string;
+    }
+  | {
+      kind: "events";
+      events: WebhookEvent[];
+    };
 export interface SyncBatch {
   cursor?: string;
   done: boolean;
   items: unknown[];
 }
-
 export interface SyncContext {
   accessToken: string;
   connectionId: string;
   scopeSelection: unknown;
   workspaceId: string;
 }
-
 export interface ProviderSync {
   fetchOne?(ctx: SyncContext, externalId: string): Promise<unknown | null>;
   kind: "webhook" | "poll" | "hybrid";
-
   parseWebhook?(
     req: Request,
     secret?: string
   ): Promise<WebhookParseResult | null>;
-
   pollDelta(
-    ctx: SyncContext & { cursor: string | undefined }
+    ctx: SyncContext & {
+      cursor: string | undefined;
+    }
   ): AsyncIterable<SyncBatch>;
-
   toResource(rawItem: unknown, ctx: SyncContext): ResourceUpsert;
 }
-
 export interface OAuth2ProviderDescriptor {
   authorizeExtraParams?: Record<string, string>;
   authorizeUrl: string;
@@ -95,7 +91,6 @@ export interface OAuth2ProviderDescriptor {
   tokenAuthStyle?: "header" | "body";
   tokenUrl: string;
 }
-
 export interface ApiTokenProviderDescriptor {
   authType: "api_token";
   id: ProviderId;
@@ -103,11 +98,9 @@ export interface ApiTokenProviderDescriptor {
   sync?: ProviderSync;
   validateToken: (token: string) => Promise<ProviderAccountInfo>;
 }
-
 export type ProviderDescriptor =
   | OAuth2ProviderDescriptor
   | ApiTokenProviderDescriptor;
-
 export function getProviderSync(
   descriptor: ProviderDescriptor
 ): ProviderSync | undefined {

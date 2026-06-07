@@ -5,7 +5,6 @@ const marked = new Marked({
   breaks: false,
   pedantic: false,
 });
-
 export function markdownToHtml(md: string): string {
   if (!md) {
     return "";

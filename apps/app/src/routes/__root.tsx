@@ -19,7 +19,6 @@ import {
 import { createServerFn } from "@tanstack/react-start";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import type * as React from "react";
-import { AnalyticsListener } from "~/components/common/analytics-listener";
 import { DevCrashTrigger } from "~/components/common/dev-crash-trigger";
 import { ErrorState } from "~/components/common/error-state";
 import { ClientAuthBoundary } from "~/lib/auth-client";
@@ -104,7 +103,6 @@ function RootComponent() {
                       getResetKey={() => pathname}
                     >
                       <DevCrashTrigger scope="root" />
-                      <AnalyticsListener />
                       <Outlet />
                     </CatchBoundary>
                   </ClientAuthBoundary>

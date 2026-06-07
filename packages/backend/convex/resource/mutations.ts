@@ -9,7 +9,6 @@ import {
   incrementStorageBytes,
 } from "../billing/storage";
 import { protectedMutation, workspaceMutation } from "../utils";
-
 export interface CreateResourceArgs {
   collectionId?: Id<"collection">;
   dailyNoteDate?: string;
@@ -30,13 +29,11 @@ export interface CreateResourceArgs {
   width?: number;
   workspaceId: Id<"workspace">;
 }
-
 export async function createResource(
   ctx: MutationCtx,
   args: CreateResourceArgs
 ): Promise<Id<"resource">> {
   const now = Date.now();
-
   if (args.collectionId) {
     const collection = await ctx.db.get(args.collectionId);
     if (
@@ -47,7 +44,6 @@ export async function createResource(
       throw new ConvexError("Collection not found");
     }
   }
-
   const resourceId = await ctx.db.insert("resource", {
     workspaceId: args.workspaceId,
     createdBy: args.userId,
@@ -61,7 +57,6 @@ export async function createResource(
     updatedAt: now,
     dailyNoteDate: args.dailyNoteDate,
   });
-
   switch (args.type) {
     case "website":
       await insertWebsiteResource(ctx, resourceId, args);
@@ -77,17 +72,14 @@ export async function createResource(
         `Could not insert resource on type ${String(args.type)}`
       );
   }
-
   const isEmptyDailyNote =
     args.dailyNoteDate !== undefined &&
     (args.plainTextContent ?? "").trim().length === 0;
-
   await ctx.db.insert("resourceAI", {
     resourceId,
     workspaceId: args.workspaceId,
     status: isEmptyDailyNote ? "skipped" : "pending",
   });
-
   if (args.type === "website") {
     await ctx.scheduler.runAfter(
       0,
@@ -95,7 +87,6 @@ export async function createResource(
       { resourceId }
     );
   }
-
   if ((args.type === "note" || args.type === "file") && !isEmptyDailyNote) {
     await ctx.scheduler.runAfter(
       0,
@@ -103,17 +94,14 @@ export async function createResource(
       { resourceId }
     );
   }
-
   return resourceId;
 }
-
 export interface CreateResourceForImportArgs extends CreateResourceArgs {
   createdAt?: number;
   importedFrom: string;
   isArchived?: boolean;
   isFavorite?: boolean;
 }
-
 export async function createResourceForImport(
   ctx: MutationCtx,
   args: CreateResourceForImportArgs
@@ -128,9 +116,7 @@ export async function createResourceForImport(
       throw new ConvexError("Collection not found");
     }
   }
-
   const now = args.createdAt ?? Date.now();
-
   const resourceId = await ctx.db.insert("resource", {
     workspaceId: args.workspaceId,
     createdBy: args.userId,
@@ -144,7 +130,6 @@ export async function createResourceForImport(
     updatedAt: now,
     importedFrom: args.importedFrom,
   });
-
   switch (args.type) {
     case "website":
       await insertWebsiteResource(ctx, resourceId, args);
@@ -160,16 +145,13 @@ export async function createResourceForImport(
         `Could not insert resource on type ${String(args.type)}`
       );
   }
-
   await ctx.db.insert("resourceAI", {
     resourceId,
     workspaceId: args.workspaceId,
     status: "skipped",
   });
-
   return resourceId;
 }
-
 export interface CreateSyncedResourceArgs {
   collectionId?: Id<"collection">;
   createdAt?: number;
@@ -185,7 +167,6 @@ export interface CreateSyncedResourceArgs {
   userId: Id<"user">;
   workspaceId: Id<"workspace">;
 }
-
 export async function createSyncedResourceForImport(
   ctx: MutationCtx,
   args: CreateSyncedResourceArgs
@@ -200,9 +181,7 @@ export async function createSyncedResourceForImport(
       throw new ConvexError("Collection not found");
     }
   }
-
   const now = args.createdAt ?? Date.now();
-
   const resourceId = await ctx.db.insert("resource", {
     workspaceId: args.workspaceId,
     createdBy: args.userId,
@@ -216,7 +195,6 @@ export async function createSyncedResourceForImport(
     updatedAt: now,
     importedFrom: args.importedFrom,
   });
-
   await ctx.db.insert("syncedResource", {
     resourceId,
     providerId: args.providerId,
@@ -226,7 +204,6 @@ export async function createSyncedResourceForImport(
     diffPatch: args.diffPatch,
     subtitle: args.subtitle,
   });
-
   if (args.markdownContent) {
     await ctx.db.insert("resourceContent", {
       resourceId,
@@ -234,22 +211,18 @@ export async function createSyncedResourceForImport(
       plainTextContent: args.markdownContent,
     });
   }
-
   await ctx.db.insert("resourceAI", {
     resourceId,
     workspaceId: args.workspaceId,
     status: "pending",
   });
-
   await ctx.scheduler.runAfter(
     0,
     internal.resource.aiActions.processResourceAI,
     { resourceId }
   );
-
   return resourceId;
 }
-
 export const create = workspaceMutation({
   args: {
     type: v.union(
@@ -260,13 +233,10 @@ export const create = workspaceMutation({
     ),
     title: v.string(),
     description: v.optional(v.string()),
-
     url: v.optional(v.string()),
-
     htmlContent: v.optional(v.string()),
     jsonContent: v.optional(v.string()),
     plainTextContent: v.optional(v.string()),
-
     storageId: v.optional(v.id("_storage")),
     fileName: v.optional(v.string()),
     fileSize: v.optional(v.number()),
@@ -274,7 +244,6 @@ export const create = workspaceMutation({
     width: v.optional(v.number()),
     height: v.optional(v.number()),
     duration: v.optional(v.number()),
-
     collectionId: v.optional(v.id("collection")),
   },
   rateLimit: "aiResourceProcess",
@@ -286,23 +255,22 @@ export const create = workspaceMutation({
     });
   },
 });
-
 async function insertWebsiteResource(
   ctx: MutationCtx,
   resourceId: Id<"resource">,
-  args: { url?: string }
+  args: {
+    url?: string;
+  }
 ) {
   if (!args.url) {
     throw new ConvexError("URL is required for website resources");
   }
-
   let domain: string | undefined;
   try {
     domain = new URL(args.url).hostname;
   } catch {
-    // invalid URL, skip domain extraction
+    void 0;
   }
-
   await ctx.db.insert("websiteResource", {
     resourceId,
     url: args.url,
@@ -311,7 +279,6 @@ async function insertWebsiteResource(
     metadataStatus: "pending",
   });
 }
-
 async function insertNoteResource(
   ctx: MutationCtx,
   resourceId: Id<"resource">,
@@ -328,7 +295,6 @@ async function insertNoteResource(
     plainTextContent: args.plainTextContent,
   });
 }
-
 async function insertFileResource(
   ctx: MutationCtx,
   resourceId: Id<"resource">,
@@ -348,15 +314,12 @@ async function insertFileResource(
       "storageId, fileName, fileSize, and mimeType are required for file resources"
     );
   }
-
-  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+  const MAX_FILE_SIZE = 50 * 1024 * 1024;
   if (args.fileSize > MAX_FILE_SIZE) {
     throw new ConvexError("File size exceeds the 50MB limit");
   }
-
   const resolved = await resolveActingBillingAccount(ctx, userId);
   await assertStorageAvailable(ctx, resolved.billingAccountId, args.fileSize);
-
   await ctx.db.insert("fileResource", {
     resourceId,
     storageId: args.storageId,
@@ -367,12 +330,9 @@ async function insertFileResource(
     height: args.height,
     duration: args.duration,
   });
-
   await incrementStorageBytes(ctx, resolved.billingAccountId, args.fileSize);
 }
-
 const UPDATED_AT_THROTTLE_MS = 60_000;
-
 export const updateContent = workspaceMutation({
   args: {
     resourceId: v.id("resource"),
@@ -385,16 +345,10 @@ export const updateContent = workspaceMutation({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     const existing = await ctx.db
       .query("resourceContent")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
-    // Only patch fields the caller actually provided; passing `undefined`
-    // through to db.patch would clear the existing value, which conflicts with
-    // sync (which writes htmlContent/plainTextContent and leaves jsonContent
-    // for the editor to manage).
     const patch: {
       htmlContent?: string;
       jsonContent?: string;
@@ -409,7 +363,6 @@ export const updateContent = workspaceMutation({
     if (args.plainTextContent !== undefined) {
       patch.plainTextContent = args.plainTextContent;
     }
-
     if (existing) {
       await ctx.db.patch(existing._id, patch);
     } else {
@@ -418,14 +371,12 @@ export const updateContent = workspaceMutation({
         ...patch,
       });
     }
-
     const now = Date.now();
     if (now - resource.updatedAt > UPDATED_AT_THROTTLE_MS) {
       await ctx.db.patch(args.resourceId, { updatedAt: now });
     }
   },
 });
-
 export const updateTitle = workspaceMutation({
   args: {
     resourceId: v.id("resource"),
@@ -442,7 +393,6 @@ export const updateTitle = workspaceMutation({
     });
   },
 });
-
 export const togglePin = workspaceMutation({
   args: {
     resourceId: v.id("resource"),
@@ -452,19 +402,16 @@ export const togglePin = workspaceMutation({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     const existing = await ctx.db
       .query("userResourcePin")
       .withIndex("by_user_resource", (q) =>
         q.eq("userId", ctx.user._id).eq("resourceId", args.resourceId)
       )
       .unique();
-
     if (existing) {
       await ctx.db.delete(existing._id);
       return { pinned: false };
     }
-
     await ctx.db.insert("userResourcePin", {
       userId: ctx.user._id,
       resourceId: args.resourceId,
@@ -474,7 +421,6 @@ export const togglePin = workspaceMutation({
     return { pinned: true };
   },
 });
-
 export const generateUploadUrl = protectedMutation({
   args: {},
   rateLimit: "resourceUpload",
@@ -482,7 +428,6 @@ export const generateUploadUrl = protectedMutation({
     return await ctx.storage.generateUploadUrl();
   },
 });
-
 export const pinLink = workspaceMutation({
   args: {
     sourceResourceId: v.id("resource"),
@@ -498,7 +443,6 @@ export const pinLink = workspaceMutation({
     ) {
       throw new ConvexError("Resource not found");
     }
-
     const existingForward = await ctx.db
       .query("resourceLink")
       .withIndex("by_source_target", (q) =>
@@ -507,7 +451,6 @@ export const pinLink = workspaceMutation({
           .eq("targetResourceId", args.targetResourceId)
       )
       .unique();
-
     const existingReverse = await ctx.db
       .query("resourceLink")
       .withIndex("by_source_target", (q) =>
@@ -516,7 +459,6 @@ export const pinLink = workspaceMutation({
           .eq("targetResourceId", args.sourceResourceId)
       )
       .unique();
-
     const existing = existingForward ?? existingReverse;
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -525,7 +467,6 @@ export const pinLink = workspaceMutation({
       });
       return existing._id;
     }
-
     return await ctx.db.insert("resourceLink", {
       workspaceId: ctx.workspace._id,
       sourceResourceId: args.sourceResourceId,
@@ -540,7 +481,6 @@ export const pinLink = workspaceMutation({
     });
   },
 });
-
 export const unpinLink = workspaceMutation({
   args: { linkId: v.id("resourceLink") },
   handler: async (ctx, args) => {
@@ -551,7 +491,6 @@ export const unpinLink = workspaceMutation({
     await ctx.db.delete(args.linkId);
   },
 });
-
 export const addTag = workspaceMutation({
   args: {
     resourceId: v.id("resource"),
@@ -562,26 +501,22 @@ export const addTag = workspaceMutation({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     const normalized = args.name.trim().toLowerCase();
     if (normalized.length === 0) {
       throw new ConvexError("Tag name cannot be empty");
     }
-
     let tag = await ctx.db
       .query("tag")
       .withIndex("by_workspace_name", (q) =>
         q.eq("workspaceId", ctx.workspace._id).eq("name", normalized)
       )
       .unique();
-
     if (!tag) {
       const tagId = await ctx.db.insert("tag", {
         workspaceId: ctx.workspace._id,
         name: normalized,
       });
       tag = await ctx.db.get(tagId);
-
       await ctx.scheduler.runAfter(
         0,
         internal.resource.aiActions.generateTagEmbedding,
@@ -591,31 +526,25 @@ export const addTag = workspaceMutation({
         }
       );
     }
-
     if (!tag) {
       throw new ConvexError("Failed to create tag");
     }
-
     const existing = await ctx.db
       .query("resourceTag")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .filter((q) => q.eq(q.field("tagId"), tag._id))
       .unique();
-
     if (existing) {
       return tag._id;
     }
-
     await ctx.db.insert("resourceTag", {
       resourceId: args.resourceId,
       tagId: tag._id,
       workspaceId: ctx.workspace._id,
     });
-
     return tag._id;
   },
 });
-
 export const moveToCollection = workspaceMutation({
   args: {
     resourceId: v.id("resource"),
@@ -626,7 +555,6 @@ export const moveToCollection = workspaceMutation({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     if (args.collectionId) {
       const collection = await ctx.db.get(args.collectionId);
       if (
@@ -637,14 +565,12 @@ export const moveToCollection = workspaceMutation({
         throw new ConvexError("Collection not found");
       }
     }
-
     await ctx.db.patch(args.resourceId, {
       collectionId: args.collectionId,
       updatedAt: Date.now(),
     });
   },
 });
-
 export const removeMany = workspaceMutation({
   args: {
     resourceIds: v.array(v.id("resource")),
@@ -663,7 +589,6 @@ export const removeMany = workspaceMutation({
     }
   },
 });
-
 async function deleteDerivedArtifacts(
   ctx: MutationCtx,
   resourceId: Id<"resource">,
@@ -676,7 +601,6 @@ async function deleteDerivedArtifacts(
   for (const embedding of embeddings) {
     await ctx.db.delete(embedding._id);
   }
-
   const chunks = await ctx.db
     .query("resourceChunk")
     .withIndex("by_resource", (q) => q.eq("resourceId", resourceId))
@@ -684,7 +608,6 @@ async function deleteDerivedArtifacts(
   for (const chunk of chunks) {
     await ctx.db.delete(chunk._id);
   }
-
   const conceptLinks = await ctx.db
     .query("resourceConcept")
     .withIndex("by_resource", (q) => q.eq("resourceId", resourceId))
@@ -692,7 +615,6 @@ async function deleteDerivedArtifacts(
   for (const link of conceptLinks) {
     await ctx.db.delete(link._id);
   }
-
   const fileRow = await ctx.db
     .query("fileResource")
     .withIndex("by_resource", (q) => q.eq("resourceId", resourceId))
@@ -712,7 +634,6 @@ async function deleteDerivedArtifacts(
     await ctx.db.delete(fileRow._id);
   }
 }
-
 export const restoreMany = workspaceMutation({
   args: {
     resourceIds: v.array(v.id("resource")),
@@ -730,7 +651,6 @@ export const restoreMany = workspaceMutation({
     }
   },
 });
-
 async function purgeResource(
   ctx: MutationCtx,
   resourceId: Id<"resource">,
@@ -743,7 +663,6 @@ async function purgeResource(
   if (!resource.deletedAt) {
     return;
   }
-
   const tagJunctions = await ctx.db
     .query("resourceTag")
     .withIndex("by_resource", (q) => q.eq("resourceId", resourceId))
@@ -751,7 +670,6 @@ async function purgeResource(
   for (const junction of tagJunctions) {
     await ctx.db.delete(junction._id);
   }
-
   const pins = await ctx.db
     .query("userResourcePin")
     .filter((q) => q.eq(q.field("resourceId"), resourceId))
@@ -759,12 +677,9 @@ async function purgeResource(
   for (const pin of pins) {
     await ctx.db.delete(pin._id);
   }
-
   await deleteDerivedArtifacts(ctx, resourceId, resource.createdBy);
-
   await ctx.db.delete(resourceId);
 }
-
 export const purgeMany = workspaceMutation({
   args: {
     resourceIds: v.array(v.id("resource")),
@@ -775,7 +690,6 @@ export const purgeMany = workspaceMutation({
     }
   },
 });
-
 export const purgeAllTrashed = workspaceMutation({
   args: {},
   handler: async (ctx) => {
@@ -789,7 +703,6 @@ export const purgeAllTrashed = workspaceMutation({
     }
   },
 });
-
 export const moveManyToCollection = workspaceMutation({
   args: {
     resourceIds: v.array(v.id("resource")),
@@ -806,7 +719,6 @@ export const moveManyToCollection = workspaceMutation({
         throw new ConvexError("Collection not found");
       }
     }
-
     const now = Date.now();
     for (const resourceId of args.resourceIds) {
       const resource = await ctx.db.get(resourceId);
@@ -820,7 +732,6 @@ export const moveManyToCollection = workspaceMutation({
     }
   },
 });
-
 export const togglePinMany = workspaceMutation({
   args: {
     resourceIds: v.array(v.id("resource")),
@@ -832,14 +743,12 @@ export const togglePinMany = workspaceMutation({
       if (!resource || resource.workspaceId !== ctx.workspace._id) {
         continue;
       }
-
       const existing = await ctx.db
         .query("userResourcePin")
         .withIndex("by_user_resource", (q) =>
           q.eq("userId", ctx.user._id).eq("resourceId", resourceId)
         )
         .unique();
-
       if (args.pinned) {
         if (!existing) {
           await ctx.db.insert("userResourcePin", {
@@ -855,7 +764,6 @@ export const togglePinMany = workspaceMutation({
     }
   },
 });
-
 export const removeTag = workspaceMutation({
   args: {
     resourceId: v.id("resource"),
@@ -867,7 +775,6 @@ export const removeTag = workspaceMutation({
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .filter((q) => q.eq(q.field("tagId"), args.tagId))
       .unique();
-
     if (junction) {
       await ctx.db.delete(junction._id);
     }

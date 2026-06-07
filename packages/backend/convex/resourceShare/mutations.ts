@@ -4,7 +4,6 @@ import { workspaceMutation } from "../utils";
 
 const MAX_SLUG_RETRIES = 5;
 const generateSlug = generateToken;
-
 export const enable = workspaceMutation({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -12,7 +11,6 @@ export const enable = workspaceMutation({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     const existing = await ctx.db
       .query("resourceShare")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
@@ -20,7 +18,6 @@ export const enable = workspaceMutation({
     if (existing) {
       return { slug: existing.slug };
     }
-
     let slug = generateSlug();
     for (let i = 0; i < MAX_SLUG_RETRIES; i++) {
       const collision = await ctx.db
@@ -32,7 +29,6 @@ export const enable = workspaceMutation({
       }
       slug = generateSlug();
     }
-
     await ctx.db.insert("resourceShare", {
       resourceId: args.resourceId,
       workspaceId: ctx.workspace._id,
@@ -40,11 +36,9 @@ export const enable = workspaceMutation({
       createdBy: ctx.user._id,
       createdAt: Date.now(),
     });
-
     return { slug };
   },
 });
-
 export const disable = workspaceMutation({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -52,7 +46,6 @@ export const disable = workspaceMutation({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Resource not found");
     }
-
     const existing = await ctx.db
       .query("resourceShare")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))

@@ -1,5 +1,4 @@
 "use node";
-
 import { createOpenAIProvider } from "@omi/ai/providers";
 import { generateObject, jsonSchema } from "ai";
 import { v } from "convex/values";
@@ -23,19 +22,16 @@ const suggestionSchema = jsonSchema<{
   required: ["suggestedTags", "suggestedCollectionName"],
   additionalProperties: false,
 });
-
 type SuggestResult =
-  | { skipped: true; reason: string }
+  | {
+      skipped: true;
+      reason: string;
+    }
   | {
       skipped: false;
       tagsApplied: number;
       collection: string | null;
     };
-
-/**
- * Auto-suggest tags and collection placement after enrichment completes.
- * Only applies when the resource has no collection and few/no tags yet.
- */
 export const suggest = internalAction({
   args: {
     resourceId: v.id("resource"),
@@ -46,7 +42,6 @@ export const suggest = internalAction({
     if (!apiKey) {
       return { skipped: true, reason: "no_api_key" };
     }
-
     const resource = await ctx.runQuery(
       internal.resource.aiInternals.getResourceById,
       { resourceId: args.resourceId }
@@ -54,7 +49,6 @@ export const suggest = internalAction({
     if (!resource) {
       return { skipped: true, reason: "missing_resource" };
     }
-
     const content = await ctx.runQuery(
       internal.resource.aiInternals.getResourceContent,
       { resourceId: args.resourceId }
@@ -63,21 +57,17 @@ export const suggest = internalAction({
       internal.resource.aiInternals.getResourceAI,
       { resourceId: args.resourceId }
     );
-
     const existingTags = await ctx.runQuery(
       internal.resource.suggestOrganizationInternals.getResourceTagNames,
       { resourceId: args.resourceId }
     );
-
     if (resource.collectionId || existingTags.length >= 3) {
       return { skipped: true, reason: "already_organized" };
     }
-
     const collections = await ctx.runQuery(
       internal.collection.internals.listNamesForWorkspace,
       { workspaceId: args.workspaceId }
     );
-
     const provider = createOpenAIProvider(apiKey);
     const { object } = await generateObject({
       model: provider("gpt-4o-mini"),
@@ -92,12 +82,10 @@ Collections: ${collections.join(", ") || "none"}
 
 Return up to 3 new tags (lowercase, no #) and an existing collection name to place this in, or null if none fit.`,
     });
-
     const tagsToApply = object.suggestedTags
       .map((tag) => tag.trim().toLowerCase())
       .filter((tag) => tag.length > 0 && !existingTags.includes(tag))
       .slice(0, 3);
-
     if (tagsToApply.length > 0) {
       await ctx.runMutation(
         internal.resource.linkInternals.upsertTagsForResource,
@@ -108,7 +96,6 @@ Return up to 3 new tags (lowercase, no #) and an existing collection name to pla
         }
       );
     }
-
     if (object.suggestedCollectionName && !resource.collectionId) {
       await ctx.runMutation(
         internal.resource.suggestOrganizationInternals.applyCollectionByName,
@@ -119,7 +106,6 @@ Return up to 3 new tags (lowercase, no #) and an existing collection name to pla
         }
       );
     }
-
     return {
       skipped: false,
       tagsApplied: tagsToApply.length,
@@ -127,7 +113,6 @@ Return up to 3 new tags (lowercase, no #) and an existing collection name to pla
     };
   },
 });
-
 export const suggestForImportJob = internalAction({
   args: { importJobId: v.id("importJob") },
   handler: async (ctx, args) => {
@@ -137,12 +122,10 @@ export const suggestForImportJob = internalAction({
     if (!job?.workspaceId) {
       return { scheduled: 0 };
     }
-
     const resources = await ctx.runQuery(
       internal.imports.internals.listResourcesForJob,
       { jobId: args.importJobId }
     );
-
     let scheduled = 0;
     for (const resourceId of resources.slice(0, 50)) {
       await ctx.scheduler.runAfter(
@@ -155,7 +138,6 @@ export const suggestForImportJob = internalAction({
       );
       scheduled += 1;
     }
-
     return { scheduled };
   },
 });

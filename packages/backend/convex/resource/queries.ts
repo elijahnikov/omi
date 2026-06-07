@@ -9,8 +9,11 @@ async function getTagsForResource(ctx: QueryCtx, resourceId: Id<"resource">) {
     .query("resourceTag")
     .withIndex("by_resource", (q) => q.eq("resourceId", resourceId))
     .collect();
-
-  const results: Array<{ _id: Id<"tag">; name: string; color?: string }> = [];
+  const results: Array<{
+    _id: Id<"tag">;
+    name: string;
+    color?: string;
+  }> = [];
   for (const rt of resourceTags) {
     const tag = await ctx.db.get(rt.tagId);
     if (tag) {
@@ -19,7 +22,6 @@ async function getTagsForResource(ctx: QueryCtx, resourceId: Id<"resource">) {
   }
   return results;
 }
-
 async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
   const preview: {
     ogImage?: string | null;
@@ -31,7 +33,6 @@ async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
     fileName?: string | null;
     plainTextSnippet?: string | null;
   } = {};
-
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
@@ -84,25 +85,19 @@ async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
     default:
       break;
   }
-
   return preview;
 }
-
 async function getLinksForResource(ctx: QueryCtx, resourceId: Id<"resource">) {
   const asSource = await ctx.db
     .query("resourceLink")
     .withIndex("by_source", (q) => q.eq("sourceResourceId", resourceId))
     .collect();
-
   const asTarget = await ctx.db
     .query("resourceLink")
     .withIndex("by_target", (q) => q.eq("targetResourceId", resourceId))
     .collect();
-
   const allLinks = [...asSource, ...asTarget];
-
   allLinks.sort((a, b) => b.score - a.score);
-
   const results: Array<{
     _id: Id<"resourceLink">;
     resource: {
@@ -128,14 +123,11 @@ async function getLinksForResource(ctx: QueryCtx, resourceId: Id<"resource">) {
       link.sourceResourceId === resourceId
         ? link.targetResourceId
         : link.sourceResourceId;
-
     const linkedResource = await ctx.db.get(linkedResourceId);
     if (!linkedResource || linkedResource.deletedAt) {
       continue;
     }
-
     const preview = await getResourcePreview(ctx, linkedResource);
-
     results.push({
       _id: link._id,
       resource: {
@@ -149,10 +141,8 @@ async function getLinksForResource(ctx: QueryCtx, resourceId: Id<"resource">) {
       status: link.status,
     });
   }
-
   return results;
 }
-
 export const get = workspaceQuery({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -160,17 +150,14 @@ export const get = workspaceQuery({
     if (!resource || resource.workspaceId !== ctx.workspace._id) {
       return null;
     }
-
     const resourceAI = await ctx.db
       .query("resourceAI")
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
       .unique();
-
     const createdBy = await ctx.db
       .query("user")
       .withIndex("by_id", (q) => q.eq("_id", resource.createdBy))
       .unique();
-
     const links = await getLinksForResource(ctx, resource._id);
     const tags = await getTagsForResource(ctx, resource._id);
     const content = await ctx.db
@@ -182,7 +169,6 @@ export const get = workspaceQuery({
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
       .unique();
     const share = shareDoc ? { slug: shareDoc.slug } : null;
-
     switch (resource.type) {
       case "website": {
         const website = await ctx.db
@@ -196,7 +182,6 @@ export const get = workspaceQuery({
           type: resource.type,
           resourceAI,
           createdBy,
-
           links,
           tags,
           share,
@@ -214,7 +199,6 @@ export const get = workspaceQuery({
           type: resource.type,
           resourceAI,
           createdBy,
-
           links,
           tags,
           share,
@@ -236,7 +220,6 @@ export const get = workspaceQuery({
           type: resource.type,
           resourceAI,
           createdBy,
-
           links,
           tags,
           share,
@@ -254,7 +237,6 @@ export const get = workspaceQuery({
           type: resource.type,
           resourceAI,
           createdBy,
-
           links,
           tags,
           share,
@@ -267,7 +249,6 @@ export const get = workspaceQuery({
           type: resource.type,
           resourceAI,
           createdBy,
-
           links,
           tags,
           share,
@@ -275,14 +256,12 @@ export const get = workspaceQuery({
     }
   },
 });
-
 export const getResourceLinks = workspaceQuery({
   args: { resourceId: v.id("resource") },
   handler: (ctx, args) => {
     return getLinksForResource(ctx, args.resourceId);
   },
 });
-
 export const getTag = workspaceQuery({
   args: { tagName: v.string() },
   handler: async (ctx, args) => {
@@ -298,7 +277,6 @@ export const getTag = workspaceQuery({
     return { _id: tag._id, name: tag.name, color: tag.color };
   },
 });
-
 export const listByTag = workspaceQuery({
   args: { tagName: v.string() },
   handler: async (ctx, args) => {
@@ -308,18 +286,15 @@ export const listByTag = workspaceQuery({
         q.eq("workspaceId", ctx.workspace._id).eq("name", args.tagName)
       )
       .unique();
-
     if (!tag) {
       return [];
     }
-
     const resourceTags = await ctx.db
       .query("resourceTag")
       .withIndex("by_workspace_tag", (q) =>
         q.eq("workspaceId", ctx.workspace._id).eq("tagId", tag._id)
       )
       .collect();
-
     const resources = await Promise.all(
       resourceTags.map(async (rt) => {
         const resource = await ctx.db.get(rt.resourceId);
@@ -329,11 +304,9 @@ export const listByTag = workspaceQuery({
         return enrichResource(ctx, resource);
       })
     );
-
     return resources.filter((r) => r !== null);
   },
 });
-
 export const listWorkspaceTags = workspaceQuery({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -350,7 +323,6 @@ export const listWorkspaceTags = workspaceQuery({
   handler: async (ctx, args) => {
     const workspaceId = ctx.workspace._id;
     const search = args.search?.trim();
-
     const enrichTag = async (tag: Doc<"tag">) => {
       const resourceTags = await ctx.db
         .query("resourceTag")
@@ -366,7 +338,6 @@ export const listWorkspaceTags = workspaceQuery({
         resourceCount: resourceTags.length,
       };
     };
-
     if (!search && args.order === "most_resources") {
       const allTags = await ctx.db
         .query("tag")
@@ -380,9 +351,7 @@ export const listWorkspaceTags = workspaceQuery({
         continueCursor: "",
       };
     }
-
     let results: PaginationResult<Doc<"tag">>;
-
     if (search) {
       results = await ctx.db
         .query("tag")
@@ -396,17 +365,13 @@ export const listWorkspaceTags = workspaceQuery({
         .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
         .paginate(args.paginationOpts);
     }
-
     const enrichedPage = await Promise.all(results.page.map(enrichTag));
-
     return { ...results, page: enrichedPage };
   },
 });
-
 const orderValidator = v.optional(
   v.union(v.literal("newest"), v.literal("oldest"), v.literal("alphabetical"))
 );
-
 const typeValidator = v.optional(
   v.union(
     v.literal("website"),
@@ -415,7 +380,6 @@ const typeValidator = v.optional(
     v.literal("synced")
   )
 );
-
 export const list = workspaceQuery({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -429,11 +393,7 @@ export const list = workspaceQuery({
     const workspaceId = ctx.workspace._id;
     const search = args.search?.trim();
     const scopeToCollection = !args.allResources;
-
-    // biome-ignore lint/suspicious/noEvolvingTypes: <>
-    // biome-ignore lint/suspicious/noImplicitAnyLet: <>
-    let results;
-
+    let results: PaginationResult<Doc<"resource">>;
     if (search) {
       const query = ctx.db
         .query("resource")
@@ -449,33 +409,29 @@ export const list = workspaceQuery({
         });
       results = await query.paginate(args.paginationOpts);
     } else if (scopeToCollection) {
-      // Collection-scoped queries (root when collectionId is undefined)
       const collectionId = args.collectionId;
       if (args.type) {
+        const type = args.type;
         const isAlpha = args.order === "alphabetical";
         const indexName = isAlpha
           ? "by_workspace_collection_type_title"
           : "by_workspace_collection_type";
-
         const query = ctx.db
           .query("resource")
           .withIndex(indexName, (q) =>
             q
               .eq("workspaceId", workspaceId)
               .eq("collectionId", collectionId)
-              // biome-ignore lint/style/noNonNullAssertion: <>
-              .eq("type", args.type!)
+              .eq("type", type)
               .eq("deletedAt", undefined)
           )
           .order(isAlpha || args.order === "oldest" ? "asc" : "desc");
-
         results = await query.paginate(args.paginationOpts);
       } else {
         const isAlpha = args.order === "alphabetical";
         const indexName = isAlpha
           ? "by_workspace_collection_title"
           : "by_workspace_collection";
-
         const query = ctx.db
           .query("resource")
           .withIndex(indexName, (q) =>
@@ -485,55 +441,46 @@ export const list = workspaceQuery({
               .eq("deletedAt", undefined)
           )
           .order(isAlpha || args.order === "oldest" ? "asc" : "desc");
-
         results = await query.paginate(args.paginationOpts);
       }
     } else if (args.type) {
+      const type = args.type;
       const isAlpha = args.order === "alphabetical";
       const indexName = isAlpha
         ? "by_workspace_type_title"
         : "by_workspace_type";
-
       const query = ctx.db
         .query("resource")
         .withIndex(indexName, (q) =>
           q
             .eq("workspaceId", workspaceId)
-            // biome-ignore lint/style/noNonNullAssertion: <>
-            .eq("type", args.type!)
+            .eq("type", type)
             .eq("deletedAt", undefined)
         )
         .order(isAlpha || args.order === "oldest" ? "asc" : "desc");
-
       results = await query.paginate(args.paginationOpts);
     } else {
       const isAlpha = args.order === "alphabetical";
       const indexName = isAlpha ? "by_workspace_title" : "by_workspace";
-
       const query = ctx.db
         .query("resource")
         .withIndex(indexName, (q) =>
           q.eq("workspaceId", workspaceId).eq("deletedAt", undefined)
         )
         .order(isAlpha || args.order === "oldest" ? "asc" : "desc");
-
       results = await query.paginate(args.paginationOpts);
     }
-
     const filtered = results.page.filter((r) => !r.dailyNoteDate);
     const enrichedPage = await Promise.all(
       filtered.map((resource) => enrichResource(ctx, resource))
     );
-
     return { ...results, page: enrichedPage };
   },
 });
-
 export const listRecent = workspaceQuery({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 5;
-    // Over-fetch to compensate for daily-note filtering, then trim.
     const overFetch = limit * 3;
     const resources = await ctx.db
       .query("resource")
@@ -542,12 +489,10 @@ export const listRecent = workspaceQuery({
       )
       .order("desc")
       .take(overFetch);
-
     const visible = resources.filter((r) => !r.dailyNoteDate).slice(0, limit);
     return Promise.all(visible.map((r) => enrichResource(ctx, r)));
   },
 });
-
 export const listTrashed = workspaceQuery({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -556,13 +501,11 @@ export const listTrashed = workspaceQuery({
   handler: async (ctx, args) => {
     const workspaceId = ctx.workspace._id;
     const search = args.search?.trim();
-
     let results: {
       page: Doc<"resource">[];
       isDone: boolean;
       continueCursor: string;
     };
-
     if (search) {
       const query = ctx.db
         .query("resource")
@@ -579,15 +522,12 @@ export const listTrashed = workspaceQuery({
         .order("desc");
       results = await query.paginate(args.paginationOpts);
     }
-
     const enrichedPage = await Promise.all(
       results.page.map((resource) => enrichResource(ctx, resource))
     );
-
     return { ...results, page: enrichedPage };
   },
 });
-
 export const listPinned = workspaceQuery({
   args: {},
   handler: async (ctx) => {
@@ -597,7 +537,6 @@ export const listPinned = workspaceQuery({
         q.eq("userId", ctx.user._id).eq("workspaceId", ctx.workspace._id)
       )
       .collect();
-
     const resources = await Promise.all(
       pins.map(async (pin) => {
         const resource = await ctx.db.get(pin.resourceId);
@@ -607,11 +546,9 @@ export const listPinned = workspaceQuery({
         return enrichResource(ctx, resource);
       })
     );
-
     return resources.filter((r) => r !== null);
   },
 });
-
 export const enrichResource = async (
   ctx: QueryCtx,
   resource: Doc<"resource">
@@ -620,7 +557,6 @@ export const enrichResource = async (
     .query("resourceAI")
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
     .unique();
-
   const creatorDoc = await ctx.db.get(resource.createdBy);
   const creator = creatorDoc
     ? {
@@ -629,7 +565,6 @@ export const enrichResource = async (
         image: creatorDoc.image,
       }
     : null;
-
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
@@ -673,12 +608,10 @@ export const enrichResource = async (
       return { ...resource, aiStatus: resourceAI?.status, creator };
   }
 };
-
 export const getStorageUrl = workspaceQuery({
   args: { storageId: v.id("_storage") },
   handler: (ctx, args) => ctx.storage.getUrl(args.storageId),
 });
-
 export const getPreview = workspaceQuery({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -695,9 +628,7 @@ export const getPreview = workspaceQuery({
     };
   },
 });
-
 const MAX_COLLECTION_PATH_DEPTH = 6;
-
 async function getCollectionPath(
   ctx: QueryCtx,
   collectionId: Id<"collection"> | undefined
@@ -714,7 +645,6 @@ async function getCollectionPath(
   }
   return path;
 }
-
 export const getTabPreview = workspaceQuery({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {

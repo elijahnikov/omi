@@ -21,7 +21,6 @@ import { rateLimiter } from "./rateLimiter";
 
 const siteUrl = process.env.SITE_URL;
 const authFunctions: AuthFunctions = internal.auth;
-
 export const authComponent = createClient<DataModel, typeof authSchema>(
   components.betterAuth,
   {
@@ -61,7 +60,6 @@ export const authComponent = createClient<DataModel, typeof authSchema>(
     },
   }
 );
-
 export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
   const origins = new Set<string>([
     siteUrl ?? "http://localhost:3000",
@@ -172,19 +170,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     ],
   } satisfies BetterAuthOptions;
 };
-
-/**
- * Stripe plugin wiring. The plugin owns:
- *   - Stripe customer creation on signup
- *   - Checkout + Customer Portal session endpoints (via authClient.subscription)
- *   - Webhook signature verification + event dispatch
- *
- * We mirror subscription state onto our `billingAccount` rows via the
- * lifecycle hooks, which close over `ctx` and call into `internal.billing.*`.
- */
 function buildStripePlugin(ctx: GenericCtx<DataModel>) {
   const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-    // Pin an API version so Stripe behavior is deterministic across deploys.
     apiVersion: "2026-03-25.dahlia",
   });
   return stripePlugin({
@@ -221,13 +208,10 @@ function buildStripePlugin(ctx: GenericCtx<DataModel>) {
     },
   });
 }
-
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth(createAuthOptions(ctx));
 };
-
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
-
 export const getLatestJwks = internalAction({
   args: {},
   handler: async (ctx) => {

@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
-
 export const insertConcept = internalMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -15,7 +14,6 @@ export const insertConcept = internalMutation({
     });
   },
 });
-
 export const insertResourceConcept = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -32,7 +30,6 @@ export const insertResourceConcept = internalMutation({
     });
   },
 });
-
 export const deleteResourceConcepts = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -42,13 +39,11 @@ export const deleteResourceConcepts = internalMutation({
       .query("resourceConcept")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .collect();
-
     for (const concept of concepts) {
       await ctx.db.delete(concept._id);
     }
   },
 });
-
 export const getResourceConcepts = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -58,7 +53,6 @@ export const getResourceConcepts = internalQuery({
       .query("resourceConcept")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .collect();
-
     const results: Array<{
       conceptId: string;
       name: string;
@@ -77,7 +71,6 @@ export const getResourceConcepts = internalQuery({
     return results;
   },
 });
-
 export const upsertResourceLink = internalMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -98,7 +91,6 @@ export const upsertResourceLink = internalMutation({
           .eq("targetResourceId", args.targetResourceId)
       )
       .unique();
-
     const existingReverse = await ctx.db
       .query("resourceLink")
       .withIndex("by_source_target", (q) =>
@@ -107,9 +99,7 @@ export const upsertResourceLink = internalMutation({
           .eq("targetResourceId", args.sourceResourceId)
       )
       .unique();
-
     const existing = existingForward ?? existingReverse;
-
     if (existing) {
       if (existing.status === "pinned") {
         return existing._id;
@@ -124,7 +114,6 @@ export const upsertResourceLink = internalMutation({
       });
       return existing._id;
     }
-
     return await ctx.db.insert("resourceLink", {
       workspaceId: args.workspaceId,
       sourceResourceId: args.sourceResourceId,
@@ -139,7 +128,6 @@ export const upsertResourceLink = internalMutation({
     });
   },
 });
-
 export const getResourceLinks = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -149,20 +137,15 @@ export const getResourceLinks = internalQuery({
       .query("resourceLink")
       .withIndex("by_source", (q) => q.eq("sourceResourceId", args.resourceId))
       .collect();
-
     const asTarget = await ctx.db
       .query("resourceLink")
       .withIndex("by_target", (q) => q.eq("targetResourceId", args.resourceId))
       .collect();
-
     const allLinks = [...asSource, ...asTarget];
-
     allLinks.sort((a, b) => b.score - a.score);
-
     return allLinks;
   },
 });
-
 export const upsertTagsForResource = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -175,14 +158,12 @@ export const upsertTagsForResource = internalMutation({
       if (normalized.length === 0) {
         continue;
       }
-
       let tag = await ctx.db
         .query("tag")
         .withIndex("by_workspace_name", (q) =>
           q.eq("workspaceId", args.workspaceId).eq("name", normalized)
         )
         .unique();
-
       if (!tag) {
         const tagId = await ctx.db.insert("tag", {
           workspaceId: args.workspaceId,
@@ -190,17 +171,14 @@ export const upsertTagsForResource = internalMutation({
         });
         tag = await ctx.db.get(tagId);
       }
-
       if (!tag) {
         continue;
       }
-
       const existing = await ctx.db
         .query("resourceTag")
         .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
         .filter((q) => q.eq(q.field("tagId"), tag._id))
         .unique();
-
       if (!existing) {
         await ctx.db.insert("resourceTag", {
           resourceId: args.resourceId,
@@ -211,7 +189,6 @@ export const upsertTagsForResource = internalMutation({
     }
   },
 });
-
 export const updateTagEmbedding = internalMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -230,14 +207,12 @@ export const updateTagEmbedding = internalMutation({
     }
   },
 });
-
 export const migrateResourceLinkStatuses = internalMutation({
   args: {},
   handler: async (ctx) => {
     const allLinks = await ctx.db.query("resourceLink").collect();
     let migrated = 0;
     let deleted = 0;
-
     for (const link of allLinks) {
       const status = link.status as string;
       if (status === "suggested" || status === "accepted") {
@@ -248,11 +223,9 @@ export const migrateResourceLinkStatuses = internalMutation({
         deleted++;
       }
     }
-
     return { migrated, deleted };
   },
 });
-
 export const getExistingLink = internalQuery({
   args: {
     sourceResourceId: v.id("resource"),
@@ -267,11 +240,9 @@ export const getExistingLink = internalQuery({
           .eq("targetResourceId", args.targetResourceId)
       )
       .unique();
-
     if (forward) {
       return forward;
     }
-
     return await ctx.db
       .query("resourceLink")
       .withIndex("by_source_target", (q) =>

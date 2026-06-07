@@ -10,14 +10,15 @@ import {
 } from "./storage";
 
 const MB = 1024 * 1024;
-
 type Plan = "free" | "basic" | "pro";
-
 async function seedAccountWithPlan(
   t: ReturnType<typeof createHarness>,
   plan: Plan,
   storageBytesUsed = 0
-): Promise<{ userId: Id<"user">; accountId: Id<"billingAccount"> }> {
+): Promise<{
+  userId: Id<"user">;
+  accountId: Id<"billingAccount">;
+}> {
   const { userId } = await seedUser(t);
   const accountId = await t.run(async (ctx) => {
     const id = await ctx.db.insert("billingAccount", {
@@ -32,7 +33,6 @@ async function seedAccountWithPlan(
   });
   return { userId, accountId };
 }
-
 describe("assertStorageAvailable", () => {
   it("passes when under the plan cap", async () => {
     const t = createHarness();
@@ -43,7 +43,6 @@ describe("assertStorageAvailable", () => {
       ).resolves.toBeUndefined();
     });
   });
-
   it("throws when adding would exceed the plan cap", async () => {
     const t = createHarness();
     const { accountId } = await seedAccountWithPlan(t, "free", 95 * MB);
@@ -54,7 +53,6 @@ describe("assertStorageAvailable", () => {
     });
   });
 });
-
 describe("incrementStorageBytes / decrementStorageBytes", () => {
   it("adds bytes to the running counter", async () => {
     const t = createHarness();
@@ -65,7 +63,6 @@ describe("incrementStorageBytes / decrementStorageBytes", () => {
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.storageBytesUsed).toBe(15 * MB);
   });
-
   it("subtracts bytes and floors at 0", async () => {
     const t = createHarness();
     const { accountId } = await seedAccountWithPlan(t, "basic", 5 * MB);
@@ -76,7 +73,6 @@ describe("incrementStorageBytes / decrementStorageBytes", () => {
     expect(account?.storageBytesUsed).toBe(0);
   });
 });
-
 describe("backfillStorageUsage", () => {
   it("resets each account to the sum of its live fileResource rows", async () => {
     const t = createHarness();
@@ -105,7 +101,6 @@ describe("backfillStorageUsage", () => {
         isArchived: false,
         updatedAt: Date.now(),
       });
-      // Deleted resource should be excluded from the sum.
       const r3 = await ctx.db.insert("resource", {
         workspaceId,
         createdBy: userId,
@@ -142,14 +137,11 @@ describe("backfillStorageUsage", () => {
         mimeType: "text/plain",
       });
     });
-
     await t.mutation(internal.billing.storage.backfillStorageUsage, {});
-
     const account = await t.run(async (ctx) => ctx.db.get(accountId));
     expect(account?.storageBytesUsed).toBe(10 * MB);
   });
 });
-
 describe("ConvexError shape", () => {
   it("assertStorageAvailable throws a ConvexError with the canonical message", async () => {
     const t = createHarness();

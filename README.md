@@ -12,7 +12,7 @@ AI-native personal knowledge management system. Save websites, notes, and files;
 | `apps/raycast` | Raycast extension (search + capture) |
 | `apps/mobile` | **Deferred** — scaffold only, not part of GA |
 | `packages/backend` | Convex backend (auth, billing, search, AI, sync) |
-| `packages/ai` | Embeddings, enrichment, chunking, reranking |
+| `packages/ai` | Embeddings, enrichment, chunking |
 | `packages/ui` | Shared UI components |
 
 ## Requirements

@@ -1,12 +1,15 @@
 import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import { protectedAction } from "../utils";
-
 export const exportData = protectedAction({
   args: {},
-  handler: async (ctx): Promise<{ url: string; exportedAt: number }> => {
+  handler: async (
+    ctx
+  ): Promise<{
+    url: string;
+    exportedAt: number;
+  }> => {
     const data = await ctx.runQuery(internal.user.internals.gatherExportData);
-
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json",
     });

@@ -2,13 +2,6 @@ import { paginationOptsValidator } from "convex/server";
 import { ConvexError, v } from "convex/values";
 import { resolveActingBillingAccount } from "../billing/resolver";
 import { workspaceQuery } from "../utils";
-
-/**
- * Gate the chat endpoint before `streamText` runs. Throws
- * `ConvexError("Insufficient credits")` when the user's balance is below the
- * estimate, which the TanStack Start handler surfaces as HTTP 402 so the UI
- * can render an upgrade CTA. BYO-key workspaces skip the check.
- */
 export const preflightChat = workspaceQuery({
   args: {
     estimate: v.optional(v.number()),
@@ -35,7 +28,6 @@ export const preflightChat = workspaceQuery({
     return { ok: true as const, byo: false as const };
   },
 });
-
 export const searchResources = workspaceQuery({
   args: {
     query: v.string(),
@@ -43,7 +35,6 @@ export const searchResources = workspaceQuery({
   },
   handler: async (ctx, args) => {
     const normalizedQuery = args.query.toLowerCase().trim();
-
     const searchHits = normalizedQuery
       ? await ctx.db
           .query("resource")
@@ -61,24 +52,17 @@ export const searchResources = workspaceQuery({
           )
           .order("desc")
           .take(args.limit);
-
-    // Client-side substring filter to catch case/prefix matches that the
-    // tokenized search might miss (e.g. "git" should match "GitHub").
     const filtered = normalizedQuery
       ? searchHits.filter((r) =>
           r.title.toLowerCase().includes(normalizedQuery)
         )
       : searchHits;
-
     const results = filtered.slice(0, args.limit);
-
-    // Enrich with preview info (favicon for websites, fileUrl for files)
     return await Promise.all(
       results.map(async (r) => {
         let favicon: string | null = null;
         let fileUrl: string | null = null;
         let mimeType: string | null = null;
-
         if (r.type === "website") {
           const website = await ctx.db
             .query("websiteResource")
@@ -95,7 +79,6 @@ export const searchResources = workspaceQuery({
             fileUrl = await ctx.storage.getUrl(file.storageId);
           }
         }
-
         return {
           _id: r._id,
           title: r.title,
@@ -108,7 +91,6 @@ export const searchResources = workspaceQuery({
     );
   },
 });
-
 export const listThreads = workspaceQuery({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -126,7 +108,6 @@ export const listThreads = workspaceQuery({
       .paginate(args.paginationOpts);
   },
 });
-
 export const getLatestThreadForResource = workspaceQuery({
   args: {
     resourceId: v.id("resource"),
@@ -145,7 +126,6 @@ export const getLatestThreadForResource = workspaceQuery({
     return thread;
   },
 });
-
 export const getThread = workspaceQuery({
   args: {
     threadId: v.id("chatThread"),
@@ -160,12 +140,10 @@ export const getThread = workspaceQuery({
     ) {
       return null;
     }
-
     const messages = await ctx.db
       .query("chatMessage")
       .withIndex("by_thread", (q) => q.eq("threadId", args.threadId))
       .collect();
-
     return { ...thread, messages };
   },
 });

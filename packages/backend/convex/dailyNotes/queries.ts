@@ -8,17 +8,12 @@ import { workspaceQuery } from "../utils";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const TODAYS_CONCEPTS_LIMIT = 8;
-
 function assertValidDateString(date: string): void {
   if (!DATE_PATTERN.test(date)) {
     throw new ConvexError("Invalid date format, expected YYYY-MM-DD");
   }
 }
-
 function startOfDayMs(date: string, timeZone: string): number {
-  // Compute the UTC ms for 00:00 in the given IANA timezone for the given date.
-  // Strategy: ask the formatter how the candidate UTC midnight renders in `tz`,
-  // then nudge by the offset until it matches.
   const utcMidnight = Date.UTC(
     Number(date.slice(0, 4)),
     Number(date.slice(5, 7)) - 1,
@@ -50,12 +45,17 @@ function startOfDayMs(date: string, timeZone: string): number {
   const offset = localAsUtcMs - utcMidnight;
   return utcMidnight - offset;
 }
-
 async function topConceptsForResources(
   ctx: QueryCtx,
   resources: Doc<"resource">[],
   limit: number
-): Promise<Array<{ _id: Id<"concept">; name: string; importance: number }>> {
+): Promise<
+  Array<{
+    _id: Id<"concept">;
+    name: string;
+    importance: number;
+  }>
+> {
   const totals = new Map<Id<"concept">, number>();
   for (const resource of resources) {
     const links = await ctx.db
@@ -69,11 +69,9 @@ async function topConceptsForResources(
       );
     }
   }
-
   const ranked = Array.from(totals.entries())
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit);
-
   const concepts = await Promise.all(
     ranked.map(async ([conceptId, importance]) => {
       const concept = await ctx.db.get(conceptId);
@@ -83,13 +81,16 @@ async function topConceptsForResources(
       return { _id: concept._id, name: concept.name, importance };
     })
   );
-
   return concepts.filter(
-    (c): c is { _id: Id<"concept">; name: string; importance: number } =>
-      c !== null
+    (
+      c
+    ): c is {
+      _id: Id<"concept">;
+      name: string;
+      importance: number;
+    } => c !== null
   );
 }
-
 export const get = workspaceQuery({
   args: {
     date: v.string(),
@@ -97,7 +98,6 @@ export const get = workspaceQuery({
   },
   handler: async (ctx, args) => {
     assertValidDateString(args.date);
-
     const noteCandidates = await ctx.db
       .query("resource")
       .withIndex("by_workspace_dailyNoteDate", (q) =>
@@ -105,15 +105,12 @@ export const get = workspaceQuery({
       )
       .collect();
     const note = noteCandidates.find((r) => !r.deletedAt) ?? null;
-
     const startMs = startOfDayMs(args.date, args.timeZone);
     const endMs = startMs + DAY_MS;
-
     const allWorkspaceResources = await ctx.db
       .query("resource")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", ctx.workspace._id))
       .collect();
-
     const todaysSaves = allWorkspaceResources.filter(
       (r) =>
         !r.deletedAt &&
@@ -121,19 +118,15 @@ export const get = workspaceQuery({
         r._creationTime < endMs &&
         !r.dailyNoteDate
     );
-
     todaysSaves.sort((a, b) => b._creationTime - a._creationTime);
-
     const todaysConcepts = await topConceptsForResources(
       ctx,
       todaysSaves,
       TODAYS_CONCEPTS_LIMIT
     );
-
     const enrichedSaves = await Promise.all(
       todaysSaves.map((resource) => buildSavedTodayCard(ctx, resource))
     );
-
     return {
       noteResourceId: note?._id ?? null,
       todaysSaves: enrichedSaves,
@@ -141,7 +134,6 @@ export const get = workspaceQuery({
     };
   },
 });
-
 interface SavedTodayCard {
   _id: Id<"resource">;
   createdAt: number;
@@ -158,13 +150,11 @@ interface SavedTodayCard {
   title: string;
   type: "website" | "note" | "file" | "synced";
 }
-
 async function buildSavedTodayCard(
   ctx: QueryCtx,
   resource: Doc<"resource">
 ): Promise<SavedTodayCard> {
   const preview: SavedTodayCard["preview"] = {};
-
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
@@ -215,7 +205,6 @@ async function buildSavedTodayCard(
     default:
       break;
   }
-
   const ai = await ctx.db
     .query("resourceAI")
     .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
@@ -223,7 +212,6 @@ async function buildSavedTodayCard(
   if (ai?.summary) {
     preview.summary = ai.summary;
   }
-
   return {
     _id: resource._id,
     title: resource.title,
@@ -232,7 +220,6 @@ async function buildSavedTodayCard(
     preview,
   };
 }
-
 export const list = workspaceQuery({
   args: {
     paginationOpts: paginationOptsValidator,
@@ -245,18 +232,15 @@ export const list = workspaceQuery({
       )
       .order("desc")
       .paginate(args.paginationOpts);
-
     const filtered = results.page.filter(
       (r) => !r.deletedAt && r.dailyNoteDate
     );
     const enrichedPage = await Promise.all(
       filtered.map((r) => enrichResource(ctx, r))
     );
-
     return { ...results, page: enrichedPage };
   },
 });
-
 export const getByDate = workspaceQuery({
   args: { date: v.string() },
   handler: async (ctx, args) => {
@@ -273,7 +257,6 @@ export const getByDate = workspaceQuery({
     return live?._id ?? null;
   },
 });
-
 export const listForMonth = workspaceQuery({
   args: {
     year: v.number(),
@@ -284,14 +267,12 @@ export const listForMonth = workspaceQuery({
       throw new ConvexError("Invalid month");
     }
     const prefix = `${args.year}-${String(args.month).padStart(2, "0")}`;
-
     const rows = await ctx.db
       .query("resource")
       .withIndex("by_workspace_dailyNoteDate", (q) =>
         q.eq("workspaceId", ctx.workspace._id)
       )
       .collect();
-
     return rows
       .filter(
         (r) =>

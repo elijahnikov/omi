@@ -3,7 +3,6 @@ const TOKEN_RANDOM_BYTES = 32;
 const BASE64_PLUS_RE = /\+/g;
 const BASE64_SLASH_RE = /\//g;
 const BASE64_PADDING_RE = /=+$/;
-
 function toBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const b of bytes) {
@@ -14,7 +13,6 @@ function toBase64Url(bytes: Uint8Array): string {
     .replace(BASE64_SLASH_RE, "_")
     .replace(BASE64_PADDING_RE, "");
 }
-
 function toHex(bytes: Uint8Array): string {
   let out = "";
   for (const b of bytes) {
@@ -22,21 +20,17 @@ function toHex(bytes: Uint8Array): string {
   }
   return out;
 }
-
 export function generateExtensionToken(): string {
   const bytes = new Uint8Array(TOKEN_RANDOM_BYTES);
   crypto.getRandomValues(bytes);
   return `${TOKEN_PREFIX}${toBase64Url(bytes)}`;
 }
-
 export async function hashExtensionToken(token: string): Promise<string> {
   const encoded = new TextEncoder().encode(token);
   const digest = await crypto.subtle.digest("SHA-256", encoded);
   return toHex(new Uint8Array(digest));
 }
-
 export function isExtensionTokenShape(value: string): boolean {
   return value.startsWith(TOKEN_PREFIX);
 }
-
 export const DEFAULT_TOKEN_TTL_MS = 180 * 24 * 60 * 60 * 1000;

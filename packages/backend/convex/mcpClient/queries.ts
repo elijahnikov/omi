@@ -1,7 +1,6 @@
 import type { Id } from "../_generated/dataModel";
 import { protectedQuery } from "../utils";
 import { MCP_CATALOG } from "./catalog";
-
 export const listMyMcpServers = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -9,7 +8,6 @@ export const listMyMcpServers = protectedQuery({
       .query("mcpServer")
       .withIndex("by_user_status", (q) => q.eq("userId", ctx.user._id))
       .collect();
-
     return servers
       .map((s) => ({
         _id: s._id,
@@ -31,16 +29,6 @@ export const listMyMcpServers = protectedQuery({
       .sort((a, b) => b.lastConnectedAt - a.lastConnectedAt);
   },
 });
-
-/**
- * Tools available to the user's chat across every workspace they belong to.
- * MCP servers are user-scoped, not workspace-scoped — connect once, use in
- * any chat the user opens.
- *
- * `inputSchema` is returned as a JSON-encoded string. The chat handler parses
- * it before handing it to the AI SDK. We do not parse server-side because
- * Convex's wire format rejects `$`-prefixed keys (common in JSON Schema).
- */
 export const listEnabledToolsForChat = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -76,7 +64,6 @@ export const listEnabledToolsForChat = protectedQuery({
     return out;
   },
 });
-
 export const listCatalog = protectedQuery({
   args: {},
   handler: async (ctx) => {

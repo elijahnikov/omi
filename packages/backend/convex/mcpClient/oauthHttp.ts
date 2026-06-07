@@ -1,25 +1,18 @@
 import { ConvexError } from "convex/values";
 import { internal } from "../_generated/api";
 import { httpAction } from "../_generated/server";
-
 export const oauthCallbackHandler = httpAction(async (ctx, request) => {
   const url = new URL(request.url);
   const state = url.searchParams.get("state");
   const code = url.searchParams.get("code");
   const errorParam = url.searchParams.get("error");
-
   if (!state) {
     return new Response("Missing state parameter", { status: 400 });
   }
-
-  // Best-effort lookup of the stored OAuth state for the redirect target,
-  // so error responses can land back in the user's settings page even when
-  // the auth server returned an error and we never get to exchange a code.
   const stored = await ctx.runQuery(
     internal.mcpClient.internals.getOauthState,
     { state }
   );
-
   if (errorParam) {
     if (stored) {
       const target = new URL(stored.returnTo);
@@ -29,11 +22,9 @@ export const oauthCallbackHandler = httpAction(async (ctx, request) => {
     }
     return new Response(`OAuth error: ${errorParam}`, { status: 400 });
   }
-
   if (!code) {
     return new Response("Missing code parameter", { status: 400 });
   }
-
   try {
     const { returnTo } = await ctx.runAction(
       internal.mcpClient.oauthActions.completeOauthCallback,

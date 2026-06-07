@@ -5,15 +5,12 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "../_generated/server";
-
 export type Plan = "free" | "basic" | "pro";
-
 export interface ResolvedBillingAccount {
   billingAccountId: Id<"billingAccount">;
   creditBalance: number;
   plan: Plan;
 }
-
 export async function resolveActingBillingAccount(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"user">,
@@ -38,11 +35,6 @@ export async function resolveActingBillingAccount(
     creditBalance: account.creditBalance,
   };
 }
-
-/**
- * Throws if the user's billing account plan is not in the allowed set.
- * Use to gate Pro-only features (e.g. integration connectors).
- */
 export async function requirePlan(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"user">,
@@ -59,7 +51,6 @@ export async function requirePlan(
   }
   return resolved;
 }
-
 export const requirePlanCheck = internalQuery({
   args: {
     userId: v.id("user"),
@@ -71,7 +62,6 @@ export const requirePlanCheck = internalQuery({
   handler: (ctx, args) =>
     requirePlan(ctx, args.userId, args.allowed, args.featureLabel),
 });
-
 export const resolveActing = internalQuery({
   args: {
     userId: v.id("user"),
@@ -80,7 +70,6 @@ export const resolveActing = internalQuery({
   handler: (ctx, args) =>
     resolveActingBillingAccount(ctx, args.userId, args.workspaceId),
 });
-
 export const resolveActingByResource = internalQuery({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {

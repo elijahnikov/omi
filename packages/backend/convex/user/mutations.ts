@@ -4,7 +4,6 @@ import type { MutationCtx } from "../_generated/server";
 import { protectedMutation } from "../utils";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
-
 export const updateProfile = protectedMutation({
   args: {
     username: v.optional(v.string()),
@@ -12,7 +11,6 @@ export const updateProfile = protectedMutation({
   },
   handler: async (ctx, args) => {
     const patch: Partial<Doc<"user">> = {};
-
     if (args.username !== undefined) {
       const trimmed = args.username.trim();
       if (trimmed.length < 2 || trimmed.length > 32) {
@@ -25,22 +23,18 @@ export const updateProfile = protectedMutation({
       }
       patch.username = trimmed;
     }
-
     if (args.image !== undefined) {
       patch.image = args.image ?? undefined;
     }
-
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(ctx.user._id, patch);
     }
   },
 });
-
 export const generateAvatarUploadUrl = protectedMutation({
   args: {},
   handler: (ctx) => ctx.storage.generateUploadUrl(),
 });
-
 export const setAvatarFromStorage = protectedMutation({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, args) => {
@@ -52,7 +46,6 @@ export const setAvatarFromStorage = protectedMutation({
     return url;
   },
 });
-
 export const completeOnboarding = protectedMutation({
   args: {},
   handler: async (ctx) => {
@@ -62,7 +55,6 @@ export const completeOnboarding = protectedMutation({
     await ctx.db.patch(ctx.user._id, { onboardedAt: Date.now() });
   },
 });
-
 export const deleteAccount = protectedMutation({
   args: {},
   handler: async (ctx) => {
@@ -71,10 +63,8 @@ export const deleteAccount = protectedMutation({
     await ctx.db.delete(userId);
   },
 });
-
 async function cascadeDeleteUserData(ctx: MutationCtx, userId: Id<"user">) {
   const now = Date.now();
-
   const tokens = await ctx.db
     .query("extensionToken")
     .withIndex("by_user", (q) =>
@@ -84,7 +74,6 @@ async function cascadeDeleteUserData(ctx: MutationCtx, userId: Id<"user">) {
   for (const token of tokens) {
     await ctx.db.patch(token._id, { revokedAt: now });
   }
-
   const connections = await ctx.db
     .query("connection")
     .withIndex("by_user_provider", (q) => q.eq("userId", userId))
@@ -97,7 +86,6 @@ async function cascadeDeleteUserData(ctx: MutationCtx, userId: Id<"user">) {
       });
     }
   }
-
   const memberships = await ctx.db
     .query("workspaceMember")
     .withIndex("by_user", (q) => q.eq("userId", userId))

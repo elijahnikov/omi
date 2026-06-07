@@ -7,5 +7,4 @@ const app = defineApp();
 app.use(betterAuth);
 app.use(resend);
 app.use(rateLimiter);
-
 export default app;

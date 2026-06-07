@@ -12,15 +12,17 @@ import {
 
 const SYNC_PLANS = ["pro"] as const;
 const WEBHOOK_SECRET_BYTES = 32;
-
 function newWebhookSecret(): string {
   const bytes = new Uint8Array(WEBHOOK_SECRET_BYTES);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
-
 async function ensureConnectionOwner(
-  ctx: (MutationCtx | QueryCtx) & { user: { _id: Id<"user"> } },
+  ctx: (MutationCtx | QueryCtx) & {
+    user: {
+      _id: Id<"user">;
+    };
+  },
   connectionId: Id<"connection">
 ) {
   const connection = await ctx.db.get(connectionId);
@@ -32,7 +34,6 @@ async function ensureConnectionOwner(
   }
   return connection;
 }
-
 async function seedDeltaCursor(
   ctx: MutationCtx,
   connectionId: Id<"connection">
@@ -53,7 +54,6 @@ async function seedDeltaCursor(
     updatedAt: Date.now(),
   });
 }
-
 async function scheduleInitialSync(
   ctx: MutationCtx,
   bindingId: Id<"connectionSyncBinding">,
@@ -66,7 +66,6 @@ async function scheduleInitialSync(
     bindingId,
   });
 }
-
 async function scheduleWebhookReconcile(
   ctx: MutationCtx,
   connectionId: Id<"connection">,
@@ -98,7 +97,6 @@ async function scheduleWebhookReconcile(
     );
   }
 }
-
 export const createSyncBinding = workspaceMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -108,12 +106,10 @@ export const createSyncBinding = workspaceMutation({
   },
   handler: async (ctx, args) => {
     await requirePlan(ctx, ctx.user._id, [...SYNC_PLANS], "Continuous sync");
-
     const connection = await ensureConnectionOwner(ctx, args.connectionId);
     if (connection.status !== "active") {
       throw new ConvexError(`Connection is ${connection.status}`);
     }
-
     if (args.destinationCollectionId) {
       const collection = await ctx.db.get(args.destinationCollectionId);
       if (
@@ -124,7 +120,6 @@ export const createSyncBinding = workspaceMutation({
         throw new ConvexError("Destination collection not found");
       }
     }
-
     if (connection.provider === "github" || connection.provider === "linear") {
       await assertScopeNoConflicts(
         ctx,
@@ -133,7 +128,6 @@ export const createSyncBinding = workspaceMutation({
         args.scopeSelection
       );
     }
-
     const existing = await ctx.db
       .query("connectionSyncBinding")
       .withIndex("by_connection_workspace", (q) =>
@@ -142,10 +136,8 @@ export const createSyncBinding = workspaceMutation({
           .eq("workspaceId", ctx.workspace._id)
       )
       .unique();
-
     const now = Date.now();
     let bindingId: Id<"connectionSyncBinding">;
-
     if (existing) {
       await ctx.db.patch(existing._id, {
         scopeSelection: args.scopeSelection,
@@ -167,21 +159,17 @@ export const createSyncBinding = workspaceMutation({
         createdAt: now,
       });
     }
-
     if (!connection.webhookSecret) {
       await ctx.db.patch(args.connectionId, {
         webhookSecret: newWebhookSecret(),
       });
     }
-
     await seedDeltaCursor(ctx, args.connectionId);
     await scheduleWebhookReconcile(ctx, args.connectionId, connection.provider);
     await scheduleInitialSync(ctx, bindingId, connection.provider);
-
     return bindingId;
   },
 });
-
 export const setScopeSelection = workspaceMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -215,7 +203,6 @@ export const setScopeSelection = workspaceMutation({
     await scheduleInitialSync(ctx, args.bindingId, connection.provider);
   },
 });
-
 export const setDestinationCollection = workspaceMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -244,7 +231,6 @@ export const setDestinationCollection = workspaceMutation({
     });
   },
 });
-
 export const setSyncPaused = workspaceMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -273,7 +259,6 @@ export const setSyncPaused = workspaceMutation({
     );
   },
 });
-
 export const triggerSyncNow = workspaceMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -291,7 +276,6 @@ export const triggerSyncNow = workspaceMutation({
     });
   },
 });
-
 export const removeSyncBinding = workspaceMutation({
   args: {
     workspaceId: v.id("workspace"),

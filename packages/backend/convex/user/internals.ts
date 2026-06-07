@@ -1,6 +1,5 @@
 import type { Id } from "../_generated/dataModel";
 import { internalQuery } from "../_generated/server";
-
 export const gatherExportData = internalQuery({
   args: {},
   handler: async (ctx) => {
@@ -13,38 +12,32 @@ export const gatherExportData = internalQuery({
     if (!user) {
       throw new Error("User not found");
     }
-
     const memberships = await ctx.db
       .query("workspaceMember")
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
-
     const workspaces = await Promise.all(
       memberships.map(async (member) => {
         const workspace = await ctx.db.get(member.workspaceId);
         if (!workspace) {
           return null;
         }
-
         const resources = await ctx.db
           .query("resource")
           .withIndex("by_workspace", (q) =>
             q.eq("workspaceId", workspace._id).eq("deletedAt", undefined)
           )
           .collect();
-
         const collections = await ctx.db
           .query("collection")
           .withIndex("by_workspace", (q) =>
             q.eq("workspaceId", workspace._id).eq("deletedAt", undefined)
           )
           .collect();
-
         const tags = await ctx.db
           .query("tag")
           .withIndex("by_workspace", (q) => q.eq("workspaceId", workspace._id))
           .collect();
-
         return {
           id: workspace._id,
           name: workspace.name,
@@ -76,7 +69,6 @@ export const gatherExportData = internalQuery({
         };
       })
     );
-
     return {
       exportedAt: Date.now(),
       user: {

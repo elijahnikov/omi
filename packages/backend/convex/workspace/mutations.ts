@@ -10,9 +10,6 @@ import { protectedMutation, workspaceMutation } from "../utils";
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_TOKEN_RETRIES = 5;
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
-
-// ── Workspace ────────────────────────────────────────────────────────
-
 export const seedWorkspace = internalMutation({
   args: { userId: v.id("user") },
   handler: async (ctx, args) => {
@@ -20,23 +17,19 @@ export const seedWorkspace = internalMutation({
     if (!user) {
       throw new Error("User not found");
     }
-
     const workspaceId = await ctx.db.insert("workspace", {
       name: `${user.username}'s Workspace`,
       ownerId: args.userId,
     });
-
     await ctx.db.insert("workspaceMember", {
       workspaceId,
       userId: args.userId,
       role: "owner",
       lastAccessedAt: Date.now(),
     });
-
     return workspaceId;
   },
 });
-
 export const create = protectedMutation({
   args: {
     name: v.string(),
@@ -52,7 +45,6 @@ export const create = protectedMutation({
     if (trimmed.length > 60) {
       throw new ConvexError("Workspace name must be 60 characters or fewer");
     }
-
     const memberships = await ctx.db
       .query("workspaceMember")
       .withIndex("by_user", (q) => q.eq("userId", ctx.user._id))
@@ -66,7 +58,6 @@ export const create = protectedMutation({
           : `You can belong to at most ${limit} workspaces`
       );
     }
-
     const workspaceId = await ctx.db.insert("workspace", {
       name: trimmed,
       ownerId: ctx.user._id,
@@ -83,7 +74,6 @@ export const create = protectedMutation({
     return workspaceId;
   },
 });
-
 export const update = workspaceMutation({
   args: {
     name: v.optional(v.string()),
@@ -94,7 +84,6 @@ export const update = workspaceMutation({
   role: ["owner", "admin"],
   handler: async (ctx, args) => {
     const patch: Record<string, string | undefined> = {};
-
     if (args.name !== undefined) {
       const trimmed = args.name.trim();
       if (!trimmed) {
@@ -102,7 +91,6 @@ export const update = workspaceMutation({
       }
       patch.name = trimmed;
     }
-
     if (args.emoji !== undefined) {
       patch.emoji = args.emoji;
       patch.icon = undefined;
@@ -112,13 +100,11 @@ export const update = workspaceMutation({
       patch.iconColor = args.iconColor;
       patch.emoji = undefined;
     }
-
     if (Object.keys(patch).length > 0) {
       await ctx.db.patch(ctx.workspace._id, patch);
     }
   },
 });
-
 export const deleteWorkspace = workspaceMutation({
   args: {},
   role: ["owner"],
@@ -135,13 +121,9 @@ export const deleteWorkspace = workspaceMutation({
         "You can't delete your only workspace. Create another one first."
       );
     }
-
     await ctx.db.patch(ctx.workspace._id, { deletedAt: Date.now() });
   },
 });
-
-// ── Invitations ──────────────────────────────────────────────────────
-
 export const createInvitation = workspaceMutation({
   args: {
     email: v.string(),
@@ -152,12 +134,10 @@ export const createInvitation = workspaceMutation({
     if (args.email === ctx.user.email) {
       throw new ConvexError("You cannot invite yourself");
     }
-
     const existingUser = await ctx.db
       .query("user")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .unique();
-
     if (existingUser) {
       const existingMember = await ctx.db
         .query("workspaceMember")
@@ -165,14 +145,12 @@ export const createInvitation = workspaceMutation({
           q.eq("workspaceId", ctx.workspace._id).eq("userId", existingUser._id)
         )
         .unique();
-
       if (existingMember) {
         throw new ConvexError(
           "This user is already a member of this workspace"
         );
       }
     }
-
     const existingInvite = await ctx.db
       .query("workspaceInvitation")
       .withIndex("by_workspace_email", (q) =>
@@ -180,16 +158,13 @@ export const createInvitation = workspaceMutation({
       )
       .filter((q) => q.eq(q.field("status"), "pending"))
       .unique();
-
     if (existingInvite) {
       throw new ConvexError("An invitation is already pending for this email");
     }
-
     await rateLimiter.limit(ctx, "emailWorkspaceInviteSend", {
       key: ctx.user._id,
       throws: true,
     });
-
     let token = generateToken();
     for (let i = 0; i < MAX_TOKEN_RETRIES; i++) {
       const collision = await ctx.db
@@ -201,7 +176,6 @@ export const createInvitation = workspaceMutation({
       }
       token = generateToken();
     }
-
     const invitationId = await ctx.db.insert("workspaceInvitation", {
       workspaceId: ctx.workspace._id,
       invitedEmail: args.email,
@@ -213,7 +187,6 @@ export const createInvitation = workspaceMutation({
       expiresAt: Date.now() + INVITE_TTL_MS,
       createdAt: Date.now(),
     });
-
     await ctx.scheduler.runAfter(
       0,
       internal.email.send.sendWorkspaceInvitation,
@@ -224,11 +197,9 @@ export const createInvitation = workspaceMutation({
         url: `${siteUrl}/invite/${token}`,
       }
     );
-
     return invitationId;
   },
 });
-
 export const revokeInvitation = workspaceMutation({
   args: {
     invitationId: v.id("workspaceInvitation"),
@@ -239,18 +210,15 @@ export const revokeInvitation = workspaceMutation({
     if (!invitation || invitation.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Invitation not found");
     }
-
     if (invitation.status !== "pending") {
       throw new ConvexError("Invitation is no longer pending");
     }
-
     await ctx.db.patch(args.invitationId, {
       status: "revoked",
       respondedAt: Date.now(),
     });
   },
 });
-
 export const acceptInvitation = protectedMutation({
   args: {
     invitationId: v.id("workspaceInvitation"),
@@ -260,33 +228,27 @@ export const acceptInvitation = protectedMutation({
     if (!invitation) {
       throw new ConvexError("Invitation not found");
     }
-
     if (invitation.status !== "pending") {
       throw new ConvexError("Invitation is no longer pending");
     }
-
     if (invitation.invitedEmail !== ctx.user.email) {
       throw new ConvexError("This invitation is not for you");
     }
-
     const existingMember = await ctx.db
       .query("workspaceMember")
       .withIndex("by_workspace_user", (q) =>
         q.eq("workspaceId", invitation.workspaceId).eq("userId", ctx.user._id)
       )
       .unique();
-
     if (existingMember) {
       throw new ConvexError("You are already a member of this workspace");
     }
-
     await ctx.db.insert("workspaceMember", {
       workspaceId: invitation.workspaceId,
       userId: ctx.user._id,
       role: invitation.role,
       lastAccessedAt: Date.now(),
     });
-
     await ctx.db.patch(args.invitationId, {
       status: "accepted",
       respondedAt: Date.now(),
@@ -294,7 +256,6 @@ export const acceptInvitation = protectedMutation({
     });
   },
 });
-
 export const acceptInvitationByToken = protectedMutation({
   args: {
     token: v.string(),
@@ -307,29 +268,24 @@ export const acceptInvitationByToken = protectedMutation({
     if (!invitation) {
       throw new ConvexError("Invitation not found");
     }
-
     if (invitation.status !== "pending") {
       throw new ConvexError("Invitation is no longer pending");
     }
-
     if (
       invitation.expiresAt !== undefined &&
       invitation.expiresAt < Date.now()
     ) {
       throw new ConvexError("This invitation has expired");
     }
-
     if (invitation.invitedEmail !== ctx.user.email) {
       throw new ConvexError("This invitation was sent to a different email");
     }
-
     const existingMember = await ctx.db
       .query("workspaceMember")
       .withIndex("by_workspace_user", (q) =>
         q.eq("workspaceId", invitation.workspaceId).eq("userId", ctx.user._id)
       )
       .unique();
-
     if (!existingMember) {
       await ctx.db.insert("workspaceMember", {
         workspaceId: invitation.workspaceId,
@@ -338,17 +294,14 @@ export const acceptInvitationByToken = protectedMutation({
         lastAccessedAt: Date.now(),
       });
     }
-
     await ctx.db.patch(invitation._id, {
       status: "accepted",
       respondedAt: Date.now(),
       invitedUserId: ctx.user._id,
     });
-
     return { workspaceId: invitation.workspaceId };
   },
 });
-
 export const declineInvitation = protectedMutation({
   args: {
     invitationId: v.id("workspaceInvitation"),
@@ -358,24 +311,18 @@ export const declineInvitation = protectedMutation({
     if (!invitation) {
       throw new ConvexError("Invitation not found");
     }
-
     if (invitation.status !== "pending") {
       throw new ConvexError("Invitation is no longer pending");
     }
-
     if (invitation.invitedEmail !== ctx.user.email) {
       throw new ConvexError("This invitation is not for you");
     }
-
     await ctx.db.patch(args.invitationId, {
       status: "declined",
       respondedAt: Date.now(),
     });
   },
 });
-
-// ── Members ──────────────────────────────────────────────────────────
-
 export const updateRole = workspaceMutation({
   args: {
     memberId: v.id("workspaceMember"),
@@ -387,15 +334,12 @@ export const updateRole = workspaceMutation({
     if (!target || target.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Member not found");
     }
-
     if (target.role === "owner") {
       throw new ConvexError("Cannot change the owner's role");
     }
-
     await ctx.db.patch(args.memberId, { role: args.role });
   },
 });
-
 export const removeMember = workspaceMutation({
   args: {
     memberId: v.id("workspaceMember"),
@@ -406,19 +350,15 @@ export const removeMember = workspaceMutation({
     if (!target || target.workspaceId !== ctx.workspace._id) {
       throw new ConvexError("Member not found");
     }
-
     if (target.role === "owner") {
       throw new ConvexError("Cannot remove the workspace owner");
     }
-
     if (ctx.member?.role === "admin" && target.role === "admin") {
       throw new ConvexError("Admins cannot remove other admins");
     }
-
     await ctx.db.delete(args.memberId);
   },
 });
-
 export const leaveWorkspace = protectedMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -428,24 +368,20 @@ export const leaveWorkspace = protectedMutation({
     if (!workspace) {
       throw new ConvexError("Workspace not found");
     }
-
     if (workspace.ownerId === ctx.user._id) {
       throw new ConvexError(
         "The workspace owner cannot leave. Transfer ownership first."
       );
     }
-
     const member = await ctx.db
       .query("workspaceMember")
       .withIndex("by_workspace_user", (q) =>
         q.eq("workspaceId", args.workspaceId).eq("userId", ctx.user._id)
       )
       .unique();
-
     if (!member) {
       throw new ConvexError("You are not a member of this workspace");
     }
-
     await ctx.db.delete(member._id);
   },
 });

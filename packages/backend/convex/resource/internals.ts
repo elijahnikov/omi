@@ -7,7 +7,6 @@ import {
   type QueryCtx,
 } from "../_generated/server";
 import { createResource } from "./mutations";
-
 export const createForUser = internalMutation({
   args: {
     workspaceId: v.id("workspace"),
@@ -32,14 +31,12 @@ export const createForUser = internalMutation({
     return await createResource(ctx, args);
   },
 });
-
 export const generateUploadUrlInternal = internalMutation({
   args: {},
   handler: async (ctx) => {
     return await ctx.storage.generateUploadUrl();
   },
 });
-
 export const updateWebsiteMetadata = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -92,11 +89,9 @@ export const updateWebsiteMetadata = internalMutation({
       .query("websiteResource")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
     if (!websiteResource) {
       throw new ConvexError("Website resource not found");
     }
-
     await ctx.db.patch(websiteResource._id, {
       ogTitle: args.ogTitle,
       ogDescription: args.ogDescription,
@@ -112,7 +107,6 @@ export const updateWebsiteMetadata = internalMutation({
       metadataStatus: args.metadataStatus,
       metadataError: args.metadataError,
     });
-
     if (args.ogTitle) {
       await ctx.db.patch(args.resourceId, {
         title: args.ogTitle,
@@ -122,7 +116,6 @@ export const updateWebsiteMetadata = internalMutation({
     }
   },
 });
-
 export const setWebsiteMetadataStatus = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -139,18 +132,15 @@ export const setWebsiteMetadataStatus = internalMutation({
       .query("websiteResource")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
     if (!websiteResource) {
       throw new ConvexError("Website resource not found");
     }
-
     await ctx.db.patch(websiteResource._id, {
       metadataStatus: args.metadataStatus,
       metadataError: args.metadataError,
     });
   },
 });
-
 export const getWebsiteResource = internalQuery({
   args: {
     resourceId: v.id("resource"),
@@ -162,7 +152,6 @@ export const getWebsiteResource = internalQuery({
       .unique();
   },
 });
-
 export const upsertResourceMarkdown = internalMutation({
   args: {
     resourceId: v.id("resource"),
@@ -173,23 +162,19 @@ export const upsertResourceMarkdown = internalMutation({
       .query("resourceContent")
       .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
       .unique();
-
     if (existing) {
       await ctx.db.patch(existing._id, {
         markdownContent: args.markdownContent,
       });
       return;
     }
-
     await ctx.db.insert("resourceContent", {
       resourceId: args.resourceId,
       markdownContent: args.markdownContent,
     });
   },
 });
-
 const PLAIN_TEXT_SNIPPET_LEN = 160;
-
 async function buildExtPreview(ctx: QueryCtx, resource: Doc<"resource">) {
   const base = {
     _id: resource._id,
@@ -198,7 +183,6 @@ async function buildExtPreview(ctx: QueryCtx, resource: Doc<"resource">) {
     description: resource.description ?? null,
     updatedAt: resource.updatedAt ?? resource._creationTime,
   };
-
   switch (resource.type) {
     case "website": {
       const website = await ctx.db
@@ -248,7 +232,6 @@ async function buildExtPreview(ctx: QueryCtx, resource: Doc<"resource">) {
       return base;
   }
 }
-
 export const listForUser = internalQuery({
   args: {
     workspaceId: v.id("workspace"),
@@ -261,13 +244,11 @@ export const listForUser = internalQuery({
   handler: async (ctx, args) => {
     const search = args.search?.trim();
     const workspaceId: Id<"workspace"> = args.workspaceId;
-
     let results: {
       page: Doc<"resource">[];
       isDone: boolean;
       continueCursor: string;
     };
-
     if (search) {
       results = await ctx.db
         .query("resource")
@@ -283,13 +264,13 @@ export const listForUser = internalQuery({
         })
         .paginate(args.paginationOpts);
     } else if (args.type) {
+      const type = args.type;
       results = await ctx.db
         .query("resource")
         .withIndex("by_workspace_type", (q) =>
           q
             .eq("workspaceId", workspaceId)
-            // biome-ignore lint/style/noNonNullAssertion: type checked above
-            .eq("type", args.type!)
+            .eq("type", type)
             .eq("deletedAt", undefined)
         )
         .order("desc")
@@ -303,11 +284,9 @@ export const listForUser = internalQuery({
         .order("desc")
         .paginate(args.paginationOpts);
     }
-
     const items = await Promise.all(
       results.page.map((resource) => buildExtPreview(ctx, resource))
     );
-
     return {
       items,
       cursor: results.continueCursor,

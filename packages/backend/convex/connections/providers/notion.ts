@@ -1,3 +1,4 @@
+import { timingSafeEqualHex } from "../../utils";
 import type {
   OAuth2ProviderDescriptor,
   ProviderSync,
@@ -10,20 +11,24 @@ import type {
 
 const NOTION_VERSION = "2022-06-28";
 const SEARCH_PAGE_SIZE = 50;
-
 interface NotionBotUser {
   bot?: {
     workspace_name?: string;
-    owner?: { user?: { person?: { email?: string }; name?: string } };
+    owner?: {
+      user?: {
+        person?: {
+          email?: string;
+        };
+        name?: string;
+      };
+    };
   };
   id: string;
   name?: string;
 }
-
 interface NotionRichText {
   plain_text?: string;
 }
-
 interface NotionPage {
   archived?: boolean;
   id: string;
@@ -39,36 +44,32 @@ interface NotionPage {
   >;
   url?: string;
 }
-
 interface NotionSearchResponse {
   has_more: boolean;
   next_cursor: string | null;
   results: NotionPage[];
 }
-
 interface NotionBlock {
   id: string;
   type: string;
-  // Each block type stores its rich_text under a key matching its type name.
   [key: string]:
-    | { rich_text?: NotionRichText[] }
+    | {
+        rich_text?: NotionRichText[];
+      }
     | string
     | boolean
     | undefined;
 }
-
 interface NotionBlockChildrenResponse {
   has_more: boolean;
   next_cursor: string | null;
   results: NotionBlock[];
 }
-
 interface NotionItem {
   html: string;
   page: NotionPage;
   plaintext: string;
 }
-
 const HTML_ESCAPE: Record<string, string> = {
   "&": "&amp;",
   "<": "&lt;",
@@ -76,11 +77,9 @@ const HTML_ESCAPE: Record<string, string> = {
   '"': "&quot;",
   "'": "&#39;",
 };
-
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (ch) => HTML_ESCAPE[ch] ?? ch);
 }
-
 function blockToHtml(block: NotionBlock, text: string): string | null {
   if (text.length === 0 && block.type !== "divider") {
     return null;
@@ -109,7 +108,6 @@ function blockToHtml(block: NotionBlock, text: string): string | null {
       return `<p>${escaped}</p>`;
   }
 }
-
 function authHeaders(accessToken: string): Record<string, string> {
   return {
     Authorization: `Bearer ${accessToken}`,
@@ -117,7 +115,6 @@ function authHeaders(accessToken: string): Record<string, string> {
     "Content-Type": "application/json",
   };
 }
-
 async function notionFetch<T>(
   url: string,
   accessToken: string,
@@ -130,15 +127,11 @@ async function notionFetch<T>(
   if (!response.ok) {
     const body = await response.text();
     throw new Error(
-      `Notion ${init?.method ?? "GET"} ${url} ${response.status}: ${body.slice(
-        0,
-        200
-      )}`
+      `Notion ${init?.method ?? "GET"} ${url} ${response.status}: ${body.slice(0, 200)}`
     );
   }
   return (await response.json()) as T;
 }
-
 function extractTitle(page: NotionPage): string {
   if (!page.properties) {
     return "Untitled";
@@ -153,7 +146,6 @@ function extractTitle(page: NotionPage): string {
   }
   return "Untitled";
 }
-
 function extractBlockText(block: NotionBlock): string {
   const payload = block[block.type];
   if (
@@ -166,12 +158,13 @@ function extractBlockText(block: NotionBlock): string {
   }
   return "";
 }
-
 async function fetchPageContent(
   accessToken: string,
   pageId: string
-): Promise<{ plaintext: string; html: string }> {
-  // V1: top-level blocks only — no recursion. Cheap, covers the common case.
+): Promise<{
+  plaintext: string;
+  html: string;
+}> {
   const url = `https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`;
   try {
     const res = await notionFetch<NotionBlockChildrenResponse>(
@@ -199,7 +192,6 @@ async function fetchPageContent(
     return { plaintext: "", html: "" };
   }
 }
-
 function searchPages(
   accessToken: string,
   startCursor: string | undefined,
@@ -222,10 +214,12 @@ function searchPages(
     { method: "POST", body: JSON.stringify(body) }
   );
 }
-
 async function* iterateBatches(
   ctx: SyncContext,
-  options: { sortDescending: boolean; stopAfterTimestamp?: string }
+  options: {
+    sortDescending: boolean;
+    stopAfterTimestamp?: string;
+  }
 ): AsyncIterable<SyncBatch> {
   let cursor: string | undefined;
   let maxSeen = options.stopAfterTimestamp;
@@ -236,7 +230,6 @@ async function* iterateBatches(
       options.sortDescending
     );
     const liveResults = res.results.filter((p) => !(p.archived || p.in_trash));
-
     let stop = false;
     let trimmed = liveResults;
     const stopAfterTimestamp = options.stopAfterTimestamp;
@@ -249,26 +242,20 @@ async function* iterateBatches(
         stop = true;
       }
     }
-
     for (const page of trimmed) {
       if (!maxSeen || page.last_edited_time > maxSeen) {
         maxSeen = page.last_edited_time;
       }
     }
-
     const items: NotionItem[] = await Promise.all(
       trimmed.map(async (page) => {
         const content = await fetchPageContent(ctx.accessToken, page.id);
         return { page, plaintext: content.plaintext, html: content.html };
       })
     );
-
     const done = stop || !(res.has_more && res.next_cursor);
     yield {
       items,
-      // Only checkpoint the cursor when we finish; intermediate batches keep
-      // the previous value so a crash mid-iteration won't advance past
-      // un-ingested pages.
       cursor: done ? maxSeen : undefined,
       done,
     };
@@ -278,16 +265,19 @@ async function* iterateBatches(
     cursor = res.next_cursor ?? undefined;
   }
 }
-
 interface NotionWebhookPayload {
-  data?: { id?: string };
-  entity?: { id?: string; type?: string };
-  id?: string; // Notion event id
-  type?: string; // e.g. "page.content_updated", "page.deleted"
-  verification_token?: string; // present in the one-time verification request
-  workspace_id?: string; // identifies the source workspace; used for connection lookup
+  data?: {
+    id?: string;
+  };
+  entity?: {
+    id?: string;
+    type?: string;
+  };
+  id?: string;
+  type?: string;
+  verification_token?: string;
+  workspace_id?: string;
 }
-
 async function verifyHmac(
   body: string,
   signatureHeader: string | null,
@@ -296,7 +286,6 @@ async function verifyHmac(
   if (!signatureHeader) {
     return false;
   }
-  // Notion sends "sha256=<hex>"
   const expected = signatureHeader.startsWith("sha256=")
     ? signatureHeader.slice("sha256=".length)
     : signatureHeader;
@@ -315,28 +304,19 @@ async function verifyHmac(
   const hex = Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-  // Constant-time compare (best effort in JS).
   if (hex.length !== expected.length) {
     return false;
   }
-  let mismatch = 0;
-  for (let i = 0; i < hex.length; i += 1) {
-    // biome-ignore lint/suspicious/noBitwiseOperators: <>
-    mismatch |= hex.charCodeAt(i) ^ expected.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return timingSafeEqualHex(hex, expected);
 }
-
 const notionSync: ProviderSync = {
   kind: "hybrid",
-
   pollDelta(ctx) {
     return iterateBatches(ctx, {
       sortDescending: true,
       stopAfterTimestamp: ctx.cursor,
     });
   },
-
   async parseWebhook(req): Promise<WebhookParseResult | null> {
     const body = await req.text();
     let payload: NotionWebhookPayload;
@@ -345,19 +325,12 @@ const notionSync: ProviderSync = {
     } catch {
       return null;
     }
-
-    // One-time verification: Notion POSTs { verification_token } when a
-    // webhook URL is first added in their UI. We don't gate on the absence of
-    // a signature header — Notion has historically toggled whether they send
-    // one on the verification request — so the presence of the token alone is
-    // the discriminator.
     if (payload.verification_token) {
       return {
         kind: "verification",
         verificationToken: payload.verification_token,
       };
     }
-
     const secret = process.env.NOTION_WEBHOOK_TOKEN;
     if (!secret) {
       console.warn(
@@ -373,17 +346,13 @@ const notionSync: ProviderSync = {
     if (!ok) {
       return null;
     }
-
     if (!payload.workspace_id) {
-      // No way to route the event without a workspace id; treat as bad request.
       return { kind: "events", events: [] };
     }
-
     const externalId = payload.entity?.id ?? payload.data?.id;
     if (!externalId) {
       return { kind: "events", events: [] };
     }
-
     const eventId = payload.id ?? `${externalId}:${Date.now()}`;
     const isDelete = payload.type?.includes("deleted") ?? false;
     const event: WebhookEvent = {
@@ -394,7 +363,6 @@ const notionSync: ProviderSync = {
     };
     return { kind: "events", events: [event] };
   },
-
   async fetchOne(ctx, externalId) {
     try {
       const page = await notionFetch<NotionPage>(
@@ -411,7 +379,6 @@ const notionSync: ProviderSync = {
       return null;
     }
   },
-
   toResource(rawItem): ResourceUpsert {
     const item = rawItem as NotionItem;
     return {
@@ -427,7 +394,6 @@ const notionSync: ProviderSync = {
     };
   },
 };
-
 export const notion: OAuth2ProviderDescriptor = {
   id: "notion",
   label: "Notion",
@@ -443,9 +409,6 @@ export const notion: OAuth2ProviderDescriptor = {
   },
   tokenAuthStyle: "header",
   fetchAccountInfo: async (accessToken, rawTokenResponse) => {
-    // Notion includes workspace_id in the OAuth token response. We use that as
-    // providerAccountId so webhook payloads (which carry workspace_id) can be
-    // routed back to the correct connection row.
     const workspaceIdFromToken =
       typeof rawTokenResponse?.workspace_id === "string"
         ? (rawTokenResponse.workspace_id as string)
@@ -454,7 +417,6 @@ export const notion: OAuth2ProviderDescriptor = {
       typeof rawTokenResponse?.workspace_name === "string"
         ? (rawTokenResponse.workspace_name as string)
         : undefined;
-
     const me = await notionFetch<NotionBotUser>(
       "https://api.notion.com/v1/users/me",
       accessToken

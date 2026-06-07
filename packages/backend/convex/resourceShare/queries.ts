@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { workspaceQuery } from "../utils";
-
 export const getForResource = workspaceQuery({
   args: { resourceId: v.id("resource") },
   handler: async (ctx, args) => {
@@ -16,7 +15,6 @@ export const getForResource = workspaceQuery({
     return share ? { slug: share.slug } : null;
   },
 });
-
 export const getPublicBySlug = query({
   args: { slug: v.string() },
   handler: async (ctx, args) => {
@@ -27,12 +25,10 @@ export const getPublicBySlug = query({
     if (!share) {
       return null;
     }
-
     const resource = await ctx.db.get(share.resourceId);
     if (!resource || resource.deletedAt) {
       return null;
     }
-
     const resourceAI = await ctx.db
       .query("resourceAI")
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
@@ -41,30 +37,29 @@ export const getPublicBySlug = query({
       resourceAI?.status === "completed" && resourceAI.summary
         ? resourceAI.summary
         : undefined;
-
     const content = await ctx.db
       .query("resourceContent")
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
       .unique();
-
     const author = await ctx.db.get(resource.createdBy);
     const createdBy = {
       username: author?.username ?? "Unknown",
       image: author?.image,
     };
-
     const resourceTags = await ctx.db
       .query("resourceTag")
       .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
       .collect();
-    const tags: { name: string; color?: string }[] = [];
+    const tags: {
+      name: string;
+      color?: string;
+    }[] = [];
     for (const rt of resourceTags) {
       const tag = await ctx.db.get(rt.tagId);
       if (tag) {
         tags.push({ name: tag.name, color: tag.color });
       }
     }
-
     let website:
       | {
           url: string;
@@ -98,7 +93,6 @@ export const getPublicBySlug = query({
           plainTextContent?: string;
         }
       | undefined;
-
     switch (resource.type) {
       case "website": {
         const w = await ctx.db
@@ -157,7 +151,6 @@ export const getPublicBySlug = query({
       default:
         break;
     }
-
     return {
       type: resource.type,
       title: resource.title,

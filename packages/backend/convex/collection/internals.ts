@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { internalQuery } from "../_generated/server";
-
 export const listNamesForWorkspace = internalQuery({
   args: { workspaceId: v.id("workspace") },
   handler: async (ctx, args) => {

@@ -4,7 +4,6 @@ import { internalMutation, type MutationCtx } from "../_generated/server";
 import { tierToAllotment } from "./pricing";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
 async function createPersonalAccount(
   ctx: MutationCtx,
   userId: Id<"user">
@@ -19,7 +18,6 @@ async function createPersonalAccount(
   await ctx.db.patch(userId, { personalBillingAccountId: accountId });
   return accountId;
 }
-
 export const createPersonalAccountForUser = internalMutation({
   args: { userId: v.id("user") },
   handler: async (ctx, args) => {
@@ -33,14 +31,12 @@ export const createPersonalAccountForUser = internalMutation({
     return await createPersonalAccount(ctx, args.userId);
   },
 });
-
 export const createPersonalAccountsForExistingUsers = internalMutation({
   args: {},
   handler: async (ctx) => {
     const users = await ctx.db.query("user").collect();
     let created = 0;
     let skipped = 0;
-
     for (const user of users) {
       if (user.personalBillingAccountId) {
         skipped += 1;
@@ -49,7 +45,6 @@ export const createPersonalAccountsForExistingUsers = internalMutation({
       await createPersonalAccount(ctx, user._id);
       created += 1;
     }
-
     return { created, skipped, total: users.length };
   },
 });

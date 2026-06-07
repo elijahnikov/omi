@@ -3,11 +3,6 @@ import { internalMutation } from "../_generated/server";
 
 const REMOVED_PROVIDERS = new Set(["readwise", "raindrop"]);
 const REMOVED_SOURCES = new Set(["readwise_api", "raindrop_oauth"]);
-
-/**
- * Verify all OAuth connections have encrypted tokens (run after encryptTokens migration).
- * internal.connections.migrations.verifyEncryptedTokens
- */
 export const verifyEncryptedTokens = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -23,12 +18,6 @@ export const verifyEncryptedTokens = internalMutation({
     };
   },
 });
-
-/**
- * Migrate legacy per-connection sync fields into connectionSyncBinding rows.
- * Run via dashboard before deploying schema that removes legacy fields:
- * internal.connections.migrations.migrateToSyncBindings
- */
 export const migrateToSyncBindings = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -79,10 +68,6 @@ export const migrateToSyncBindings = internalMutation({
     return { migrated };
   },
 });
-
-/**
- * One-shot cleanup before removing readwise/raindrop from schema unions.
- */
 export const removeReadwiseAndRaindrop = internalMutation({
   args: {},
   handler: async (ctx) => {
@@ -94,7 +79,6 @@ export const removeReadwiseAndRaindrop = internalMutation({
         deletedConnections++;
       }
     }
-
     const importJobs = await ctx.db.query("importJob").collect();
     let deletedImportJobs = 0;
     for (const job of importJobs) {
@@ -103,7 +87,6 @@ export const removeReadwiseAndRaindrop = internalMutation({
         deletedImportJobs++;
       }
     }
-
     return { deletedConnections, deletedImportJobs };
   },
 });

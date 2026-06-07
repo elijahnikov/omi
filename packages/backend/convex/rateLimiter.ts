@@ -87,7 +87,5 @@ const limits = {
     capacity: 60,
   },
 } as const;
-
 export type RateLimitName = keyof typeof limits;
-
 export const rateLimiter = new RateLimiter(components.rateLimiter, limits);

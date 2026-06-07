@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 import { register as registerRateLimiter } from "@convex-dev/rate-limiter/test";
 import { convexTest, type TestConvex } from "convex-test";
 import { internal } from "../convex/_generated/api";
@@ -8,32 +7,26 @@ import schema from "../convex/schema";
 
 type SchemaDef = typeof schema;
 type TestHarness = TestConvex<SchemaDef>;
-
-// `import.meta.glob` is provided by Vite at test time. convex-test uses the
-// resulting modules map to wire up Convex function references.
 export function createHarness(): TestHarness {
   const modules = import.meta.glob("../convex/**/*.ts");
   const t = convexTest(schema, modules);
   registerRateLimiter(t);
-  // Register the Better Auth component so tests can exercise code that reaches
-  // into `components.betterAuth.queries.*`. Tests that need a betterAuth `user`
-  // row seed it directly via `t.run(ctx => ctx.runQuery("betterAuth", …))`.
   const betterAuthModules = import.meta.glob("../convex/betterAuth/**/*.ts");
   t.registerComponent("betterAuth", betterAuthSchema, betterAuthModules);
   return t;
 }
-
 interface SeedUserOptions {
   email?: string;
   emailVerified?: boolean;
   username?: string;
 }
-
 export interface SeededUser {
-  identity: { subject: string; userId: string };
+  identity: {
+    subject: string;
+    userId: string;
+  };
   userId: Id<"user">;
 }
-
 export async function seedUser(
   t: TestHarness,
   overrides: SeedUserOptions = {}
@@ -55,7 +48,6 @@ export async function seedUser(
     identity: { subject: userId as string, userId: userId as string },
   };
 }
-
 export async function seedWorkspace(
   t: TestHarness,
   userId: Id<"user">
@@ -64,7 +56,6 @@ export async function seedWorkspace(
     userId,
   });
 }
-
 export async function seedMember(
   t: TestHarness,
   workspaceId: Id<"workspace">,
@@ -80,31 +71,28 @@ export async function seedMember(
     })
   );
 }
-
 export function asUser(
   t: TestHarness,
-  identity: { subject: string; userId: string }
+  identity: {
+    subject: string;
+    userId: string;
+  }
 ): TestHarness {
-  // Cast: convex-test accepts Partial<UserIdentity>, but our auth layer
-  // expects an extra `userId` field on the identity object. Pass it through.
   return t.withIdentity(
     identity as unknown as {
       subject: string;
     }
   ) as TestHarness;
 }
-
 export interface SeededResource {
   aiRowId: Id<"resourceAI">;
   resourceId: Id<"resource">;
 }
-
 interface SeedResourceOptions {
   aiStatus?: Doc<"resourceAI">["status"];
   title?: string;
   type?: "website" | "note" | "file";
 }
-
 export async function seedResource(
   t: TestHarness,
   workspaceId: Id<"workspace">,
@@ -122,13 +110,11 @@ export async function seedResource(
       isArchived: false,
       updatedAt: Date.now(),
     });
-
     const aiRowId = await ctx.db.insert("resourceAI", {
       resourceId,
       workspaceId,
       status: options.aiStatus ?? "pending",
     });
-
     return { resourceId, aiRowId };
   });
 }

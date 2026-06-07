@@ -6,7 +6,6 @@ import { getOAuth2Provider, isProviderId } from "../providers/registry";
 import { newNonce, signState } from "./stateSigner";
 
 const TRAILING_SLASHES_RE = /\/+$/;
-
 function convexSiteUrl(): string {
   const url = process.env.CONVEX_SITE_URL;
   if (!url) {
@@ -14,7 +13,6 @@ function convexSiteUrl(): string {
   }
   return url.replace(TRAILING_SLASHES_RE, "");
 }
-
 export const getAuthorizeUrl = action({
   args: {
     provider: v.string(),
@@ -37,7 +35,6 @@ export const getAuthorizeUrl = action({
     if (!descriptor.clientId) {
       throw new ConvexError(`${descriptor.label} is not configured`);
     }
-
     const state = await signState({
       userId: identity.userId,
       provider: descriptor.id,
@@ -45,7 +42,6 @@ export const getAuthorizeUrl = action({
       nonce: newNonce(),
       workspaceId: args.workspaceId,
     });
-
     const redirectUri = `${convexSiteUrl()}/api/oauth/${descriptor.id}/callback`;
     const authorizeUrl = new URL(descriptor.authorizeUrl);
     authorizeUrl.searchParams.set("client_id", descriptor.clientId);

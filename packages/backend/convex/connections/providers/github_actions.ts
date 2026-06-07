@@ -1,5 +1,4 @@
 "use node";
-
 import { ConvexError, v } from "convex/values";
 import { internal } from "../../_generated/api";
 import { action, internalAction } from "../../_generated/server";
@@ -8,16 +7,13 @@ import { decryptToken } from "../tokens";
 
 const GITHUB_API = "https://api.github.com";
 const USER_AGENT = "omi-app";
-
 interface ScopedRepo {
   hookId?: number;
-  name: string; // "owner/repo"
+  name: string;
 }
-
 interface GitHubHookResponse {
   id: number;
 }
-
 interface GitHubStarredItem {
   description: string | null;
   full_name: string;
@@ -25,16 +21,18 @@ interface GitHubStarredItem {
   language: string | null;
   stargazers_count: number;
 }
-
 interface GitHubRepoListItem {
   archived?: boolean;
   description: string | null;
   fork?: boolean;
   full_name: string;
-  permissions?: { admin?: boolean; push?: boolean; pull?: boolean };
+  permissions?: {
+    admin?: boolean;
+    push?: boolean;
+    pull?: boolean;
+  };
   private: boolean;
 }
-
 const TRAILING_SLASHES_RE = /\/+$/;
 function siteUrl(): string {
   const url = process.env.CONVEX_SITE_URL;
@@ -43,7 +41,6 @@ function siteUrl(): string {
   }
   return url.replace(TRAILING_SLASHES_RE, "");
 }
-
 async function ghFetch<T>(
   url: string,
   accessToken: string,
@@ -70,7 +67,6 @@ async function ghFetch<T>(
   }
   return (await response.json()) as T;
 }
-
 async function ghDelete(url: string, accessToken: string): Promise<void> {
   const response = await fetch(url, {
     method: "DELETE",
@@ -88,13 +84,6 @@ async function ghDelete(url: string, accessToken: string): Promise<void> {
     );
   }
 }
-
-/**
- * Reconcile GitHub repo-level webhooks for a connection. Given the desired set
- * of repo full names, registers webhooks on newly-added repos, deletes them on
- * removed ones, and persists the resulting (name, hookId) list back into
- * scopeSelection.repos. Pass `targetRepos: []` to remove all (pause/disconnect).
- */
 export const reconcileWebhooks = internalAction({
   args: {
     connectionId: v.id("connection"),
@@ -109,29 +98,22 @@ export const reconcileWebhooks = internalAction({
       return;
     }
     if (!conn.webhookSecret) {
-      // enableSync hasn't run yet — nothing to reconcile.
       return;
     }
     const accessToken = decryptToken(
       conn.encryptedAccessToken,
       conn.tokenKeyVersion
     );
-
     const current: ScopedRepo[] = conn.webhookScope.repos ?? [];
     const currentByName = new Map(current.map((r) => [r.name, r]));
     const target = new Set(args.targetRepos);
-
-    // An entry without hookId hasn't been registered yet (e.g. just added by
-    // the scope picker) — include it in the register set.
     const toRegister = args.targetRepos.filter(
       (n) => !currentByName.get(n)?.hookId
     );
     const toUnregister = current.filter(
       (r) => !target.has(r.name) && r.hookId !== undefined
     );
-
     const callbackUrl = `${siteUrl()}/api/integrations/github/webhook/${args.connectionId}`;
-
     const registered: ScopedRepo[] = [];
     for (const repo of toRegister) {
       try {
@@ -160,7 +142,6 @@ export const reconcileWebhooks = internalAction({
         registered.push({ name: repo });
       }
     }
-
     for (const repo of toUnregister) {
       if (!repo.hookId) {
         continue;
@@ -174,7 +155,6 @@ export const reconcileWebhooks = internalAction({
         console.warn("[github] unregister webhook failed", repo.name, err);
       }
     }
-
     const finalRepos: ScopedRepo[] = args.targetRepos.map((name) => {
       const existing = currentByName.get(name);
       const newly = registered.find((r) => r.name === name);
@@ -183,7 +163,6 @@ export const reconcileWebhooks = internalAction({
         hookId: newly?.hookId ?? existing?.hookId,
       };
     });
-
     await ctx.runMutation(
       internal.connections.providers.github_internals.writeWebhookScope,
       {
@@ -195,19 +174,17 @@ export const reconcileWebhooks = internalAction({
     );
   },
 });
-
-/**
- * Public action used by the scope picker UI: lists the user's GitHub repos so
- * they can pick which to subscribe to. Filters to repos where the user has
- * admin permission (a prerequisite for registering webhooks).
- */
 export const listMyRepos = action({
   args: { connectionId: v.id("connection") },
   handler: async (
     ctx,
     args
   ): Promise<
-    Array<{ fullName: string; private: boolean; description: string | null }>
+    Array<{
+      fullName: string;
+      private: boolean;
+      description: string | null;
+    }>
   > => {
     const identity = await getAuthIdentity(ctx);
     if (!identity?.userId) {
@@ -225,7 +202,7 @@ export const listMyRepos = action({
       conn.tokenKeyVersion
     );
     const PER_PAGE = 100;
-    const PAGES = 3; // up to 300 repos for v1
+    const PAGES = 3;
     const out: Array<{
       fullName: string;
       private: boolean;
@@ -240,9 +217,6 @@ export const listMyRepos = action({
         if (r.archived) {
           continue;
         }
-        // Skip repos where we know we don't have admin (hook registration
-        // would 403); when GitHub omits the field, include the repo and let
-        // reconcileWebhooks fail gracefully if push comes to shove.
         if (r.permissions && r.permissions.admin === false) {
           continue;
         }
@@ -259,11 +233,6 @@ export const listMyRepos = action({
     return out;
   },
 });
-
-/**
- * Final-stage disconnect: deletes all webhooks for the connection then zeroes
- * the encrypted token. Scheduled by mutations.disconnect for GitHub.
- */
 export const disconnectAndCleanup = internalAction({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args): Promise<void> => {
@@ -281,8 +250,6 @@ export const disconnectAndCleanup = internalAction({
     );
   },
 });
-
-/** Cron-driven: poll active GitHub connections' starred repos. */
 export const pollAllStars = internalAction({
   args: {},
   handler: async (ctx): Promise<void> => {
@@ -303,7 +270,6 @@ export const pollAllStars = internalAction({
     }
   },
 });
-
 export const pollStarsForBinding = internalAction({
   args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args): Promise<void> => {
@@ -318,7 +284,6 @@ export const pollStarsForBinding = internalAction({
       conn.encryptedAccessToken,
       conn.tokenKeyVersion
     );
-
     const PAGES = 2;
     const PER_PAGE = 100;
     const items: GitHubStarredItem[] = [];
@@ -332,12 +297,10 @@ export const pollStarsForBinding = internalAction({
         break;
       }
     }
-
     const previousSnapshot = new Set(conn.scopeSelection.starsSnapshot ?? []);
     const isFirstRun = (conn.scopeSelection.starsSnapshot ?? null) === null;
     const currentNames = items.map((i) => i.full_name);
     const currentSet = new Set(currentNames);
-
     if (isFirstRun) {
       await ctx.runMutation(
         internal.connections.providers.github_internals
@@ -352,12 +315,10 @@ export const pollStarsForBinding = internalAction({
       );
       return;
     }
-
     const added = items.filter((i) => !previousSnapshot.has(i.full_name));
     const removed = [...previousSnapshot].filter(
       (n): n is string => typeof n === "string" && !currentSet.has(n)
     );
-
     for (const repo of added) {
       try {
         await ctx.runMutation(
@@ -385,7 +346,6 @@ export const pollStarsForBinding = internalAction({
         console.warn("[github] star upsert failed", repo.full_name, err);
       }
     }
-
     for (const fullName of removed) {
       try {
         await ctx.runMutation(
@@ -399,7 +359,6 @@ export const pollStarsForBinding = internalAction({
         console.warn("[github] star tombstone failed", fullName, err);
       }
     }
-
     await ctx.runMutation(
       internal.connections.providers.github_internals
         .writeBindingScopeSelection,

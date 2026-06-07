@@ -13,7 +13,6 @@ function providerSupportsSync(providerId: string): boolean {
     return false;
   }
 }
-
 export const listMyConnections = protectedQuery({
   args: {},
   handler: async (ctx) => {
@@ -21,7 +20,6 @@ export const listMyConnections = protectedQuery({
       .query("connection")
       .withIndex("by_user_provider", (q) => q.eq("userId", ctx.user._id))
       .collect();
-
     const result: {
       _id: Id<"connection">;
       provider: string;
@@ -48,7 +46,6 @@ export const listMyConnections = protectedQuery({
         .query("connectionSyncBinding")
         .withIndex("by_connection", (q) => q.eq("connectionId", c._id))
         .collect();
-
       result.push({
         _id: c._id,
         provider: c.provider,
@@ -74,7 +71,6 @@ export const listMyConnections = protectedQuery({
     return result;
   },
 });
-
 export const getConnection = protectedQuery({
   args: { connectionId: v.id("connection") },
   handler: async (ctx, args) => {

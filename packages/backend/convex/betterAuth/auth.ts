@@ -1,4 +1,5 @@
+import type { GenericCtx } from "@convex-dev/better-auth";
+import type { DataModel } from "../_generated/dataModel";
 import { createAuth } from "../auth";
 
-// biome-ignore lint/suspicious/noExplicitAny: <>
-export const auth = createAuth({} as any);
+export const auth = createAuth({} as GenericCtx<DataModel>);
