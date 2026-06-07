@@ -201,7 +201,7 @@ export function UserMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="ml-px flex h-7! w-full items-center gap-x-1 rounded-full pr-0.5 text-left text-sm hover:bg-accent"
+          className="ml-px flex h-7! w-full items-center gap-x-1 rounded-sm pr-0.5 text-left text-sm hover:bg-accent"
           render={<div />}
         >
           <Avatar className="size-6">
@@ -211,7 +211,7 @@ export function UserMenu() {
             </AvatarFallback>
           </Avatar>
           {workspace && (
-            <div className="flex w-full items-center gap-x-0 rounded-full bg-ui-bg-base pl-1 shadow-borders-base">
+            <div className="flex w-full items-center gap-x-0 rounded-sm bg-ui-bg-base pl-1 shadow-borders-base">
               <WorkspaceIcon
                 className={cn(workspace.emoji && "")}
                 emoji={workspace.emoji}

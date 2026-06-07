@@ -6,9 +6,26 @@ import { RelatedResources } from "../related-resources";
 import { ResourceHeader } from "../resource-header";
 import { ResourceSummary } from "../resource-summary";
 import { ResourceTags } from "../resource-tags";
-import { GithubPrDiff } from "./github-pr-diff";
 
 const NoteEditor = lazy(() => import("./note-editor"));
+const GithubPrDiff = lazy(() =>
+  import("./github-pr-diff").then((module) => ({
+    default: module.GithubPrDiff,
+  }))
+);
+
+function PrDiffFallback() {
+  return (
+    <div className="mt-4 space-y-3">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div
+          className="h-10 animate-pulse rounded-sm border border-ui-border-base bg-ui-bg-subtle"
+          key={index}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function SyncedResource({ resource }: { resource: GetResourceData }) {
   const synced = getSyncedViewModel(resource);
@@ -22,8 +39,6 @@ export function SyncedResource({ resource }: { resource: GetResourceData }) {
     ? undefined
     : (synced.markdownContent ?? undefined);
   const showDiff = synced.kind === "pr" && Boolean(synced.diffPatch);
-  const showEditor =
-    synced.kind !== "pr" || Boolean(fallbackMarkdown || jsonContent);
 
   return (
     <PageContent className="mt-2">
@@ -45,20 +60,20 @@ export function SyncedResource({ resource }: { resource: GetResourceData }) {
       )}
 
       {showDiff && synced.diffPatch ? (
-        <GithubPrDiff patch={synced.diffPatch} />
-      ) : null}
-
-      {showEditor ? (
-        <Suspense fallback={<div className="mt-6 min-h-[100px]" />}>
-          <NoteEditor
-            fallbackMarkdown={fallbackMarkdown}
-            initialContent={jsonContent}
-            key={`${resource._id}:${"syncedAt" in resource ? (resource.syncedAt ?? 0) : 0}`}
-            resourceId={resource._id}
-            workspaceId={resource.workspaceId}
-          />
+        <Suspense fallback={<PrDiffFallback />}>
+          <GithubPrDiff patch={synced.diffPatch} />
         </Suspense>
       ) : null}
+
+      <Suspense fallback={<div className="mt-6 min-h-[100px]" />}>
+        <NoteEditor
+          fallbackMarkdown={fallbackMarkdown}
+          initialContent={jsonContent}
+          key={`${resource._id}:${"syncedAt" in resource ? (resource.syncedAt ?? 0) : 0}`}
+          resourceId={resource._id}
+          workspaceId={resource.workspaceId}
+        />
+      </Suspense>
     </PageContent>
   );
 }

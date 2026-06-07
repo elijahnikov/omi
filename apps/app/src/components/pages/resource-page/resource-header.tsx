@@ -22,6 +22,7 @@ import {
   URLPathTruncate,
 } from "~/components/common/middle-truncate";
 import { ShortcutTooltipBody } from "~/components/common/shortcut-tooltip";
+import { SyncedSubtitleParts } from "~/components/common/synced-subtitle-parts";
 import { UserAvatar } from "~/components/common/user-avatar";
 import {
   GitHub,
@@ -29,7 +30,7 @@ import {
   Notion,
 } from "~/components/pages/settings-page/import-tab/integration-logos";
 import type { GetResourceData } from "~/lib/convex-types";
-import { getSyncedViewModel, isSyncedResource } from "~/lib/synced-resource";
+import { getSyncedViewModel } from "~/lib/synced-resource";
 import { useFloatingPanelsStore } from "./floating-panels-store";
 import { ResourceActionsMenu } from "./resource-actions-menu";
 import { ResourceChatPanel } from "./resource-chat-panel";
@@ -91,9 +92,11 @@ export function ResourceHeader({ resource }: { resource: GetResourceData }) {
     [updateTitle, resource._id, workspaceId, queryClient, queryKey]
   );
 
+  const synced = getSyncedViewModel(resource);
+
   return (
     <div className="flex flex-col gap-y-1">
-      <div className="relative flex w-full items-center pr-28 md:pr-0">
+      <div className="relative flex w-full min-w-0 items-center gap-2 pr-28 md:pr-0">
         <AnimatePresence>
           {isAiProcessing && (
             <motion.div
@@ -108,10 +111,13 @@ export function ResourceHeader({ resource }: { resource: GetResourceData }) {
           )}
         </AnimatePresence>
         <EditableText
-          className="h1-core font-medium font-sans"
+          className="h1-core min-w-0 flex-1 font-medium font-sans"
           onSave={handleSave}
           value={resource.title}
         />
+        {synced?.subtitle ? (
+          <SyncedSubtitleParts subtitle={synced.subtitle} />
+        ) : null}
       </div>
       <div className="absolute top-1.5 right-1.5 z-50 ml-auto flex size-8 w-max shrink-0 items-center gap-x-2">
         <Tooltip>
@@ -349,16 +355,13 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
           target="_blank"
         >
           <Badge
-            className="min-w-0 max-w-full shrink text-ui-fg-subtle text-xs"
+            className="flex min-w-0 max-w-full shrink items-center gap-1.5 text-ui-fg-subtle text-xs"
             variant="mono"
           >
             {entry ? <entry.Logo className="size-3.5 shrink-0" /> : null}
             <span className="shrink-0 font-medium text-ui-fg-base">
               {hostname}
             </span>
-            {synced.subtitle ? (
-              <span className="min-w-0 flex-1 truncate">{synced.subtitle}</span>
-            ) : null}
             <RiArrowRightUpLine className="shrink-0" />
           </Badge>
         </a>

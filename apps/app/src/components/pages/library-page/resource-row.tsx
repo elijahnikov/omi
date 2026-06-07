@@ -3,7 +3,6 @@ import { useDraggable } from "@dnd-kit/core";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
-import { Badge } from "@omi/ui/badge";
 import { ContextMenu } from "@omi/ui/context-menu";
 import {
   RiDeleteBinFill,
@@ -22,6 +21,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { DotGridLoader } from "~/components/common/dot-grid-loader";
 import { EditableText } from "~/components/common/editable-text";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
+import { SyncedSubtitleParts } from "~/components/common/synced-subtitle-parts";
 import { TextShimmer } from "~/components/common/text-shimmer";
 import { UserAvatar } from "~/components/common/user-avatar";
 import { INTEGRATION_LOGO } from "~/components/pages/settings-page/import-tab/integration-logos";
@@ -305,9 +305,7 @@ function SyncedRow({
             value={resource.title}
           />
           {synced?.subtitle ? (
-            <Badge className="shrink-0 text-xs" variant="mono">
-              {synced.subtitle}
-            </Badge>
+            <SyncedSubtitleParts subtitle={synced.subtitle} />
           ) : null}
         </div>
         {snippet ? <SnippetLine html={snippet} /> : null}
