@@ -25,7 +25,11 @@ export function Nav() {
   }, []);
 
   return (
-    <header className={"top-0 z-50 mt-6 transition-colors duration-200"}>
+    <header
+      className={
+        "sticky top-0 z-50 mt-6 bg-ui-bg-subtle transition-colors duration-200"
+      }
+    >
       <nav aria-label="Primary" className="px-5 sm:px-8">
         <div className="mx-auto flex h-16 w-full max-w-xl items-center justify-between">
           <a aria-label="Omi home" className="flex items-center" href="#top">

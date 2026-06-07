@@ -435,6 +435,67 @@ const Apple = (props: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const Gmail = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...props} viewBox="0 49.4 512 399.42">
+    <title>Gmail</title>
+    <g fill="none" fillRule="evenodd">
+      <g fillRule="nonzero">
+        <path
+          d="M34.91 448.818h81.454V251L0 163.727V413.91c0 19.287 15.622 34.91 34.91 34.91z"
+          fill="#4285f4"
+        />
+        <path
+          d="M395.636 448.818h81.455c19.287 0 34.909-15.622 34.909-34.909V163.727L395.636 251z"
+          fill="#34a853"
+        />
+        <path
+          d="M395.636 99.727V251L512 163.727v-46.545c0-43.142-49.25-67.782-83.782-41.891z"
+          fill="#fbbc04"
+        />
+      </g>
+      <path
+        d="M116.364 251V99.727L256 204.455 395.636 99.727V251L256 355.727z"
+        fill="#ea4335"
+      />
+      <path
+        d="M0 117.182v46.545L116.364 251V99.727L83.782 75.291C49.25 49.4 0 74.04 0 117.18z"
+        fill="#c5221f"
+        fillRule="nonzero"
+      />
+    </g>
+  </svg>
+);
+
+export const GoogleDrive = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...props} viewBox="0 0 87.3 78">
+    <title>Google Drive</title>
+    <path
+      d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z"
+      fill="#0066da"
+    />
+    <path
+      d="M43.65 25 29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44A9.06 9.06 0 0 0 0 53h27.5z"
+      fill="#00ac47"
+    />
+    <path
+      d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L86.1 57.5c.8-1.4 1.2-2.95 1.2-4.5H59.798l5.852 11.5z"
+      fill="#ea4335"
+    />
+    <path
+      d="M43.65 25 57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z"
+      fill="#00832d"
+    />
+    <path
+      d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z"
+      fill="#2684fc"
+    />
+    <path
+      d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z"
+      fill="#ffba00"
+    />
+  </svg>
+);
+
 export const captureLogos: { name: string; Logo: ComponentType<LogoProps> }[] =
   [
     { name: "Chrome", Logo: Chrome },
@@ -448,4 +509,6 @@ export const captureLogos: { name: string; Logo: ComponentType<LogoProps> }[] =
     { name: "ChatGPT", Logo: ChatGPT },
     { name: "MCP", Logo: ModelContextProtocol },
     { name: "Cursor", Logo: Cursor },
+    { name: "Gmail", Logo: Gmail },
+    { name: "GoogleDrive", Logo: GoogleDrive },
   ];

@@ -4,10 +4,9 @@ export interface PricingTier {
   cadence?: string;
   cta: { label: string; href: string };
   featured?: boolean;
-  /** Feature limits sourced from packages/backend/convex/billing/pricing.ts */
+  /** Mirrors apps/app billing-tab + packages/backend/convex/billing/pricing.ts */
   features: string[];
   name: string;
-  /** PLACEHOLDER — confirm real amounts from Stripe before launch. */
   price: string;
   tagline: string;
 }
@@ -17,45 +16,47 @@ export const pricingTiers: PricingTier[] = [
     name: "Free",
     price: "$0",
     cadence: "forever",
-    tagline: "Everything you need to start your second brain.",
+    tagline: "Try the product without a card.",
     cta: { label: "Get started", href: links.register },
     features: [
-      "500 AI credits / month",
-      "100 MB storage",
+      "500 AI actions / month",
+      "100 MB file storage",
       "Up to 3 workspaces",
-      "Semantic search",
-      "Browser, Raycast & mobile capture",
+      "100 web captures / month",
+      "Auto-summaries, tagging, semantic search, and chat — within your credit budget",
+      "All imports and connections (Notion, Raindrop, Readwise, Fabric, MyMind, Evernote, bookmarks)",
+      "Bring your own API key (skips credit charges for chat and search)",
     ],
   },
   {
     name: "Basic",
-    price: "$X",
+    price: "$5",
     cadence: "/ month",
-    tagline: "For knowledge workers who live in their library.",
+    tagline: "For active personal libraries.",
     cta: { label: "Start Basic", href: links.register },
     featured: true,
     features: [
-      "3,000 AI credits / month",
-      "5 GB storage",
+      "Everything in Free",
+      "3,000 AI actions / month",
+      "5 GB file storage",
       "Unlimited workspaces",
-      "AI chat with citations",
-      "All integrations & MCP servers",
       "2,000 web captures / month",
+      "Home-page AI insights: concept clusters, recent connections, forgotten gems",
     ],
   },
   {
     name: "Pro",
-    price: "$Y",
+    price: "$12",
     cadence: "/ month",
-    tagline: "For power users and teams that run on knowledge.",
+    tagline: "For heavy users.",
     cta: { label: "Start Pro", href: links.register },
     features: [
-      "10,000 AI credits / month",
-      "25 GB storage",
+      "Everything in Basic",
+      "10,000 AI actions / month",
+      "25 GB file storage",
       "Unlimited workspaces",
       "Unlimited web captures",
-      "Bring your own AI keys",
-      "Priority support",
+      "Continuous sync (GitHub, Linear, and more)",
     ],
   },
 ];

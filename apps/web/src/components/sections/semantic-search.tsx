@@ -309,7 +309,7 @@ function SearchMock() {
         value={typed}
       />
 
-      <div className="mt-3 min-h-[264px]">
+      <div className="mt-3 min-h-[270px]">
         <AnimatePresence mode="wait">
           {showResults ? (
             <motion.div

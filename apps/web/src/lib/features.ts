@@ -3,7 +3,6 @@ export interface BentoFeature {
   title: string;
 }
 
-/** Secondary features for the bento grid (the killers get their own sections). */
 export const bentoFeatures: BentoFeature[] = [
   {
     title: "Comments & @mentions",
@@ -16,14 +15,14 @@ export const bentoFeatures: BentoFeature[] = [
       "A fresh page every day for journaling, capture, and thinking out loud — automatically dated and searchable.",
   },
   {
-    title: "Public share links",
+    title: "AI enrichment on save",
     description:
-      "Publish any resource as a clean, read-only page with a single click. Share knowledge without giving up your workspace.",
+      "Every save is summarized, tagged, and embedded automatically — concepts and entities extracted in the background, no effort from you.",
   },
   {
-    title: "Rich notes & web embeds",
+    title: "Real-time collaboration",
     description:
-      "Write with a full block editor. Save articles with the original embedded — YouTube, X, Figma, Google Docs, and more.",
+      "Write together in a full block editor. See live cursors, @mention teammates, and check things off as the doc updates in real time.",
   },
   {
     title: "Collections & nested folders",
@@ -31,13 +30,12 @@ export const bentoFeatures: BentoFeature[] = [
       "Organize loosely or tightly. Nest collections as deep as you like, pin what matters, archive what doesn't.",
   },
   {
-    title: "Bulk import",
+    title: "Bulk import and live sync",
     description:
-      "Bring everything with you. Import from Notion, Evernote, Markdown, and CSV — enriched and linked on arrival.",
+      "Bring everything with you. Import from Notion, Evernote, Markdown, and CSV — or live-sync GitHub, Linear, and more — enriched and linked on arrival.",
   },
 ];
 
-/** Surfaces Omi captures from — honest 'social proof' for the strip. */
 export const captureSurfaces = [
   "Browser extension",
   "Raycast",

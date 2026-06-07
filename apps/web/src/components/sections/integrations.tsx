@@ -1,32 +1,105 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import type { ComponentType } from "react";
+import { FeatureSplit } from "~/components/marketing/feature-split";
 import {
-  GitHubIcon,
-  NotionIcon,
-  OmiMark,
-  ReadwiseIcon,
-  SlackIcon,
-} from "~/components/marketing/brand-icons";
-import { Eyebrow } from "~/components/marketing/eyebrow";
+  GitHubLogo,
+  GmailLogo,
+  GoogleCalendarLogo,
+  GoogleDriveLogo,
+  LinearLogo,
+  NotionLogo,
+  ReadwiseLogo,
+  SlackLogo,
+} from "~/components/marketing/mcp-logos";
 import { Section } from "~/components/marketing/section";
 
 const EASE: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
 
-// Staggered cross cluster, like the reference — Omi at center-top.
-const cluster = [
-  { Icon: GitHubIcon, label: "GitHub", x: -84, y: 10, delay: 0.05 },
-  { Icon: OmiMark, label: "Omi", x: 0, y: -36, delay: 0, accent: true },
-  { Icon: SlackIcon, label: "Slack", x: 84, y: 10, delay: 0.1 },
-  { Icon: NotionIcon, label: "Notion", x: -28, y: 64, delay: 0.15 },
-  { Icon: ReadwiseIcon, label: "Readwise", x: 56, y: 70, delay: 0.2 },
-];
-
 const FIELD_COLS = 9;
 const FIELD_ROWS = 5;
-const fieldTiles = Array.from(
-  { length: FIELD_COLS * FIELD_ROWS },
-  (_, i) => `tile-${i}`
+
+interface ActiveTile {
+  col: number;
+  delay: number;
+  Logo?: ComponentType<{ className?: string }>;
+  label: string;
+  logoClassName?: string;
+  omi?: boolean;
+  row: number;
+}
+
+const ACTIVE_TILES: ActiveTile[] = [
+  { row: 0, col: 4, label: "Omi", omi: true, delay: 0 },
+  {
+    row: 1,
+    col: 4,
+    label: "Linear",
+    Logo: LinearLogo,
+    logoClassName: "size-7",
+    delay: 0.05,
+  },
+  {
+    row: 1,
+    col: 3,
+    label: "GitHub",
+    Logo: GitHubLogo,
+    logoClassName: "size-7 text-foreground",
+    delay: 0.1,
+  },
+  {
+    row: 1,
+    col: 5,
+    label: "Slack",
+    Logo: SlackLogo,
+    logoClassName: "size-7",
+    delay: 0.15,
+  },
+  {
+    row: 1,
+    col: 6,
+    label: "Gmail",
+    Logo: GmailLogo,
+    logoClassName: "size-7",
+    delay: 0.2,
+  },
+  {
+    row: 2,
+    col: 4,
+    label: "Google Drive",
+    Logo: GoogleDriveLogo,
+    logoClassName: "size-7",
+    delay: 0.25,
+  },
+  {
+    row: 2,
+    col: 3,
+    label: "Notion",
+    Logo: NotionLogo,
+    logoClassName: "size-7",
+    delay: 0.3,
+  },
+  {
+    row: 2,
+    col: 5,
+    label: "Readwise",
+    Logo: ReadwiseLogo,
+    logoClassName: "size-7",
+    delay: 0.35,
+  },
+  {
+    row: 1,
+    col: 2,
+    label: "Google Calendar",
+    Logo: GoogleCalendarLogo,
+    logoClassName: "size-7",
+    delay: 0.4,
+  },
+];
+
+const activeByCell = new Map(
+  ACTIVE_TILES.map((tile) => [`${tile.row}-${tile.col}`, tile])
 );
 
 export function Integrations() {
@@ -34,93 +107,96 @@ export function Integrations() {
 
   return (
     <Section ariaLabel="Integrations" id="integrations">
-      <div className="relative flex flex-col items-center">
-        {/* Faint recessed field */}
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 -z-0 grid gap-3 [mask-image:radial-gradient(60%_70%_at_50%_30%,black,transparent)]"
-          style={{
-            gridTemplateColumns: `repeat(${FIELD_COLS}, minmax(0, 1fr))`,
-          }}
-        >
-          {fieldTiles.map((tile) => (
-            <div
-              className="aspect-square rounded-xl border border-border/60 bg-accent/40"
-              key={tile}
-            />
-          ))}
-        </div>
-
-        {/* Active cluster */}
-        <div className="relative z-10 mb-10 h-56 w-full max-w-md">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2">
-            {cluster.map((tile) => {
-              const Icon = tile.Icon;
-              return (
-                <motion.div
-                  animate={
-                    reduceMotion
-                      ? undefined
-                      : { y: [tile.y, tile.y - 6, tile.y] }
-                  }
-                  className="absolute flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border border-border bg-card shadow-glow"
-                  initial={
-                    reduceMotion
-                      ? { opacity: 1, x: tile.x, y: tile.y }
-                      : { opacity: 0, scale: 0.6, x: tile.x, y: tile.y }
-                  }
-                  key={tile.label}
-                  style={{ left: 0, top: 0 }}
-                  transition={
-                    reduceMotion
-                      ? undefined
-                      : {
-                          opacity: {
-                            duration: 0.4,
-                            delay: tile.delay,
-                            ease: EASE,
-                          },
-                          scale: {
-                            duration: 0.4,
-                            delay: tile.delay,
-                            ease: EASE,
-                          },
-                          y: {
-                            duration: 4,
-                            repeat: Number.POSITIVE_INFINITY,
-                            ease: "easeInOut",
-                            delay: tile.delay,
-                          },
-                        }
-                  }
-                  viewport={{ once: true, margin: "-80px" }}
-                  whileInView={
-                    reduceMotion ? undefined : { opacity: 1, scale: 1 }
-                  }
-                >
-                  <Icon
-                    className={
-                      tile.accent
-                        ? "size-7 text-blue-500"
-                        : "size-7 text-foreground"
-                    }
-                  />
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center text-center">
-          <Eyebrow>Integrations</Eyebrow>
-          <h2 className="mt-5 text-balance text-3xl text-display text-foreground">
-            Plugs into what your team already uses.
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Connects in seconds, no code required.
-          </p>
-        </div>
-      </div>
+      <FeatureSplit
+        body="Sync Notion, GitHub, Linear, Google Workspace, and Slack via OAuth — connects in seconds, no code required."
+        eyebrow="Integrations"
+        title="Plugs into what your team already uses."
+        visual={<IntegrationsGrid reduceMotion={reduceMotion} />}
+      />
     </Section>
+  );
+}
+
+function IntegrationsGrid({ reduceMotion }: { reduceMotion: boolean | null }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="mask-[radial-gradient(60%_80%_at_50%_38%,black,transparent)] w-full max-w-2xl pt-1"
+    >
+      <div
+        className="grid gap-3"
+        style={{
+          gridTemplateColumns: `repeat(${FIELD_COLS}, minmax(0, 1fr))`,
+        }}
+      >
+        {Array.from({ length: FIELD_COLS * FIELD_ROWS }, (_, i) => {
+          const row = Math.floor(i / FIELD_COLS);
+          const col = i % FIELD_COLS;
+          const active = activeByCell.get(`${row}-${col}`);
+
+          return (
+            <GridCell
+              active={active}
+              key={`${row}-${col}`}
+              reduceMotion={reduceMotion}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function GridCell({
+  active,
+  reduceMotion,
+}: {
+  active?: ActiveTile;
+  reduceMotion: boolean | null;
+}) {
+  const Logo = active?.Logo;
+
+  return (
+    <div className="relative aspect-square">
+      <div className="absolute inset-0 rounded-xl border border-border/60 bg-accent/40" />
+
+      {active ? (
+        <motion.div
+          aria-label={active.label}
+          className={
+            active.omi
+              ? "absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-card shadow-borders-base"
+              : "absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-card shadow-borders-base"
+          }
+          initial={
+            reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }
+          }
+          role="img"
+          transition={
+            reduceMotion
+              ? undefined
+              : {
+                  opacity: { duration: 0.4, delay: active.delay, ease: EASE },
+                  scale: { duration: 0.4, delay: active.delay, ease: EASE },
+                }
+          }
+          viewport={{ once: true, margin: "-80px" }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
+        >
+          {active.omi ? (
+            // biome-ignore lint/performance/noImgElement: official Omi logo from public/
+            <img
+              alt=""
+              className="size-8 object-contain"
+              height={32}
+              src="/omi_black_on_transparent.png"
+              width={32}
+            />
+          ) : Logo ? (
+            <Logo className={active.logoClassName} />
+          ) : null}
+        </motion.div>
+      ) : null}
+    </div>
   );
 }

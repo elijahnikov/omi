@@ -23,21 +23,13 @@ export function Pricing() {
           <StaggerItem className="h-full" key={tier.name}>
             <div
               className={cn(
-                "flex h-full flex-col rounded-2xl border bg-card p-6",
-                tier.featured
-                  ? "border-blue-500/40 shadow-glow"
-                  : "border-border shadow-soft-sm"
+                "flex h-full flex-col rounded-2xl bg-card p-6 shadow-borders-base"
               )}
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground text-lg">
                   {tier.name}
                 </h3>
-                {tier.featured ? (
-                  <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 font-mono text-blue-600 text-xs">
-                    Popular
-                  </span>
-                ) : null}
               </div>
 
               <div className="mt-4 flex items-baseline gap-1">
@@ -64,7 +56,9 @@ export function Pricing() {
                       className="mt-0.5 shrink-0 text-blue-500"
                       size={16}
                     />
-                    <span className="text-foreground">{feature}</span>
+                    <span className="font-medium text-ui-fg-subtle">
+                      {feature}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -79,10 +73,6 @@ export function Pricing() {
           </StaggerItem>
         ))}
       </Stagger>
-
-      <p className="mt-6 font-mono text-muted-foreground text-xs">
-        Prices shown are placeholders pending final billing setup.
-      </p>
     </Section>
   );
 }

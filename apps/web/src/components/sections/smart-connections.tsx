@@ -1,33 +1,52 @@
 "use client";
 
+import { AnimatedBeam } from "@omi/ui/animated-beam";
+import { RiFileTextFill, RiStickyNoteFill } from "@remixicon/react";
 import { motion, useReducedMotion } from "motion/react";
+import { type Ref, useRef } from "react";
 import { Eyebrow } from "~/components/marketing/eyebrow";
 import { Section } from "~/components/marketing/section";
 
 const EASE: [number, number, number, number] = [0.21, 0.47, 0.32, 0.98];
 
-const gnodes = [
-  { x: 150, y: 60, r: 10, accent: true },
-  { x: 60, y: 130, r: 7, accent: false },
-  { x: 250, y: 110, r: 8, accent: false },
-  { x: 120, y: 210, r: 7, accent: false },
-  { x: 300, y: 200, r: 6, accent: false },
-  { x: 220, y: 250, r: 7, accent: false },
-  { x: 40, y: 230, r: 6, accent: false },
-];
-const glines = [
-  { x1: 150, y1: 60, x2: 60, y2: 130 },
-  { x1: 150, y1: 60, x2: 250, y2: 110 },
-  { x1: 60, y1: 130, x2: 120, y2: 210 },
-  { x1: 250, y1: 110, x2: 300, y2: 200 },
-  { x1: 120, y1: 210, x2: 220, y2: 250 },
-  { x1: 300, y1: 200, x2: 220, y2: 250 },
-  { x1: 60, y1: 130, x2: 40, y2: 230 },
-];
+interface Res {
+  domain?: string;
+  title: string;
+  type: "website" | "note" | "file";
+}
+
+const R1: Res = {
+  title: "Building effective agents",
+  type: "website",
+  domain: "anthropic.com",
+};
+const R2: Res = {
+  title: "System Design Primer",
+  type: "website",
+  domain: "github.com",
+};
+const R3: Res = {
+  title: "Refactoring UI",
+  type: "website",
+  domain: "refactoringui.com",
+};
+const R4: Res = {
+  title: "How Linear builds",
+  type: "website",
+  domain: "linear.app",
+};
+const R5: Res = {
+  title: "Karpathy — Intro to LLMs",
+  type: "website",
+  domain: "youtube.com",
+};
+const R6: Res = {
+  title: "The Rust Book",
+  type: "website",
+  domain: "doc.rust-lang.org",
+};
 
 export function SmartConnections() {
-  const reduceMotion = useReducedMotion();
-
   return (
     <Section
       ariaLabel="Smart connections"
@@ -46,60 +65,244 @@ export function SmartConnections() {
           </p>
         </div>
 
-        <div className="relative mt-10 w-full max-w-md">
-          <svg
-            aria-hidden="true"
-            className="h-auto w-full"
-            viewBox="0 0 340 300"
-          >
-            <title>Knowledge graph</title>
-            {glines.map((l) => (
-              <motion.line
-                initial={reduceMotion ? { pathLength: 1 } : { pathLength: 0 }}
-                key={`${l.x1}-${l.y1}-${l.x2}-${l.y2}`}
-                stroke="var(--border)"
-                strokeWidth="1.5"
-                transition={{ duration: 1, ease: EASE }}
-                viewport={{ once: true, margin: "-80px" }}
-                whileInView={{ pathLength: 1 }}
-                x1={l.x1}
-                x2={l.x2}
-                y1={l.y1}
-                y2={l.y2}
-              />
-            ))}
-            {gnodes.map((n, i) => (
-              <motion.circle
-                animate={
-                  n.accent && !reduceMotion
-                    ? { scale: [1, 1.12, 1] }
-                    : undefined
-                }
-                cx={n.x}
-                cy={n.y}
-                fill={n.accent ? "var(--color-blue-500)" : "var(--card)"}
-                initial={reduceMotion ? { scale: 1 } : { scale: 0 }}
-                key={`${n.x}-${n.y}`}
-                r={n.r}
-                stroke={n.accent ? "var(--color-blue-500)" : "var(--border)"}
-                strokeWidth="1.5"
-                style={{ transformOrigin: "center", transformBox: "fill-box" }}
-                transition={
-                  n.accent && !reduceMotion
-                    ? {
-                        duration: 3,
-                        repeat: Number.POSITIVE_INFINITY,
-                        ease: "easeInOut",
-                      }
-                    : { duration: 0.4, delay: 0.3 + i * 0.08, ease: EASE }
-                }
-                viewport={{ once: true, margin: "-80px" }}
-                whileInView={reduceMotion ? undefined : { scale: 1 }}
-              />
-            ))}
-          </svg>
-        </div>
+        <ConnectionsGraph />
       </div>
     </Section>
   );
+}
+
+function ConnectionsGraph() {
+  const reduceMotion = useReducedMotion();
+  const repeat = reduceMotion ? 0 : Number.POSITIVE_INFINITY;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const aiRef = useRef<HTMLDivElement>(null);
+  const sweRef = useRef<HTMLDivElement>(null);
+  const designRef = useRef<HTMLDivElement>(null);
+  const r1Ref = useRef<HTMLDivElement>(null);
+  const r2Ref = useRef<HTMLDivElement>(null);
+  const r3Ref = useRef<HTMLDivElement>(null);
+  const r4Ref = useRef<HTMLDivElement>(null);
+  const r5Ref = useRef<HTMLDivElement>(null);
+  const r6Ref = useRef<HTMLDivElement>(null);
+
+  const beam = {
+    containerRef,
+    pathColor: "var(--border)",
+    pathOpacity: 0.5,
+    pathWidth: 1.5,
+    gradientStartColor: "#60a5fa",
+    gradientStopColor: "#3b82f6",
+    duration: 4,
+    repeat,
+  };
+
+  return (
+    <div
+      className="relative mx-auto mt-6 flex h-[340px] w-full max-w-2xl items-stretch justify-between"
+      ref={containerRef}
+    >
+      {/* Left resources */}
+      <div className="z-10 flex flex-col justify-around py-2">
+        <ResourceNode
+          delay={0}
+          reduceMotion={reduceMotion}
+          ref={r1Ref}
+          res={R1}
+        />
+        <ResourceNode
+          delay={0.1}
+          reduceMotion={reduceMotion}
+          ref={r2Ref}
+          res={R2}
+        />
+        <ResourceNode
+          delay={0.2}
+          reduceMotion={reduceMotion}
+          ref={r6Ref}
+          res={R6}
+        />
+      </div>
+
+      {/* Center concepts (the shared meaning) */}
+      <div className="z-10 flex flex-col justify-center gap-14">
+        <ConceptNode
+          delay={0.05}
+          label="#ai"
+          reduceMotion={reduceMotion}
+          ref={aiRef}
+        />
+        <ConceptNode
+          delay={0.1}
+          label="#software-engineering"
+          reduceMotion={reduceMotion}
+          ref={sweRef}
+        />
+        <ConceptNode
+          delay={0.15}
+          label="#design"
+          reduceMotion={reduceMotion}
+          ref={designRef}
+        />
+      </div>
+
+      {/* Right resources */}
+      <div className="z-10 flex flex-col justify-around py-2">
+        <ResourceNode
+          delay={0.05}
+          reduceMotion={reduceMotion}
+          ref={r3Ref}
+          res={R3}
+        />
+        <ResourceNode
+          delay={0.15}
+          reduceMotion={reduceMotion}
+          ref={r4Ref}
+          res={R4}
+        />
+        <ResourceNode
+          delay={0.25}
+          reduceMotion={reduceMotion}
+          ref={r5Ref}
+          res={R5}
+        />
+      </div>
+
+      {/* Beams — each resource flows into the concept(s) it shares */}
+      <AnimatedBeam
+        curvature={45}
+        delay={0.2}
+        fromRef={r1Ref}
+        toRef={aiRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={-10}
+        delay={0.45}
+        fromRef={r1Ref}
+        toRef={sweRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={25}
+        delay={0.6}
+        fromRef={r2Ref}
+        toRef={sweRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={-30}
+        delay={0.75}
+        fromRef={r6Ref}
+        toRef={sweRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={30}
+        delay={0.3}
+        fromRef={r3Ref}
+        reverse
+        toRef={designRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={25}
+        delay={0.5}
+        fromRef={r4Ref}
+        reverse
+        toRef={designRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={-20}
+        delay={0.7}
+        fromRef={r4Ref}
+        reverse
+        toRef={sweRef}
+        {...beam}
+      />
+      <AnimatedBeam
+        curvature={-45}
+        delay={0.9}
+        fromRef={r5Ref}
+        reverse
+        toRef={aiRef}
+        {...beam}
+      />
+    </div>
+  );
+}
+
+function ResourceNode({
+  res,
+  delay,
+  reduceMotion,
+  ref,
+}: {
+  res: Res;
+  delay: number;
+  reduceMotion: boolean | null;
+  ref?: Ref<HTMLDivElement>;
+}) {
+  return (
+    <motion.div
+      className="flex w-fit items-center gap-2 rounded-lg bg-card px-2.5 py-1.5 shadow-borders-base"
+      initial={
+        reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }
+      }
+      ref={ref}
+      transition={{ duration: 0.4, delay, ease: EASE }}
+      viewport={{ once: true, margin: "-60px" }}
+      whileInView={{ opacity: 1, scale: 1 }}
+    >
+      <ResourceTypeIcon resource={res} />
+      <span className="max-w-[150px] truncate font-medium text-ui-fg-base text-xs">
+        {res.title}
+      </span>
+    </motion.div>
+  );
+}
+
+function ConceptNode({
+  label,
+  delay,
+  reduceMotion,
+  ref,
+}: {
+  label: string;
+  delay: number;
+  reduceMotion: boolean | null;
+  ref?: Ref<HTMLDivElement>;
+}) {
+  return (
+    <motion.div
+      className="flex w-fit items-center rounded-full bg-blue-500 px-3 py-1.5 font-medium text-blue-100 text-xs shadow-borders-interactive-with-shadow"
+      initial={
+        reduceMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }
+      }
+      ref={ref}
+      transition={{ type: "spring", stiffness: 400, damping: 24, delay }}
+      viewport={{ once: true, margin: "-60px" }}
+      whileInView={{ opacity: 1, scale: 1 }}
+    >
+      {label}
+    </motion.div>
+  );
+}
+
+function ResourceTypeIcon({ resource }: { resource: Res }) {
+  if (resource.type === "website" && resource.domain) {
+    return (
+      // biome-ignore lint/performance/noImgElement: external favicon, no next/image domain config
+      <img
+        alt=""
+        className="size-3.5 shrink-0 rounded-[4px]"
+        height={14}
+        src={`https://www.google.com/s2/favicons?domain=${resource.domain}&sz=64`}
+        width={14}
+      />
+    );
+  }
+  const Icon = resource.type === "note" ? RiStickyNoteFill : RiFileTextFill;
+  return <Icon className="size-3.5 shrink-0 text-ui-fg-muted" />;
 }

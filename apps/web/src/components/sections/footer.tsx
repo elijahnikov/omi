@@ -67,9 +67,9 @@ export function Footer() {
         ))}
       </div>
 
-      <div className="mx-auto mt-12 w-full max-w-xl -px-8 pt-8">
+      <div className="mx-auto mt-12 w-full max-w-xl pt-8">
         <p className="font-medium text-muted-foreground text-xs">
-          © {currentYear} Omi · built for thinkers
+          © {currentYear} Omi · made with ❤️ in London
         </p>
       </div>
     </footer>

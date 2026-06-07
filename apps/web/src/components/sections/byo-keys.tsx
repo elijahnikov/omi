@@ -1,17 +1,30 @@
-import { KeyRound, Lock } from "lucide-react";
+import type { ComponentType } from "react";
+import {
+  ClaudeLogo,
+  GoogleLogo,
+  OpenAILogo,
+} from "~/components/marketing/ai-provider-logos";
 import { Eyebrow } from "~/components/marketing/eyebrow";
 import { Section } from "~/components/marketing/section";
 import { Reveal } from "~/components/motion/reveal";
 
-const providers = ["Claude", "OpenAI", "Google"];
+const providers: {
+  Logo: ComponentType<{ className?: string }>;
+  label: string;
+  logoClassName?: string;
+}[] = [
+  { label: "Claude", Logo: ClaudeLogo, logoClassName: "size-4" },
+  { label: "OpenAI", Logo: OpenAILogo, logoClassName: "size-4" },
+  { label: "Google", Logo: GoogleLogo, logoClassName: "size-4" },
+];
 
 export function ByoKeys() {
   return (
     <Section ariaLabel="Your AI, your data">
-      <Reveal className="relative overflow-hidden rounded-3xl border border-border bg-sidebar p-8 sm:p-10">
-        <div className="relative flex flex-col items-start gap-6">
+      <Reveal className="relative overflow-hidden">
+        <div className="relative flex flex-col items-start gap-6 pb-1">
           <div>
-            <Eyebrow>bring_your_own_key</Eyebrow>
+            <Eyebrow>BYOK</Eyebrow>
             <h2 className="mt-5 text-balance text-3xl text-display text-foreground">
               Your AI. Your data. Your keys.
             </h2>
@@ -21,23 +34,18 @@ export function ByoKeys() {
               models, cost, and privacy.
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
-              {providers.map((p) => (
+              {providers.map(({ label, Logo, logoClassName }) => (
                 <span
-                  className="rounded-full border border-border bg-card px-3 py-1 font-mono text-foreground text-xs"
-                  key={p}
+                  className="flex items-center gap-2 rounded-full bg-card px-3 py-1.5 shadow-borders-base"
+                  key={label}
                 >
-                  {p}
+                  <Logo aria-hidden className={logoClassName} />
+                  <span className="font-medium text-sm text-ui-fg-subtle">
+                    {label}
+                  </span>
                 </span>
               ))}
             </div>
-          </div>
-          <div className="flex shrink-0 gap-3">
-            <span className="flex size-14 items-center justify-center rounded-2xl border border-border bg-card text-foreground shadow-soft-sm">
-              <KeyRound size={22} />
-            </span>
-            <span className="flex size-14 items-center justify-center rounded-2xl border border-border bg-card text-foreground shadow-soft-sm">
-              <Lock size={22} />
-            </span>
           </div>
         </div>
       </Reveal>
