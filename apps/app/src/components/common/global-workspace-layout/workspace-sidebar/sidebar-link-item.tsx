@@ -5,11 +5,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@omi/ui/tooltip";
 import { RiArrowRightUpLine } from "@remixicon/react";
 import { Link } from "@tanstack/react-router";
 import { memo } from "react";
+import { TabHoverCard } from "~/components/common/global-workspace-layout/top-bar/tab-hover-card";
 import { ShortcutTooltipBody } from "~/components/common/shortcut-tooltip";
 
 interface SidebarLinkItemProps {
   className?: string;
   external?: boolean;
+  hoverResourceId?: string;
   icon?: React.ElementType;
   iconNode?: React.ReactNode;
   isActive?: boolean;
@@ -18,6 +20,7 @@ interface SidebarLinkItemProps {
   sidebarOpen?: boolean;
   title: string;
   url: string;
+  workspaceId?: string;
 }
 
 function SidebarLinkItem({
@@ -31,6 +34,8 @@ function SidebarLinkItem({
   shortcut,
   className,
   sidebarOpen,
+  hoverResourceId,
+  workspaceId,
 }: SidebarLinkItemProps) {
   const Icon = icon as React.ComponentType<{ className?: string }> | undefined;
 
@@ -120,6 +125,23 @@ function SidebarLinkItem({
       )}
     </Button>
   );
+
+  // Resource pins show a rich preview card to the right instead of the plain
+  // shortcut/title tooltip (suppressed while active, mirroring the tab strip).
+  if (hoverResourceId && workspaceId && !isActive) {
+    return (
+      <Tooltip>
+        <TooltipTrigger render={button} />
+        <TooltipContent className="rounded-md p-0" side="right" sideOffset={8}>
+          <TabHoverCard
+            resourceId={hoverResourceId}
+            title={title}
+            workspaceId={workspaceId}
+          />
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
 
   if (!(shortcut || !sidebarOpen)) {
     return button;

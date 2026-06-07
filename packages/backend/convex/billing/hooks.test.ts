@@ -38,6 +38,11 @@ function makeFakeCtx(
       return await t.query(fn, args);
     },
     runMutation: async (fn: any, args: any) => await t.mutation(fn, args),
+    scheduler: {
+      runAfter: async () => undefined,
+      runAt: async () => undefined,
+      cancel: async () => undefined,
+    },
   } as unknown as ActionCtx;
 }
 

@@ -30,7 +30,6 @@ interface TabsState {
     anchorId: string
   ) => { nextUrl: string | null };
 
-  duplicateTab: (workspaceId: string, id: string) => { newId: string } | null;
   openOrActivate: (workspaceId: string, tab: WorkspaceTab) => void;
   pinTab: (workspaceId: string, id: string) => void;
   reorder: (workspaceId: string, fromIdx: number, toIdx: number) => void;
@@ -55,19 +54,6 @@ export const useWorkspaceTabs = create<TabsState>()(
         const state = get();
         const existing = state.tabsByWorkspace[workspaceId] ?? [];
         const currentActiveId = state.activeByWorkspace[workspaceId];
-        const currentActiveTab = existing.find((t) => t.id === currentActiveId);
-
-        // If the active tab is a duplicate of this entity (same entityId/url
-        // but a synthetic id), keep it active instead of bouncing to the
-        // canonical tab.
-        if (
-          currentActiveTab &&
-          currentActiveTab.id !== tab.id &&
-          currentActiveTab.entityId === tab.entityId &&
-          currentActiveTab.url === tab.url
-        ) {
-          return;
-        }
 
         const match = existing.find((t) => t.id === tab.id);
         const alreadyActive = currentActiveId === tab.id;
@@ -280,35 +266,6 @@ export const useWorkspaceTabs = create<TabsState>()(
             [workspaceId]: sortPinnedFirst(next),
           },
         });
-      },
-
-      duplicateTab: (workspaceId, id) => {
-        const state = get();
-        const tabs = state.tabsByWorkspace[workspaceId] ?? [];
-        const idx = tabs.findIndex((t) => t.id === id);
-        const source = tabs[idx];
-        if (!source) {
-          return null;
-        }
-        const newId = `${source.id}#dup-${Date.now().toString(36)}`;
-        const duplicate: WorkspaceTab = {
-          ...source,
-          id: newId,
-          pinned: false,
-        };
-        const next = [...tabs];
-        next.splice(idx + 1, 0, duplicate);
-        set({
-          tabsByWorkspace: {
-            ...state.tabsByWorkspace,
-            [workspaceId]: sortPinnedFirst(next),
-          },
-          activeByWorkspace: {
-            ...state.activeByWorkspace,
-            [workspaceId]: newId,
-          },
-        });
-        return { newId };
       },
 
       clearActive: (workspaceId) => {

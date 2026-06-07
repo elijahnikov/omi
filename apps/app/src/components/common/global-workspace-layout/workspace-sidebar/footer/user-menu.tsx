@@ -181,6 +181,16 @@ export function UserMenu() {
   const { data } = useSuspenseQuery(
     convexQuery(api.user.queries.currentUser, {})
   );
+  const { workspaceId } = useParams({ strict: false }) as {
+    workspaceId?: string;
+  };
+  const { data: workspaceData } = useQuery(
+    convexQuery(
+      api.workspace.queries.getById,
+      workspaceId ? { workspaceId: workspaceId as Id<"workspace"> } : "skip"
+    )
+  );
+  const workspace = workspaceData?.workspace;
 
   const user = data.user;
   if (!user) {
@@ -191,13 +201,29 @@ export function UserMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          className="flex size-7! w-full items-center gap-2 rounded-full text-left text-sm hover:bg-accent"
-          render={<Avatar className="size-6" />}
+          className="ml-px flex h-7! w-full items-center gap-x-1 rounded-full pr-0.5 text-left text-sm hover:bg-accent"
+          render={<div />}
         >
-          {user.image && <AvatarImage src={user.image} />}
-          <AvatarFallback>
-            <BoringAvatar name={user.username} size={28} variant="marble" />
-          </AvatarFallback>
+          <Avatar className="size-6">
+            {user.image && <AvatarImage src={user.image} />}
+            <AvatarFallback>
+              <BoringAvatar name={user.username} size={28} variant="marble" />
+            </AvatarFallback>
+          </Avatar>
+          {workspace && (
+            <div className="flex w-full items-center gap-x-0 rounded-full bg-ui-bg-base pl-1 shadow-borders-base">
+              <WorkspaceIcon
+                className={cn(workspace.emoji && "")}
+                emoji={workspace.emoji}
+                icon={workspace.icon}
+                iconColor={workspace.iconColor}
+                size="sm"
+              />
+              <span className="truncate! max-w-18 font-medium text-[13px]">
+                {workspace?.name}
+              </span>
+            </div>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"

@@ -1,7 +1,92 @@
 @import "tailwindcss";
+@import "@omi/tailwind-config/theme";
 
-@theme {
-  --font-sans:
-    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+@config "../../tailwind.config.ts";
+
+@source "../../../../packages/ui/src/*.{ts,tsx}";
+
+/* Self-hosted brand fonts. The shared theme references these literal family
+   names via --font-open-runde-sans / --font-berkeley-mono. */
+@font-face {
+  font-family: "OpenRunde";
+  src: url("/fonts/OpenRunde-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OpenRunde";
+  src: url("/fonts/OpenRunde-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OpenRunde";
+  src: url("/fonts/OpenRunde-Semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "OpenRunde";
+  src: url("/fonts/OpenRunde-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IoskeleyMono";
+  src: url("/fonts/IoskeleyMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --font-berkeley-mono: "IoskeleyMono";
+    --font-open-runde-sans: "OpenRunde", sans-serif;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    font-family: var(--font-open-runde-sans);
+    color: var(--foreground);
+    background-color: var(--background);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+@layer utilities {
+  /* Faint dot-grid field used in the hero / final CTA ambiance. */
+  .dot-grid {
+    background-image: radial-gradient(
+      circle at center,
+      --alpha(var(--color-black) / 8%) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  .marquee-mask {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 12%,
+      black 88%,
+      transparent
+    );
+  }
+
+  .text-display {
+    font-family: var(--font-open-runde-sans);
+    font-weight: 600;
+  }
 }

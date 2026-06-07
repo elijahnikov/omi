@@ -1,5 +1,6 @@
+import { convexQuery } from "@convex-dev/react-query";
 import { useDraggable } from "@dnd-kit/core";
-import type { api } from "@omi/backend/_generated/api.js";
+import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
 import { ContextMenu } from "@omi/ui/context-menu";
@@ -13,6 +14,7 @@ import {
   RiStickyNoteFill,
   RiUnpinFill,
 } from "@remixicon/react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { FunctionReturnType } from "convex/server";
 import { AnimatePresence, motion } from "motion/react";
@@ -20,11 +22,30 @@ import { DotGridLoader } from "~/components/common/dot-grid-loader";
 import { EditableText } from "~/components/common/editable-text";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
 import { TextShimmer } from "~/components/common/text-shimmer";
+import { UserAvatar } from "~/components/common/user-avatar";
 import type { DragItemData } from "./use-library-dnd";
 
 type Resource = FunctionReturnType<
   typeof api.resource.queries.list
 >["page"][number];
+
+// Shows who created the resource, but not for resources the current user
+// created themselves.
+function ResourceCreatorAvatar({ creator }: { creator: Resource["creator"] }) {
+  const { data } = useQuery(convexQuery(api.user.queries.currentUser, {}));
+  const currentUserId = data?.user?._id;
+  if (!creator || creator._id === currentUserId) {
+    return null;
+  }
+  return (
+    <UserAvatar
+      className="size-5 shrink-0"
+      image={creator.image ?? undefined}
+      name={creator.username}
+      size={20}
+    />
+  );
+}
 
 interface ResourceRowProps {
   isPinned: boolean;
@@ -429,6 +450,7 @@ function ResourceContextMenu({
         }
       >
         {children}
+        <ResourceCreatorAvatar creator={resource.creator} />
       </ContextMenu.Trigger>
       <ContextMenu.Content className="z-[110]!">
         {variant === "trash" ? (

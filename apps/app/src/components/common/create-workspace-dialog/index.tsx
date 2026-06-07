@@ -137,7 +137,7 @@ export function CreateWorkspaceDialog({
             Create workspace
           </DialogTitle>
         </DialogHeader>
-        <DialogPanel>
+        <DialogPanel className="mt-4">
           <CreateWorkspaceForm
             onSuccess={(workspaceId) => {
               onOpenChange(false);

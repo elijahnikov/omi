@@ -4,7 +4,6 @@ import {
   UserMenu,
   UserMenuSkeleton,
 } from "~/components/common/global-workspace-layout/workspace-sidebar/footer/user-menu";
-import { NotificationsPopover } from "~/components/common/notifications-popover";
 
 export default function WorkspaceSidebarHeader() {
   return (
@@ -14,9 +13,9 @@ export default function WorkspaceSidebarHeader() {
           <Suspense fallback={<UserMenuSkeleton />}>
             <UserMenu />
           </Suspense>
-          <Suspense>
+          {/* <Suspense>
             <NotificationsPopover />
-          </Suspense>
+          </Suspense> */}
         </div>
         <SidebarTrigger className="ml-auto size-7 shrink-0 text-ui-fg-muted transition-colors duration-200 hover:text-ui-fg-base" />
       </div>
