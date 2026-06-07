@@ -20,10 +20,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
 import { useEffect, useState } from "react";
-import {
-  Notion,
-  Raindrop,
-} from "~/components/pages/settings-page/import-tab/integration-logos";
+import { Notion } from "~/components/pages/settings-page/import-tab/integration-logos";
 
 const TOTAL_STEPS = 5;
 
@@ -242,13 +239,10 @@ function WelcomeStep({ onAdvance }: StepProps) {
 }
 
 const OAUTH_PROVIDERS: {
-  id: "notion" | "raindrop";
+  id: "notion";
   label: string;
   Logo: React.ComponentType<{ className?: string }>;
-}[] = [
-  { id: "notion", label: "Notion", Logo: Notion },
-  { id: "raindrop", label: "Raindrop", Logo: Raindrop },
-];
+}[] = [{ id: "notion", label: "Notion", Logo: Notion }];
 
 function ConnectStep({ onAdvance, onBack }: StepProps) {
   const { data: connections } = useSuspenseQuery(
@@ -281,7 +275,7 @@ function ConnectStep({ onAdvance, onBack }: StepProps) {
     },
   });
 
-  const handleConnect = (provider: "notion" | "raindrop") => {
+  const handleConnect = (provider: "notion") => {
     const returnTo = `${window.location.origin}/onboarding?step=2&connections=${provider}`;
     getAuthorizeUrl({ provider, returnTo });
   };
@@ -291,8 +285,8 @@ function ConnectStep({ onAdvance, onBack }: StepProps) {
       <div className="flex flex-col gap-2">
         <Heading>Connect a source</Heading>
         <Text className="text-ui-fg-subtle" size="small">
-          Pull in your existing knowledge from Notion or Raindrop. Everything
-          syncs in the background — you can keep going while it imports.
+          Pull in your existing knowledge from Notion. Everything syncs in the
+          background — you can keep going while it imports.
         </Text>
       </div>
       <div className="flex flex-col gap-2">

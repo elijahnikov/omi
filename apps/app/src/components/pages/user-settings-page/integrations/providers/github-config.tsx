@@ -10,13 +10,7 @@ import { Text } from "@omi/ui/text";
 import { toastManager } from "@omi/ui/toast";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import {
-  type ConfigConnection,
-  DestinationPicker,
-  toErrorMessage,
-  type WorkspaceOption,
-  WorkspacePicker,
-} from "../shared";
+import { DestinationPicker, toErrorMessage } from "../shared";
 
 interface GithubRepo {
   description: string | null;
@@ -30,41 +24,35 @@ interface GithubScopeSelection {
 }
 
 export function GithubSyncForm({
-  connection,
-  destinationCollectionId,
-  onDestinationChange,
-  onWorkspaceChange,
+  connectionId,
   workspaceId,
-  workspaces,
+  onComplete,
 }: {
-  connection: ConfigConnection;
-  destinationCollectionId: Id<"collection"> | undefined;
-  onDestinationChange: (next: Id<"collection"> | undefined) => void;
-  onWorkspaceChange: (next: Id<"workspace">) => void;
-  workspaceId: Id<"workspace"> | undefined;
-  workspaces: WorkspaceOption[];
+  connectionId: Id<"connection">;
+  workspaceId: Id<"workspace">;
+  onComplete: () => void;
 }) {
-  const enableSync = useConvexMutation(api.connections.mutations.enableSync);
+  const createSyncBinding = useConvexMutation(
+    api.connections.bindings.mutations.createSyncBinding
+  );
   const [enabling, setEnabling] = useState(false);
+  const [destinationCollectionId, setDestinationCollectionId] = useState<
+    Id<"collection"> | undefined
+  >();
   const repoState = useGithubRepoPicker({
-    connectionId: connection._id,
-    initialScope: connection.scopeSelection as GithubScopeSelection | undefined,
+    connectionId,
+    initialScope: undefined,
   });
 
   const canEnable =
-    !!workspaceId &&
-    (repoState.selectedRepos.size > 0 || repoState.starsEnabled) &&
-    !enabling;
+    (repoState.selectedRepos.size > 0 || repoState.starsEnabled) && !enabling;
 
   const handleEnable = async () => {
-    if (!workspaceId) {
-      return;
-    }
     setEnabling(true);
     try {
-      await enableSync({
-        connectionId: connection._id,
+      await createSyncBinding({
         workspaceId,
+        connectionId,
         destinationCollectionId,
         scopeSelection: {
           repos: Array.from(repoState.selectedRepos).map((name) => ({ name })),
@@ -78,6 +66,7 @@ export function GithubSyncForm({
           ? "Webhooks registering. Stars baseline captured shortly."
           : "Webhooks registering on selected repos.",
       });
+      onComplete();
     } catch (err) {
       toastManager.add({
         type: "error",
@@ -91,16 +80,8 @@ export function GithubSyncForm({
 
   return (
     <div className="flex flex-col gap-6">
-      <Text className="font-medium" size="small">
-        Continuous sync
-      </Text>
-      <WorkspacePicker
-        onChange={onWorkspaceChange}
-        value={workspaceId}
-        workspaces={workspaces}
-      />
       <DestinationPicker
-        onChange={onDestinationChange}
+        onChange={setDestinationCollectionId}
         value={destinationCollectionId}
         workspaceId={workspaceId}
       />
@@ -122,26 +103,33 @@ export function GithubSyncForm({
 }
 
 export function GithubScopeEditor({
-  connection,
+  bindingId,
+  connectionId,
+  workspaceId,
+  initialScope,
   onClose,
 }: {
-  connection: ConfigConnection;
+  bindingId: Id<"connectionSyncBinding">;
+  connectionId: Id<"connection">;
+  workspaceId: Id<"workspace">;
+  initialScope: GithubScopeSelection | undefined;
   onClose: () => void;
 }) {
   const setScope = useConvexMutation(
-    api.connections.mutations.setScopeSelection
+    api.connections.bindings.mutations.setScopeSelection
   );
   const [saving, setSaving] = useState(false);
   const repoState = useGithubRepoPicker({
-    connectionId: connection._id,
-    initialScope: connection.scopeSelection as GithubScopeSelection | undefined,
+    connectionId,
+    initialScope,
   });
 
   const handleSave = async () => {
     setSaving(true);
     try {
       await setScope({
-        connectionId: connection._id,
+        workspaceId,
+        bindingId,
         scopeSelection: {
           repos: Array.from(repoState.selectedRepos).map((name) => ({ name })),
           starsEnabled: repoState.starsEnabled,
@@ -165,9 +153,6 @@ export function GithubScopeEditor({
 
   return (
     <div className="flex flex-col gap-6">
-      <Text className="font-medium" size="small">
-        Repositories
-      </Text>
       <GithubRepoList state={repoState} />
       <GithubStarsToggle state={repoState} />
       <div>
@@ -200,7 +185,7 @@ function useGithubRepoPicker({
   connectionId,
   initialScope,
 }: {
-  connectionId: Id<"connection">;
+  connectionId: Id<"connection"> | undefined;
   initialScope: GithubScopeSelection | undefined;
 }): GithubRepoPickerState {
   const listRepos = useConvexAction(
@@ -216,11 +201,17 @@ function useGithubRepoPicker({
 
   const reposQuery = useQuery({
     queryKey: ["github-repos", connectionId],
-    queryFn: () => listRepos({ connectionId }),
+    queryFn: () => {
+      if (!connectionId) {
+        return Promise.resolve([]);
+      }
+      return listRepos({ connectionId });
+    },
+    enabled: Boolean(connectionId),
   });
   const repos: GithubRepo[] | null =
-    reposQuery.data ?? (reposQuery.isError ? [] : null);
-  const loading = reposQuery.isPending;
+    reposQuery.data ?? (reposQuery.isError ? [] : connectionId ? null : []);
+  const loading = connectionId ? reposQuery.isPending : false;
 
   const filtered = useMemo(() => {
     if (!repos) {
@@ -260,7 +251,10 @@ function useGithubRepoPicker({
 
 function GithubRepoList({ state }: { state: GithubRepoPickerState }) {
   return (
-    <div className="-mt-4 flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
+      <Text className="font-medium" size="small">
+        Repositories
+      </Text>
       <Input
         onChange={(e) => state.setFilter(e.target.value)}
         placeholder="Filter repos…"

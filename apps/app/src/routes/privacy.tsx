@@ -67,14 +67,7 @@ const SUBPROCESSORS: {
   },
 ];
 
-const INTEGRATIONS = [
-  "GitHub",
-  "Google Drive",
-  "Notion",
-  "Linear",
-  "Raindrop",
-  "Readwise",
-];
+const INTEGRATIONS = ["GitHub", "Google Drive", "Notion", "Linear"];
 
 function PrivacyPolicyComponent() {
   return (

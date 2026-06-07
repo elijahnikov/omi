@@ -3,6 +3,7 @@ interface StatePayload {
   provider: string;
   returnTo: string;
   userId: string;
+  workspaceId?: string;
 }
 
 const encoder = new TextEncoder();

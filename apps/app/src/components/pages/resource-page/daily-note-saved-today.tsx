@@ -24,7 +24,7 @@ interface SavedItem {
   _id: Id<"resource">;
   preview: PreviewData;
   title: string;
-  type: "website" | "note" | "file";
+  type: "website" | "note" | "file" | "synced";
 }
 
 function WebsitePreview({ preview }: { preview: PreviewData }) {
@@ -103,6 +103,7 @@ function ResourcePreview({
     case "file":
       return <FilePreview preview={preview} />;
     case "note":
+    case "synced":
       return <NotePreview />;
     default:
       return (

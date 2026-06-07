@@ -22,9 +22,9 @@ authComponent.registerRoutes(http, createAuth);
 
 for (const provider of [
   "notion",
-  "raindrop",
   "google_drive",
   "github",
+  "linear",
 ] as const) {
   http.route({
     path: `/api/oauth/${provider}/callback`,

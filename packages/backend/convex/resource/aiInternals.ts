@@ -60,6 +60,21 @@ export const getResourceContent = internalQuery({
           fileUrl,
         };
       }
+      case "synced": {
+        const synced = await ctx.db
+          .query("syncedResource")
+          .withIndex("by_resource", (q) => q.eq("resourceId", args.resourceId))
+          .unique();
+        return {
+          type: "synced" as const,
+          title: resource.title,
+          description: resource.description,
+          workspaceId: resource.workspaceId,
+          providerId: synced?.providerId ?? resource.sourceProviderId ?? "",
+          markdownContent: synced?.markdownContent,
+          subtitle: synced?.subtitle,
+        };
+      }
       default:
         throw new ConvexError(
           `Unknown resource type: ${String(resource.type)}`

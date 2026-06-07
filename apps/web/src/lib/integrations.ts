@@ -4,8 +4,6 @@ import {
   GoogleDriveIcon,
   LinearIcon,
   NotionIcon,
-  RaindropIcon,
-  ReadwiseIcon,
   SlackIcon,
 } from "~/components/marketing/brand-icons";
 
@@ -20,7 +18,5 @@ export const integrations: Integration[] = [
   { name: "GitHub", Icon: GitHubIcon },
   { name: "Linear", Icon: LinearIcon },
   { name: "Google Drive", Icon: GoogleDriveIcon },
-  { name: "Readwise", Icon: ReadwiseIcon },
-  { name: "Raindrop", Icon: RaindropIcon },
   { name: "Slack", Icon: SlackIcon },
 ];

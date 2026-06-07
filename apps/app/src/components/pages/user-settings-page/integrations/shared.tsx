@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ConvexError } from "convex/values";
 import { CollectionIcon } from "~/components/common/collection-icon";
 
-export type ProviderId = "notion" | "raindrop" | "readwise" | "github";
+export type ProviderId = "notion" | "github" | "linear";
 
 export interface ConfigConnection {
   _id: Id<"connection">;

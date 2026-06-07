@@ -1,4 +1,3 @@
-import { markdownToHtml } from "../../imports/parsers/util/markdownToHtml";
 import type {
   OAuth2ProviderDescriptor,
   ProviderSync,
@@ -50,6 +49,28 @@ interface GitHubWebhookPayload {
 }
 
 type IssueOrPrKind = "issue" | "pr";
+
+async function ghFetchText(
+  url: string,
+  accessToken: string,
+  accept: string
+): Promise<string> {
+  const response = await fetch(url, {
+    headers: {
+      Accept: accept,
+      Authorization: `Bearer ${accessToken}`,
+      "User-Agent": USER_AGENT,
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(
+      `GitHub GET ${url} ${response.status}: ${body.slice(0, 200)}`
+    );
+  }
+  return response.text();
+}
 
 async function ghFetch<T>(
   url: string,
@@ -137,6 +158,7 @@ function parseExternalId(
 }
 
 interface GitHubRawItem {
+  diffPatch?: string;
   kind: IssueOrPrKind;
   payload: GitHubIssueOrPr;
   repoFullName: string;
@@ -242,10 +264,23 @@ const githubSync: ProviderSync = {
         `${GITHUB_API}/repos/${parsed.owner}/${parsed.repo}/${path}/${parsed.number}`,
         ctx.accessToken
       );
+      let diffPatch: string | undefined;
+      if (parsed.kind === "pr") {
+        try {
+          diffPatch = await ghFetchText(
+            `${GITHUB_API}/repos/${parsed.owner}/${parsed.repo}/pulls/${parsed.number}`,
+            ctx.accessToken,
+            "application/vnd.github.diff"
+          );
+        } catch {
+          diffPatch = undefined;
+        }
+      }
       return {
         kind: parsed.kind,
         repoFullName: `${parsed.owner}/${parsed.repo}`,
         payload: item,
+        diffPatch,
       } satisfies GitHubRawItem;
     } catch {
       return null;
@@ -254,28 +289,23 @@ const githubSync: ProviderSync = {
 
   toResource(rawItem): ResourceUpsert {
     const item = rawItem as GitHubRawItem;
-    const { kind, repoFullName, payload } = item;
+    const { kind, repoFullName, payload, diffPatch } = item;
     const author = payload.user?.login ?? "unknown";
     const state = kind === "pr" ? prState(payload) : payload.state;
-    const description = `${kind === "pr" ? "PR" : "Issue"} #${payload.number} · ${state} · @${author} · ${repoFullName}`;
-    const html = payload.body
-      ? markdownToHtml(payload.body)
-      : "<p><em>(no description)</em></p>";
+    const subtitle = `${kind === "pr" ? "PR" : "Issue"} #${payload.number} · ${state} · @${author} · ${repoFullName}`;
 
     return {
       externalId: externalIdFor(kind, repoFullName, payload.number),
       externalUrl: payload.html_url,
-      type: "website",
+      type: "synced",
       title: payload.title,
-      description,
-      website: {
-        url: payload.html_url,
-        domain: "github.com",
-        favicon: "https://github.githubassets.com/favicons/favicon.svg",
-        ogTitle: payload.title,
-        ogDescription: description,
-        siteName: "GitHub",
-        articleContent: html,
+      description: subtitle,
+      synced: {
+        kind: kind === "pr" ? "pr" : "issue",
+        externalUrl: payload.html_url,
+        markdownContent: payload.body ?? undefined,
+        diffPatch,
+        subtitle,
       },
     };
   },

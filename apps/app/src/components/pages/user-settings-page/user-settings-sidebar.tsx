@@ -21,7 +21,6 @@ import {
   RiShieldUserFill,
   RiUserFill,
 } from "@remixicon/react";
-import { useNavigate } from "@tanstack/react-router";
 import { memo } from "react";
 import type { UserSettingsTab } from ".";
 
@@ -48,7 +47,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
   {
     label: "Integrations",
     items: [
-      { value: "connections", label: "Integrations", icon: RiLinksFill },
+      { value: "connections", label: "Connected accounts", icon: RiLinksFill },
       { value: "mcp", label: "MCP", icon: RiPlugFill },
       { value: "devices", label: "Devices", icon: RiComputerFill },
     ],
@@ -98,6 +97,7 @@ function SidebarTabButton({
 const MemoSidebarTabButton = memo(SidebarTabButton);
 
 interface UserSettingsSidebarProps {
+  onBack: () => void;
   onTabChange: (next: UserSettingsTab) => void;
   tab: UserSettingsTab;
 }
@@ -105,16 +105,15 @@ interface UserSettingsSidebarProps {
 export default function UserSettingsSidebar({
   tab,
   onTabChange,
+  onBack,
 }: UserSettingsSidebarProps) {
-  const navigate = useNavigate();
-
   return (
     <TooltipProvider>
       <Sidebar className="z-50 -mt-0.5 pl-[4px]" variant="inset">
         <SidebarHeader className="px-2">
           <Button
             className="h-7 w-full items-center justify-start gap-x-2 overflow-hidden rounded-md px-2 text-ui-fg-muted/70 hover:text-ui-fg-base"
-            onClick={() => navigate({ to: "/" })}
+            onClick={onBack}
             size="small"
             variant="ghost"
           >

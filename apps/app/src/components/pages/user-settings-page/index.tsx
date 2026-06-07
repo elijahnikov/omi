@@ -1,3 +1,4 @@
+import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
 import { Button } from "@omi/ui/button";
 import { SidebarInset, SidebarProvider } from "@omi/ui/sidebar";
@@ -16,6 +17,10 @@ import {
 } from "@remixicon/react";
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, Suspense } from "react";
+import {
+  type UserSettingsTab,
+  userSettingsBackNavigation,
+} from "~/lib/user-settings-nav";
 import { AccountTab } from "./account-tab";
 import { BillingTab } from "./billing-tab";
 import { ConnectionsTab } from "./connections-tab";
@@ -35,7 +40,7 @@ const MOBILE_TABS: {
   { value: "general", label: "General", icon: RiUserFill },
   { value: "account", label: "Account", icon: RiShieldUserFill },
   { value: "workspaces", label: "Workspaces", icon: RiBuilding2Fill },
-  { value: "connections", label: "Integrations", icon: RiLinksFill },
+  { value: "connections", label: "Accounts", icon: RiLinksFill },
   { value: "mcp", label: "MCP", icon: RiPlugFill },
   { value: "devices", label: "Devices", icon: RiComputerFill },
   { value: "usage", label: "Usage", icon: RiBarChart2Fill },
@@ -81,27 +86,27 @@ function TabPanel({
   );
 }
 
-export type UserSettingsTab =
-  | "general"
-  | "workspaces"
-  | "connections"
-  | "devices"
-  | "mcp"
-  | "usage"
-  | "billing"
-  | "account";
+export type { UserSettingsTab } from "~/lib/user-settings-nav";
 
 export function UserSettingsPageComponent({
   tab,
   onTabChange,
+  workspaceId,
 }: {
   tab: UserSettingsTab;
   onTabChange: (next: UserSettingsTab) => void;
+  workspaceId?: Id<"workspace">;
 }) {
   const navigate = useNavigate();
+  const goBack = () => navigate(userSettingsBackNavigation(workspaceId));
+
   return (
     <SidebarProvider className="relative bg-ui-bg-subtle!" open>
-      <UserSettingsSidebar onTabChange={onTabChange} tab={tab} />
+      <UserSettingsSidebar
+        onBack={goBack}
+        onTabChange={onTabChange}
+        tab={tab}
+      />
       <SidebarInset className="relative mx-2 mt-1 h-[calc(100svh-8px)] rounded-t-2xl shadow-borders-base transition-[background-color,box-shadow] duration-200 md:h-[calc(100vh-16px)]">
         <main className="h-full flex-1 overflow-y-auto">
           <Tabs
@@ -114,7 +119,7 @@ export function UserSettingsPageComponent({
               <Button
                 aria-label="Back"
                 className="shrink-0"
-                onClick={() => navigate({ to: "/" })}
+                onClick={goBack}
                 size="small"
                 variant="ghost"
               >
@@ -152,7 +157,7 @@ export function UserSettingsPageComponent({
                   <UsageTab />
                 </TabPanel>
                 <TabPanel value="billing">
-                  <BillingTab />
+                  <BillingTab workspaceId={workspaceId} />
                 </TabPanel>
                 <TabPanel value="account">
                   <AccountTab />

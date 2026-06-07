@@ -29,6 +29,7 @@ import {
   RiDownload2Fill,
   RiGroupFill,
   RiKey2Fill,
+  RiLinksFill,
   RiSettings3Fill,
   RiShieldKeyholeFill,
 } from "@remixicon/react";
@@ -42,6 +43,7 @@ import {
 } from "~/components/common/workspace-icon";
 import { AIProviderTab } from "./ai-provider-tab";
 import { ImportTab } from "./import-tab";
+import { IntegrationsTab } from "./integrations-tab";
 import { MembersTab } from "./members-tab";
 import { MemoryTab } from "./memory-tab";
 
@@ -76,6 +78,7 @@ export type SettingsTab =
   | "memory"
   | "ai-provider"
   | "import"
+  | "integrations"
   | "advanced";
 
 export function SettingsPageComponent({
@@ -118,6 +121,11 @@ export function SettingsPageComponent({
             value="import"
           />
           <SettingsTabLink
+            icon={RiLinksFill}
+            label="Integrations"
+            value="integrations"
+          />
+          <SettingsTabLink
             icon={RiShieldKeyholeFill}
             label="Advanced"
             value="advanced"
@@ -149,6 +157,9 @@ export function SettingsPageComponent({
           </TabsContent>
           <TabsContent value="import">
             <ImportTab workspaceId={workspaceId} />
+          </TabsContent>
+          <TabsContent value="integrations">
+            <IntegrationsTab workspaceId={workspaceId} />
           </TabsContent>
           <TabsContent value="advanced">
             <AdvancedTab

@@ -70,6 +70,17 @@ async function getResourcePreview(ctx: QueryCtx, resource: Doc<"resource">) {
       }
       break;
     }
+    case "synced": {
+      const synced = await ctx.db
+        .query("syncedResource")
+        .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
+        .unique();
+      if (synced?.markdownContent) {
+        preview.plainTextSnippet = synced.markdownContent.slice(0, 120);
+      }
+      preview.url = synced?.externalUrl ?? null;
+      break;
+    }
     default:
       break;
   }
@@ -231,12 +242,29 @@ export const get = workspaceQuery({
           share,
         };
       }
+      case "synced": {
+        const synced = await ctx.db
+          .query("syncedResource")
+          .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
+          .unique();
+        return {
+          ...resource,
+          synced,
+          content,
+          type: resource.type,
+          resourceAI,
+          createdBy,
+
+          links,
+          tags,
+          share,
+        };
+      }
       default:
         return {
           ...resource,
           content,
           type: resource.type,
-          aiStatus: resourceAI?.status,
           resourceAI,
           createdBy,
 
@@ -380,7 +408,12 @@ const orderValidator = v.optional(
 );
 
 const typeValidator = v.optional(
-  v.union(v.literal("website"), v.literal("note"), v.literal("file"))
+  v.union(
+    v.literal("website"),
+    v.literal("note"),
+    v.literal("file"),
+    v.literal("synced")
+  )
 );
 
 export const list = workspaceQuery({
@@ -628,6 +661,13 @@ export const enrichResource = async (
         aiStatus: resourceAI?.status,
         creator,
       };
+    }
+    case "synced": {
+      const synced = await ctx.db
+        .query("syncedResource")
+        .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
+        .unique();
+      return { ...resource, synced, aiStatus: resourceAI?.status, creator };
     }
     default:
       return { ...resource, aiStatus: resourceAI?.status, creator };

@@ -24,7 +24,7 @@ export interface CreateResourceArgs {
   plainTextContent?: string;
   storageId?: Id<"_storage">;
   title: string;
-  type: "website" | "note" | "file";
+  type: "website" | "note" | "file" | "synced";
   url?: string;
   userId: Id<"user">;
   width?: number;
@@ -170,9 +170,94 @@ export async function createResourceForImport(
   return resourceId;
 }
 
+export interface CreateSyncedResourceArgs {
+  collectionId?: Id<"collection">;
+  createdAt?: number;
+  description?: string;
+  diffPatch?: string;
+  externalUrl: string;
+  importedFrom: string;
+  kind: "issue" | "pr" | "page";
+  markdownContent?: string;
+  providerId: string;
+  subtitle?: string;
+  title: string;
+  userId: Id<"user">;
+  workspaceId: Id<"workspace">;
+}
+
+export async function createSyncedResourceForImport(
+  ctx: MutationCtx,
+  args: CreateSyncedResourceArgs
+): Promise<Id<"resource">> {
+  if (args.collectionId) {
+    const collection = await ctx.db.get(args.collectionId);
+    if (
+      !collection ||
+      collection.workspaceId !== args.workspaceId ||
+      collection.deletedAt
+    ) {
+      throw new ConvexError("Collection not found");
+    }
+  }
+
+  const now = args.createdAt ?? Date.now();
+
+  const resourceId = await ctx.db.insert("resource", {
+    workspaceId: args.workspaceId,
+    createdBy: args.userId,
+    type: "synced",
+    title: args.title,
+    description: args.description,
+    collectionId: args.collectionId,
+    isFavorite: false,
+    isPinned: false,
+    isArchived: false,
+    updatedAt: now,
+    importedFrom: args.importedFrom,
+  });
+
+  await ctx.db.insert("syncedResource", {
+    resourceId,
+    providerId: args.providerId,
+    kind: args.kind,
+    externalUrl: args.externalUrl,
+    markdownContent: args.markdownContent,
+    diffPatch: args.diffPatch,
+    subtitle: args.subtitle,
+  });
+
+  if (args.markdownContent) {
+    await ctx.db.insert("resourceContent", {
+      resourceId,
+      markdownContent: args.markdownContent,
+      plainTextContent: args.markdownContent,
+    });
+  }
+
+  await ctx.db.insert("resourceAI", {
+    resourceId,
+    workspaceId: args.workspaceId,
+    status: "pending",
+  });
+
+  await ctx.scheduler.runAfter(
+    0,
+    internal.resource.aiActions.processResourceAI,
+    { resourceId }
+  );
+
+  return resourceId;
+}
+
 export const create = workspaceMutation({
   args: {
-    type: v.union(v.literal("website"), v.literal("note"), v.literal("file")),
+    type: v.union(
+      v.literal("website"),
+      v.literal("note"),
+      v.literal("file"),
+      v.literal("synced")
+    ),
     title: v.string(),
     description: v.optional(v.string()),
 

@@ -156,7 +156,7 @@ interface SavedTodayCard {
     summary?: string | null;
   };
   title: string;
-  type: "website" | "note" | "file";
+  type: "website" | "note" | "file" | "synced";
 }
 
 async function buildSavedTodayCard(
@@ -199,6 +199,16 @@ async function buildSavedTodayCard(
         .unique();
       if (note?.plainTextContent) {
         preview.plainTextSnippet = note.plainTextContent.slice(0, 140);
+      }
+      break;
+    }
+    case "synced": {
+      const synced = await ctx.db
+        .query("syncedResource")
+        .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
+        .unique();
+      if (synced?.markdownContent) {
+        preview.plainTextSnippet = synced.markdownContent.slice(0, 140);
       }
       break;
     }

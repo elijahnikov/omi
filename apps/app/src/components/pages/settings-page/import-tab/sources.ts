@@ -2,12 +2,10 @@ export type ImportSourceId =
   | "markdown_zip"
   | "url_csv"
   | "bookmark_html"
-  | "readwise_api"
   | "evernote_enex"
   | "notion_zip"
   | "fabric"
-  | "notion_oauth"
-  | "raindrop_oauth";
+  | "notion_oauth";
 
 export type ImportSourceKind = "file" | "connection";
 
@@ -27,7 +25,7 @@ export interface FileImportSource extends BaseImportSource {
 export interface ConnectionImportSource extends BaseImportSource {
   instructions?: string;
   kind: "connection";
-  provider: "readwise" | "notion" | "raindrop";
+  provider: "notion";
 }
 
 export type UiImportSource = FileImportSource | ConnectionImportSource;
@@ -98,15 +96,6 @@ export const UI_IMPORT_SOURCES: UiImportSource[] = [
   },
   {
     kind: "connection",
-    id: "readwise",
-    label: "Readwise",
-    description:
-      "Import your highlights and notes from Readwise. One note per book or article.",
-    source: "readwise_api",
-    provider: "readwise",
-  },
-  {
-    kind: "connection",
     id: "notion_oauth",
     label: "Notion",
     description:
@@ -115,15 +104,6 @@ export const UI_IMPORT_SOURCES: UiImportSource[] = [
     provider: "notion",
     instructions:
       "Notion's API rate limit is 3 requests/second, so large workspaces may take a while.",
-  },
-  {
-    kind: "connection",
-    id: "raindrop_oauth",
-    label: "Raindrop.io",
-    description:
-      "Import all bookmarks and collections from your Raindrop account.",
-    source: "raindrop_oauth",
-    provider: "raindrop",
   },
   {
     kind: "file",

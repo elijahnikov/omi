@@ -83,11 +83,6 @@ export const webhookHandler = httpAction(async (ctx, request) => {
       continue;
     }
 
-    await ctx.runMutation(
-      internal.connections.sync.internals.markWebhookReceived,
-      { connectionId }
-    );
-
     await ctx.scheduler.runAfter(
       0,
       internal.connections.sync.worker.applyWebhookEvent,
@@ -126,7 +121,7 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
 
   const connectionId = connectionIdParam as Id<"connection">;
   const conn = await ctx.runQuery(
-    internal.connections.sync.internals.getActiveConnectionForSync,
+    internal.connections.sync.internals.getConnectionForWebhook,
     { connectionId }
   );
   if (!conn) {
@@ -153,11 +148,6 @@ export const webhookHandlerByConnection = httpAction(async (ctx, request) => {
     );
     return new Response(null, { status: 200 });
   }
-
-  await ctx.runMutation(
-    internal.connections.sync.internals.markWebhookReceived,
-    { connectionId }
-  );
 
   for (const event of parsed.events) {
     const isNew: boolean = await ctx.runMutation(

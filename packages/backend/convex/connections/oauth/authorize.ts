@@ -19,6 +19,7 @@ export const getAuthorizeUrl = action({
   args: {
     provider: v.string(),
     returnTo: v.string(),
+    workspaceId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
     const identity = await getAuthIdentity(ctx);
@@ -42,6 +43,7 @@ export const getAuthorizeUrl = action({
       provider: descriptor.id,
       returnTo: args.returnTo,
       nonce: newNonce(),
+      workspaceId: args.workspaceId,
     });
 
     const redirectUri = `${convexSiteUrl()}/api/oauth/${descriptor.id}/callback`;

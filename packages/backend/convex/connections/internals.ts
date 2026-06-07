@@ -4,9 +4,7 @@ import { internalMutation, internalQuery } from "../_generated/server";
 
 const providerValidator = v.union(
   v.literal("notion"),
-  v.literal("raindrop"),
   v.literal("google_drive"),
-  v.literal("readwise"),
   v.literal("github"),
   v.literal("linear")
 );
@@ -25,7 +23,6 @@ export const insertConnection = internalMutation({
     scope: v.optional(v.string()),
     providerAccountId: v.optional(v.string()),
     providerAccountLabel: v.optional(v.string()),
-    workspaceId: v.optional(v.id("workspace")),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -54,7 +51,6 @@ export const insertConnection = internalMutation({
         scope: args.scope,
         providerAccountId: args.providerAccountId,
         providerAccountLabel: args.providerAccountLabel,
-        workspaceId: args.workspaceId ?? sameAccount.workspaceId,
         lastError: undefined,
         lastErrorAt: undefined,
         disconnectedAt: undefined,
@@ -74,7 +70,6 @@ export const insertConnection = internalMutation({
       scope: args.scope,
       providerAccountId: args.providerAccountId,
       providerAccountLabel: args.providerAccountLabel,
-      workspaceId: args.workspaceId,
       createdAt: now,
     });
   },
@@ -169,13 +164,7 @@ export const getConnectionForRefresh = internalQuery({
     args
   ): Promise<{
     _id: Id<"connection">;
-    provider:
-      | "notion"
-      | "raindrop"
-      | "google_drive"
-      | "readwise"
-      | "github"
-      | "linear";
+    provider: "notion" | "google_drive" | "github" | "linear";
     encryptedRefreshToken: string | undefined;
     tokenKeyVersion: number | undefined;
   } | null> => {
@@ -187,6 +176,23 @@ export const getConnectionForRefresh = internalQuery({
       _id: connection._id,
       provider: connection.provider,
       encryptedRefreshToken: connection.encryptedRefreshToken,
+      tokenKeyVersion: connection.tokenKeyVersion,
+    };
+  },
+});
+
+export const getConnectionForTokenRefresh = internalQuery({
+  args: { connectionId: v.id("connection") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection) {
+      return null;
+    }
+    return {
+      authType: connection.authType,
+      encryptedRefreshToken: connection.encryptedRefreshToken,
+      expiresAt: connection.expiresAt,
+      provider: connection.provider,
       tokenKeyVersion: connection.tokenKeyVersion,
     };
   },

@@ -4,7 +4,7 @@ import { cn } from "@omi/ui";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(
-  "relative inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-sm border font-medium outline-none transition-shadow focus-visible:shadow-borders-focus disabled:pointer-events-none disabled:opacity-64 [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-3.5 sm:[&_svg:not([class*='size-'])]:size-3 [&_svg]:pointer-events-none [&_svg]:shrink-0 [button,a&]:cursor-pointer [button,a&]:pointer-coarse:after:absolute [button,a&]:pointer-coarse:after:size-full [button,a&]:pointer-coarse:after:min-h-11 [button,a&]:pointer-coarse:after:min-w-11",
+  "relative inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-xs border font-medium outline-none transition-shadow focus-visible:shadow-borders-focus disabled:pointer-events-none disabled:opacity-64 [&_svg:not([class*='opacity-'])]:opacity-80 [&_svg:not([class*='size-'])]:size-3.5 sm:[&_svg:not([class*='size-'])]:size-3 [&_svg]:pointer-events-none [&_svg]:shrink-0 [button,a&]:cursor-pointer [button,a&]:pointer-coarse:after:absolute [button,a&]:pointer-coarse:after:size-full [button,a&]:pointer-coarse:after:min-h-11 [button,a&]:pointer-coarse:after:min-w-11",
   {
     defaultVariants: {
       size: "default",
@@ -32,7 +32,7 @@ const badgeVariants = cva(
           "border-[0.5px] border-green-200 bg-success/8 text-success-foreground dark:border-green-700 dark:bg-success/16",
         warning:
           "border-[0.5px] border-orange-200 bg-warning/8 text-warning-foreground dark:border-yellow-700/50 dark:bg-warning/16",
-        mono: "border-0 bg-secondary px-1.5 py-0.25 font-mono text-sm shadow-buttons-neutral [button,a&]:hover:bg-secondary/90",
+        mono: "rounded-sm border-0 bg-ui-bg-subtle px-1.5 py-0.25 font-mono font-normal text-sm shadow-borders-base [button,a&]:hover:bg-secondary/90",
       },
     },
   }

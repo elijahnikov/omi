@@ -1,6 +1,7 @@
 import { convexQuery, useConvexAction } from "@convex-dev/react-query";
 import { authClient } from "@omi/auth/client";
 import { api } from "@omi/backend/_generated/api.js";
+import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Badge } from "@omi/ui/badge";
 import { Button } from "@omi/ui/button";
 import { Heading } from "@omi/ui/heading";
@@ -12,6 +13,7 @@ import { RiCheckFill } from "@remixicon/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ConvexError } from "convex/values";
 import { useEffect, useRef, useState } from "react";
+import { userSettingsPath } from "~/lib/user-settings-nav";
 import { TabSkeleton } from "./tab-skeleton";
 
 type Plan = "free" | "basic" | "pro";
@@ -50,7 +52,7 @@ const PLANS: Record<Plan, PlanInfo> = {
       "100 MB file storage",
       "Up to 3 workspaces",
       "Auto-summaries, tagging, semantic search, and chat — within your credit budget",
-      "All imports and connections (Notion, Raindrop, Readwise, Fabric, MyMind, Evernote, bookmarks)",
+      "All imports and connections (Notion, GitHub, Linear, Fabric, MyMind, Evernote, bookmarks)",
       "Bring your own API key (skips credit charges for chat and search)",
     ],
   },
@@ -105,7 +107,7 @@ function formatDate(ts: number | undefined): string {
   });
 }
 
-export function BillingTab() {
+export function BillingTab({ workspaceId }: { workspaceId?: Id<"workspace"> }) {
   const { data: state, isLoading } = useQuery(
     convexQuery(api.billing.queries.getMyBillingState, {})
   );
@@ -150,7 +152,7 @@ export function BillingTab() {
         stripeCurrentPeriodEnd={state.stripeCurrentPeriodEnd ?? undefined}
       />
 
-      <PlansSection currentPlan={plan} />
+      <PlansSection currentPlan={plan} workspaceId={workspaceId} />
 
       {plan === "free" ? null : <CancellationSection />}
     </div>
@@ -260,7 +262,13 @@ function PortalButton({
   );
 }
 
-function PlansSection({ currentPlan }: { currentPlan: Plan }) {
+function PlansSection({
+  currentPlan,
+  workspaceId,
+}: {
+  currentPlan: Plan;
+  workspaceId?: Id<"workspace">;
+}) {
   const [cadence, setCadence] = useState<"monthly" | "yearly">("monthly");
 
   return (
@@ -300,6 +308,7 @@ function PlansSection({ currentPlan }: { currentPlan: Plan }) {
             currentPlan={currentPlan}
             key={p}
             plan={p}
+            workspaceId={workspaceId}
           />
         ))}
       </div>
@@ -311,10 +320,12 @@ function PlanCard({
   plan,
   currentPlan,
   cadence,
+  workspaceId,
 }: {
   plan: Plan;
   currentPlan: Plan;
   cadence: "monthly" | "yearly";
+  workspaceId?: Id<"workspace">;
 }) {
   const info = PLANS[plan];
   const isCurrent = plan === currentPlan;
@@ -352,6 +363,7 @@ function PlanCard({
         isCurrent={isCurrent}
         isUpgrade={isUpgrade}
         plan={plan}
+        workspaceId={workspaceId}
       />
     </div>
   );
@@ -362,11 +374,13 @@ function PlanCardCta({
   isCurrent,
   isUpgrade,
   cadence,
+  workspaceId,
 }: {
   plan: Plan;
   isCurrent: boolean;
   isUpgrade: boolean;
   cadence: "monthly" | "yearly";
+  workspaceId?: Id<"workspace">;
 }) {
   if (isCurrent) {
     return (
@@ -379,7 +393,7 @@ function PlanCardCta({
     return (
       <Button
         className="mt-auto"
-        onClick={() => upgradeTo(plan as "basic" | "pro", cadence)}
+        onClick={() => upgradeTo(plan as "basic" | "pro", cadence, workspaceId)}
         size="small"
         variant={plan === "pro" ? "omi" : "secondary"}
       >
@@ -408,12 +422,24 @@ function SubscriptionStatusBanner({ status }: { status: SubscriptionStatus }) {
   );
 }
 
-async function upgradeTo(plan: "basic" | "pro", cadence: "monthly" | "yearly") {
+async function upgradeTo(
+  plan: "basic" | "pro",
+  cadence: "monthly" | "yearly",
+  workspaceId?: Id<"workspace">
+) {
   const { data, error } = await authClient.subscription.upgrade({
     plan,
     annual: cadence === "yearly",
-    successUrl: `${window.location.origin}/settings?tab=billing&checkout=success`,
-    cancelUrl: `${window.location.origin}/settings?tab=billing&checkout=cancel`,
+    successUrl: `${window.location.origin}${userSettingsPath({
+      tab: "billing",
+      checkout: "success",
+      workspaceId,
+    })}`,
+    cancelUrl: `${window.location.origin}${userSettingsPath({
+      tab: "billing",
+      checkout: "cancel",
+      workspaceId,
+    })}`,
   });
   if (error) {
     return;

@@ -111,11 +111,28 @@ export const processResourceAI = internalAction({
           embeddingText = content.title;
           break;
         }
+        case "synced": {
+          enricherInput = {
+            type: "synced",
+            data: {
+              title: content.title,
+              providerId: content.providerId,
+              markdownContent: content.markdownContent,
+              subtitle: content.subtitle,
+            },
+          };
+          embeddingText =
+            content.markdownContent ?? content.subtitle ?? content.title;
+          break;
+        }
         default:
           break;
       }
 
-      const isTextBased = content.type === "website" || content.type === "note";
+      const isTextBased =
+        content.type === "website" ||
+        content.type === "note" ||
+        content.type === "synced";
       if (isTextBased && embeddingText.length < MIN_CONTENT_LENGTH) {
         await ctx.runMutation(
           internal.resource.aiInternals.setResourceAIStatus,

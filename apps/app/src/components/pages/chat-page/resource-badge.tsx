@@ -78,6 +78,8 @@ export function ResourceIcon({
         );
       }
       return <FileKindIcon className="size-3.5 shrink-0" mimeType={mimeType} />;
+    case "synced":
+      return <NoteIcon />;
     default:
       return <WebsiteIcon favicon={null} />;
   }

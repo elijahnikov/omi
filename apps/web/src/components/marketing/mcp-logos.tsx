@@ -183,15 +183,3 @@ export const PocketLogo: ComponentType<RasterLogoProps> = ({ className }) => (
     width={20}
   />
 );
-
-/** Readwise import / connection logo. */
-export const ReadwiseLogo: ComponentType<RasterLogoProps> = ({ className }) => (
-  // biome-ignore lint/performance/noImgElement: bundled import logo asset
-  <img
-    alt=""
-    className={`object-contain${className ? ` ${className}` : ""}`}
-    height={20}
-    src="/import-logos/readwise.svg"
-    width={20}
-  />
-);

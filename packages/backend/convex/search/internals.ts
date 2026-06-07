@@ -297,6 +297,23 @@ async function enrichOne(ctx: QueryCtx, resource: Doc<"resource">) {
         concepts,
       };
     }
+    case "synced": {
+      const synced = await ctx.db
+        .query("syncedResource")
+        .withIndex("by_resource", (q) => q.eq("resourceId", resource._id))
+        .unique();
+      return {
+        ...resource,
+        synced,
+        aiStatus,
+        summary,
+        sentiment,
+        language,
+        category,
+        tags,
+        concepts,
+      };
+    }
     default:
       return {
         ...resource,
@@ -374,7 +391,12 @@ export const listFilteredResourceIds = internalQuery({
     workspaceId: v.id("workspace"),
     types: v.optional(
       v.array(
-        v.union(v.literal("website"), v.literal("note"), v.literal("file"))
+        v.union(
+          v.literal("website"),
+          v.literal("note"),
+          v.literal("file"),
+          v.literal("synced")
+        )
       )
     ),
     typesOp: v.optional(listOpValidator),

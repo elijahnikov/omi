@@ -6,13 +6,11 @@ const SOURCE_UNION = v.union(
   v.literal("markdown_zip"),
   v.literal("notion_zip"),
   v.literal("evernote_enex"),
-  v.literal("readwise_api"),
   v.literal("url_csv"),
   v.literal("bookmark_html"),
   v.literal("fabric"),
   v.literal("mymind"),
-  v.literal("notion_oauth"),
-  v.literal("raindrop_oauth")
+  v.literal("notion_oauth")
 );
 
 const OPTIONS = v.object({

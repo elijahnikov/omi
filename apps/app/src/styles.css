@@ -71,6 +71,13 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "IoskeleyMono";
+  src: url("/fonts/IoskeleyMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
 
 @utility container {
   padding-inline: 2rem;

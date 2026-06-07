@@ -166,7 +166,7 @@ function ThumbnailCard({
   preview,
   path,
 }: {
-  type: "note" | "file";
+  type: "note" | "file" | "synced";
   title: string;
   preview: ResourcePreview;
   path: string[];
@@ -180,6 +180,7 @@ function ThumbnailCard({
     <div className="flex w-64 items-center gap-2.5 px-0 py-1">
       <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-ui-bg-subtle text-ui-fg-muted">
         {type === "note" && <NoteIcon />}
+        {type === "synced" && <NoteIcon />}
         {type === "file" &&
           (isImageFile ? (
             <CoverImage
@@ -200,7 +201,7 @@ function ThumbnailCard({
         <p className="line-clamp-2 font-medium text-ui-fg-base text-xs">
           {title}
         </p>
-        {type === "note" && preview.plainTextSnippet ? (
+        {(type === "note" || type === "synced") && preview.plainTextSnippet ? (
           <p className="line-clamp-2 text-ui-fg-subtle text-xs">
             {preview.plainTextSnippet}
           </p>
@@ -242,6 +243,17 @@ export function TabHoverCard({
 
   if (type === "website") {
     return <WebsiteCard path={path} preview={preview} title={displayTitle} />;
+  }
+
+  if (type === "synced") {
+    return (
+      <ThumbnailCard
+        path={path}
+        preview={preview}
+        title={displayTitle}
+        type="synced"
+      />
+    );
   }
 
   if (
