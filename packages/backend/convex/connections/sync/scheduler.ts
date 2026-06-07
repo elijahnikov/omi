@@ -2,30 +2,33 @@ import { internal } from "../../_generated/api";
 import type { Id } from "../../_generated/dataModel";
 import { internalAction, internalMutation } from "../../_generated/server";
 
-const POLL_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6h since last webhook → eligible for poll
-const IDLE_PAUSE_MS = 14 * 24 * 60 * 60 * 1000; // 14d workspace inactivity → pause
+const POLL_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const IDLE_PAUSE_MS = 14 * 24 * 60 * 60 * 1000;
 
 export const enqueueDeltaPolls = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
-    const connections = await ctx.db
-      .query("connection")
-      .withIndex("by_status_syncEnabled", (q) =>
-        q.eq("status", "active").eq("syncEnabled", true)
-      )
+    const bindings = await ctx.db
+      .query("connectionSyncBinding")
+      .withIndex("by_syncEnabled", (q) => q.eq("syncEnabled", true))
       .collect();
 
     let scheduled = 0;
-    for (const conn of connections) {
-      if (!conn.workspaceId) {
+    for (const binding of bindings) {
+      if (binding.syncPaused) {
+        continue;
+      }
+
+      const connection = await ctx.db.get(binding.connectionId);
+      if (!connection || connection.status !== "active") {
         continue;
       }
 
       const lastAccess = await ctx.db
         .query("workspaceMember")
         .withIndex("by_workspace", (q) =>
-          q.eq("workspaceId", conn.workspaceId as Id<"workspace">)
+          q.eq("workspaceId", binding.workspaceId)
         )
         .collect();
       const mostRecentAccess = lastAccess.reduce(
@@ -37,7 +40,7 @@ export const enqueueDeltaPolls = internalMutation({
       }
 
       const webhookFresh =
-        conn.lastWebhookAt && now - conn.lastWebhookAt < POLL_INTERVAL_MS;
+        binding.lastWebhookAt && now - binding.lastWebhookAt < POLL_INTERVAL_MS;
       if (webhookFresh) {
         continue;
       }
@@ -45,7 +48,7 @@ export const enqueueDeltaPolls = internalMutation({
       await ctx.scheduler.runAfter(
         0,
         internal.connections.sync.worker.runDelta,
-        { connectionId: conn._id }
+        { bindingId: binding._id }
       );
       scheduled += 1;
     }
@@ -67,16 +70,18 @@ export const pauseDowngradedConnections = internalAction({
 export const runPauseDowngraded = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ paused: number }> => {
-    const connections = await ctx.db
-      .query("connection")
-      .withIndex("by_status_syncEnabled", (q) =>
-        q.eq("status", "active").eq("syncEnabled", true)
-      )
+    const bindings = await ctx.db
+      .query("connectionSyncBinding")
+      .withIndex("by_syncEnabled", (q) => q.eq("syncEnabled", true))
       .collect();
 
     let paused = 0;
-    for (const conn of connections) {
-      const user = await ctx.db.get(conn.userId);
+    for (const binding of bindings) {
+      const connection = await ctx.db.get(binding.connectionId);
+      if (!connection) {
+        continue;
+      }
+      const user = await ctx.db.get(connection.userId);
       if (!user?.personalBillingAccountId) {
         continue;
       }
@@ -84,10 +89,7 @@ export const runPauseDowngraded = internalMutation({
       if (!account || account.plan === "pro") {
         continue;
       }
-      await ctx.db.patch(conn._id, {
-        status: "paused",
-        syncEnabled: false,
-      });
+      await ctx.db.patch(binding._id, { syncPaused: true });
       paused += 1;
     }
     return { paused };

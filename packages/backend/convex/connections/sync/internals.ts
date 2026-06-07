@@ -1,7 +1,17 @@
 import { ConvexError, v } from "convex/values";
-import type { Id } from "../../_generated/dataModel";
+import { internal } from "../../_generated/api";
+import type { Doc, Id } from "../../_generated/dataModel";
+import type { MutationCtx } from "../../_generated/server";
 import { internalMutation, internalQuery } from "../../_generated/server";
-import { createResourceForImport } from "../../resource/mutations";
+import {
+  createResourceForImport,
+  createSyncedResourceForImport,
+} from "../../resource/mutations";
+import {
+  bindingIncludesGithubExternalId,
+  bindingIncludesLinearTeam,
+  linearTeamIds,
+} from "../bindings/scopeHelpers";
 
 const jobKindValidator = v.union(
   v.literal("backfill"),
@@ -20,7 +30,12 @@ const jobStatusValidator = v.union(
 const upsertPayload = v.object({
   externalId: v.string(),
   externalUrl: v.optional(v.string()),
-  type: v.union(v.literal("website"), v.literal("note"), v.literal("file")),
+  type: v.union(
+    v.literal("website"),
+    v.literal("note"),
+    v.literal("file"),
+    v.literal("synced")
+  ),
   title: v.string(),
   description: v.optional(v.string()),
   note: v.optional(
@@ -28,6 +43,15 @@ const upsertPayload = v.object({
       htmlContent: v.optional(v.string()),
       jsonContent: v.optional(v.string()),
       plainTextContent: v.optional(v.string()),
+    })
+  ),
+  synced: v.optional(
+    v.object({
+      kind: v.union(v.literal("issue"), v.literal("pr"), v.literal("page")),
+      externalUrl: v.string(),
+      markdownContent: v.optional(v.string()),
+      diffPatch: v.optional(v.string()),
+      subtitle: v.optional(v.string()),
     })
   ),
   website: v.optional(
@@ -47,12 +71,14 @@ const upsertPayload = v.object({
 export const createSyncJob = internalMutation({
   args: {
     connectionId: v.id("connection"),
+    bindingId: v.optional(v.id("connectionSyncBinding")),
     workspaceId: v.id("workspace"),
     kind: jobKindValidator,
   },
   handler: async (ctx, args): Promise<Id<"syncJob">> => {
     return await ctx.db.insert("syncJob", {
       connectionId: args.connectionId,
+      bindingId: args.bindingId,
       workspaceId: args.workspaceId,
       kind: args.kind,
       status: "running",
@@ -101,11 +127,17 @@ export const finishSyncJob = internalMutation({
       lastError: args.lastError,
     });
     const job = await ctx.db.get(args.jobId);
-    if (job && (args.status === "completed" || args.status === "failed")) {
+    if (!job) {
+      return;
+    }
+    const now = Date.now();
+    if (job.bindingId) {
+      await ctx.db.patch(job.bindingId, { lastSyncedAt: now });
+    }
+    if (job.connectionId) {
       await ctx.db.patch(job.connectionId, {
-        lastSyncedAt: Date.now(),
         ...(args.status === "failed"
-          ? { lastError: args.lastError, lastErrorAt: Date.now() }
+          ? { lastError: args.lastError, lastErrorAt: now }
           : { lastError: undefined, lastErrorAt: undefined }),
       });
     }
@@ -157,10 +189,6 @@ export const setSyncCursor = internalMutation({
   },
 });
 
-/**
- * Returns true if the event is new and was recorded; false if it's a duplicate.
- * Caller should skip processing on `false`.
- */
 export const recordSyncEvent = internalMutation({
   args: {
     connectionId: v.id("connection"),
@@ -187,117 +215,229 @@ export const recordSyncEvent = internalMutation({
   },
 });
 
-/**
- * Insert or patch a resource keyed by (sourceConnectionId, sourceExternalId).
- * Returns "created" | "updated" | "skipped".
- */
+async function patchExistingResource(
+  ctx: MutationCtx,
+  existing: Doc<"resource">,
+  upsert: {
+    title: string;
+    description?: string;
+    externalUrl?: string;
+    type: "website" | "note" | "file" | "synced";
+    note?: {
+      htmlContent?: string;
+      plainTextContent?: string;
+    };
+    synced?: {
+      kind: "issue" | "pr" | "page";
+      externalUrl: string;
+      markdownContent?: string;
+      diffPatch?: string;
+      subtitle?: string;
+    };
+    website?: {
+      url: string;
+      domain?: string;
+      favicon?: string;
+      ogTitle?: string;
+      ogDescription?: string;
+      ogImage?: string;
+      siteName?: string;
+      articleContent?: string;
+    };
+  }
+) {
+  const now = Date.now();
+  await ctx.db.patch(existing._id, {
+    title: upsert.title,
+    description: upsert.description,
+    sourceExternalUrl: upsert.externalUrl,
+    updatedAt: now,
+    syncedAt: now,
+    deletedAt: undefined,
+  });
+  if (upsert.type === "synced" && upsert.synced) {
+    const child = await ctx.db
+      .query("syncedResource")
+      .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
+      .unique();
+    if (child) {
+      await ctx.db.replace(child._id, {
+        resourceId: existing._id,
+        providerId: child.providerId,
+        kind: upsert.synced.kind,
+        externalUrl: upsert.synced.externalUrl,
+        markdownContent: upsert.synced.markdownContent,
+        diffPatch: upsert.synced.diffPatch,
+        subtitle: upsert.synced.subtitle,
+      });
+    } else if (existing.sourceProviderId) {
+      await ctx.db.insert("syncedResource", {
+        resourceId: existing._id,
+        providerId: existing.sourceProviderId,
+        kind: upsert.synced.kind,
+        externalUrl: upsert.synced.externalUrl,
+        markdownContent: upsert.synced.markdownContent,
+        diffPatch: upsert.synced.diffPatch,
+        subtitle: upsert.synced.subtitle,
+      });
+      if (existing.type !== "synced") {
+        await ctx.db.patch(existing._id, { type: "synced" });
+      }
+    }
+    if (upsert.synced.markdownContent) {
+      const editorContent = await ctx.db
+        .query("resourceContent")
+        .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
+        .unique();
+      if (editorContent) {
+        await ctx.db.replace(editorContent._id, {
+          resourceId: existing._id,
+          markdownContent: upsert.synced.markdownContent,
+          plainTextContent: upsert.synced.markdownContent,
+        });
+      } else {
+        await ctx.db.insert("resourceContent", {
+          resourceId: existing._id,
+          markdownContent: upsert.synced.markdownContent,
+          plainTextContent: upsert.synced.markdownContent,
+        });
+      }
+    }
+    await ctx.scheduler.runAfter(
+      0,
+      internal.resource.aiActions.processResourceAI,
+      { resourceId: existing._id }
+    );
+  } else if (upsert.type === "note" && upsert.note) {
+    const child = await ctx.db
+      .query("noteResource")
+      .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
+      .unique();
+    if (child) {
+      await ctx.db.replace(child._id, {
+        resourceId: existing._id,
+        htmlContent: upsert.note.htmlContent,
+        plainTextContent: upsert.note.plainTextContent,
+      });
+    }
+    const editorContent = await ctx.db
+      .query("resourceContent")
+      .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
+      .unique();
+    if (editorContent) {
+      await ctx.db.replace(editorContent._id, {
+        resourceId: existing._id,
+        htmlContent: upsert.note.htmlContent,
+        plainTextContent: upsert.note.plainTextContent,
+      });
+    } else {
+      await ctx.db.insert("resourceContent", {
+        resourceId: existing._id,
+        htmlContent: upsert.note.htmlContent,
+        plainTextContent: upsert.note.plainTextContent,
+      });
+    }
+  } else if (upsert.type === "website" && upsert.website) {
+    const child = await ctx.db
+      .query("websiteResource")
+      .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
+      .unique();
+    if (child) {
+      await ctx.db.patch(child._id, {
+        url: upsert.website.url,
+        domain: upsert.website.domain,
+        favicon: upsert.website.favicon,
+        ogTitle: upsert.website.ogTitle,
+        ogDescription: upsert.website.ogDescription,
+        ogImage: upsert.website.ogImage,
+        siteName: upsert.website.siteName,
+        articleContent: upsert.website.articleContent,
+        metadataStatus: "completed",
+      });
+    }
+    if (upsert.website.articleContent) {
+      const editorContent = await ctx.db
+        .query("resourceContent")
+        .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
+        .unique();
+      if (editorContent) {
+        await ctx.db.replace(editorContent._id, {
+          resourceId: existing._id,
+          htmlContent: upsert.website.articleContent,
+        });
+      } else {
+        await ctx.db.insert("resourceContent", {
+          resourceId: existing._id,
+          htmlContent: upsert.website.articleContent,
+        });
+      }
+    }
+  }
+}
+
 export const upsertSyncedResource = internalMutation({
   args: {
-    connectionId: v.id("connection"),
+    bindingId: v.id("connectionSyncBinding"),
     providerId: v.string(),
     upsert: upsertPayload,
   },
   handler: async (ctx, args): Promise<"created" | "updated" | "skipped"> => {
-    const connection = await ctx.db.get(args.connectionId);
-    if (!connection?.workspaceId) {
-      throw new ConvexError("Connection or workspace not found");
+    const binding = await ctx.db.get(args.bindingId);
+    if (!binding?.syncEnabled || binding.syncPaused) {
+      throw new ConvexError("Sync binding not active");
+    }
+    const connection = await ctx.db.get(binding.connectionId);
+    if (!connection) {
+      throw new ConvexError("Connection not found");
     }
 
     const existing = await ctx.db
       .query("resource")
       .withIndex("by_source_external", (q) =>
         q
-          .eq("sourceConnectionId", args.connectionId)
+          .eq("sourceConnectionId", binding.connectionId)
           .eq("sourceExternalId", args.upsert.externalId)
       )
       .first();
 
     if (existing) {
-      const now = Date.now();
-      // Patch base fields; child rows updated separately below.
-      await ctx.db.patch(existing._id, {
-        title: args.upsert.title,
-        description: args.upsert.description,
-        sourceExternalUrl: args.upsert.externalUrl,
-        updatedAt: now,
-        syncedAt: now,
-        deletedAt: undefined,
-      });
-      if (args.upsert.type === "note" && args.upsert.note) {
-        // Use db.replace (not patch) so that any stale jsonContent from prior
-        // editor snapshots is unambiguously cleared. Sync is authoritative for
-        // these resources; in-app edits to synced notes are intentionally
-        // overwritten on the next Notion change.
-        const child = await ctx.db
-          .query("noteResource")
-          .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
-          .unique();
-        if (child) {
-          await ctx.db.replace(child._id, {
-            resourceId: existing._id,
-            htmlContent: args.upsert.note.htmlContent,
-            plainTextContent: args.upsert.note.plainTextContent,
-          });
-        }
-        const editorContent = await ctx.db
-          .query("resourceContent")
-          .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
-          .unique();
-        if (editorContent) {
-          await ctx.db.replace(editorContent._id, {
-            resourceId: existing._id,
-            htmlContent: args.upsert.note.htmlContent,
-            plainTextContent: args.upsert.note.plainTextContent,
-          });
-        } else {
-          await ctx.db.insert("resourceContent", {
-            resourceId: existing._id,
-            htmlContent: args.upsert.note.htmlContent,
-            plainTextContent: args.upsert.note.plainTextContent,
-          });
-        }
-      } else if (args.upsert.type === "website" && args.upsert.website) {
-        const child = await ctx.db
-          .query("websiteResource")
-          .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
-          .unique();
-        if (child) {
-          await ctx.db.patch(child._id, {
-            url: args.upsert.website.url,
-            domain: args.upsert.website.domain,
-            favicon: args.upsert.website.favicon,
-            ogTitle: args.upsert.website.ogTitle,
-            ogDescription: args.upsert.website.ogDescription,
-            ogImage: args.upsert.website.ogImage,
-            siteName: args.upsert.website.siteName,
-            articleContent: args.upsert.website.articleContent,
-            metadataStatus: "completed",
-          });
-        }
-        if (args.upsert.website.articleContent) {
-          const editorContent = await ctx.db
-            .query("resourceContent")
-            .withIndex("by_resource", (q) => q.eq("resourceId", existing._id))
-            .unique();
-          if (editorContent) {
-            await ctx.db.replace(editorContent._id, {
-              resourceId: existing._id,
-              htmlContent: args.upsert.website.articleContent,
-            });
-          } else {
-            await ctx.db.insert("resourceContent", {
-              resourceId: existing._id,
-              htmlContent: args.upsert.website.articleContent,
-            });
-          }
-        }
+      if (existing.workspaceId !== binding.workspaceId) {
+        return "skipped";
       }
+      await patchExistingResource(ctx, existing, args.upsert);
       return "updated";
     }
 
     const importedFrom = `${args.providerId}_sync:${args.upsert.externalId}`;
+
+    if (args.upsert.type === "synced" && args.upsert.synced) {
+      const resourceId = await createSyncedResourceForImport(ctx, {
+        workspaceId: binding.workspaceId,
+        userId: connection.userId,
+        title: args.upsert.title,
+        description: args.upsert.description,
+        collectionId: binding.destinationCollectionId,
+        importedFrom,
+        providerId: args.providerId,
+        kind: args.upsert.synced.kind,
+        externalUrl: args.upsert.synced.externalUrl,
+        markdownContent: args.upsert.synced.markdownContent,
+        diffPatch: args.upsert.synced.diffPatch,
+        subtitle: args.upsert.synced.subtitle,
+      });
+
+      await ctx.db.patch(resourceId, {
+        sourceConnectionId: binding.connectionId,
+        sourceProviderId: args.providerId,
+        sourceExternalUrl: args.upsert.externalUrl,
+        sourceExternalId: args.upsert.externalId,
+        syncedAt: Date.now(),
+      });
+      return "created";
+    }
+
     const resourceId = await createResourceForImport(ctx, {
-      workspaceId: connection.workspaceId,
+      workspaceId: binding.workspaceId,
       userId: connection.userId,
       type: args.upsert.type,
       title: args.upsert.title,
@@ -307,20 +447,18 @@ export const upsertSyncedResource = internalMutation({
         args.upsert.note?.htmlContent ?? args.upsert.website?.articleContent,
       jsonContent: args.upsert.note?.jsonContent,
       plainTextContent: args.upsert.note?.plainTextContent,
-      collectionId: connection.destinationCollectionId,
+      collectionId: binding.destinationCollectionId,
       importedFrom,
     });
 
     await ctx.db.patch(resourceId, {
-      sourceConnectionId: args.connectionId,
+      sourceConnectionId: binding.connectionId,
       sourceProviderId: args.providerId,
-      sourceExternalId: args.upsert.externalId,
       sourceExternalUrl: args.upsert.externalUrl,
+      sourceExternalId: args.upsert.externalId,
       syncedAt: Date.now(),
     });
 
-    // Editor renders from resourceContent (separate from the type-specific
-    // noteResource/websiteResource child). Seed it so the body shows up.
     if (args.upsert.type === "note" && args.upsert.note) {
       await ctx.db.insert("resourceContent", {
         resourceId,
@@ -329,9 +467,6 @@ export const upsertSyncedResource = internalMutation({
         plainTextContent: args.upsert.note.plainTextContent,
       });
     } else if (args.upsert.type === "website" && args.upsert.website) {
-      // Sync provides authoritative metadata directly from the source API
-      // (e.g. GitHub issue body, Notion page) — skip the URL scrape that
-      // leaves metadataStatus stuck on "pending" for private repos.
       const website = args.upsert.website;
       const child = await ctx.db
         .query("websiteResource")
@@ -362,19 +497,26 @@ export const upsertSyncedResource = internalMutation({
 
 export const tombstoneSyncedResource = internalMutation({
   args: {
-    connectionId: v.id("connection"),
+    bindingId: v.id("connectionSyncBinding"),
     externalId: v.string(),
   },
   handler: async (ctx, args): Promise<boolean> => {
+    const binding = await ctx.db.get(args.bindingId);
+    if (!binding) {
+      return false;
+    }
     const existing = await ctx.db
       .query("resource")
       .withIndex("by_source_external", (q) =>
         q
-          .eq("sourceConnectionId", args.connectionId)
+          .eq("sourceConnectionId", binding.connectionId)
           .eq("sourceExternalId", args.externalId)
       )
       .first();
     if (!existing || existing.deletedAt) {
+      return false;
+    }
+    if (existing.workspaceId !== binding.workspaceId) {
       return false;
     }
     await ctx.db.patch(existing._id, { deletedAt: Date.now() });
@@ -382,28 +524,27 @@ export const tombstoneSyncedResource = internalMutation({
   },
 });
 
-export const getActiveConnectionForSync = internalQuery({
-  args: { connectionId: v.id("connection") },
+export const getActiveBindingForSync = internalQuery({
+  args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args) => {
-    const connection = await ctx.db.get(args.connectionId);
-    if (!connection) {
+    const binding = await ctx.db.get(args.bindingId);
+    if (!binding?.syncEnabled || binding.syncPaused) {
       return null;
     }
+    const connection = await ctx.db.get(binding.connectionId);
     if (
+      !connection ||
       connection.status !== "active" ||
-      !(
-        connection.encryptedAccessToken &&
-        connection.tokenKeyVersion &&
-        connection.workspaceId
-      )
+      !(connection.encryptedAccessToken && connection.tokenKeyVersion)
     ) {
       return null;
     }
     return {
-      _id: connection._id,
+      bindingId: binding._id,
+      connectionId: connection._id,
       provider: connection.provider,
-      workspaceId: connection.workspaceId,
-      scopeSelection: connection.scopeSelection,
+      workspaceId: binding.workspaceId,
+      scopeSelection: binding.scopeSelection,
       encryptedAccessToken: connection.encryptedAccessToken,
       tokenKeyVersion: connection.tokenKeyVersion,
       webhookSecret: connection.webhookSecret,
@@ -411,41 +552,107 @@ export const getActiveConnectionForSync = internalQuery({
   },
 });
 
-/**
- * Look up the active sync-enabled connection for a (provider, providerAccountId)
- * pair. Used to route integration-level webhook deliveries (e.g. Notion sends
- * one URL for all installations and identifies the source workspace by id).
- */
+export const getConnectionForWebhook = internalQuery({
+  args: { connectionId: v.id("connection") },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (
+      !connection ||
+      connection.status !== "active" ||
+      !(connection.encryptedAccessToken && connection.tokenKeyVersion)
+    ) {
+      return null;
+    }
+    return {
+      _id: connection._id,
+      provider: connection.provider,
+      webhookSecret: connection.webhookSecret,
+    };
+  },
+});
+
+export const listMatchingBindingsForWebhook = internalQuery({
+  args: {
+    connectionId: v.id("connection"),
+    externalId: v.string(),
+    linearTeamId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (!connection) {
+      return [];
+    }
+    const bindings = await ctx.db
+      .query("connectionSyncBinding")
+      .withIndex("by_connection", (q) =>
+        q.eq("connectionId", args.connectionId)
+      )
+      .collect();
+
+    return bindings
+      .filter((b) => b.syncEnabled && !b.syncPaused)
+      .filter((b) => {
+        if (connection.provider === "github") {
+          return bindingIncludesGithubExternalId(
+            b.scopeSelection,
+            args.externalId
+          );
+        }
+        if (connection.provider === "linear") {
+          if (args.linearTeamId) {
+            return bindingIncludesLinearTeam(
+              b.scopeSelection,
+              args.linearTeamId
+            );
+          }
+          return linearTeamIds(b.scopeSelection).length > 0;
+        }
+        return true;
+      })
+      .map((b) => b._id);
+  },
+});
+
 export const findConnectionByProviderAccount = internalQuery({
   args: {
     provider: v.union(
       v.literal("notion"),
-      v.literal("raindrop"),
       v.literal("google_drive"),
-      v.literal("readwise"),
       v.literal("github"),
       v.literal("linear")
     ),
     providerAccountId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Webhook fan-in volume is low; full table scan is fine for v1. If this
-    // ever becomes hot, add a dedicated index on (provider, providerAccountId).
     const all = await ctx.db.query("connection").collect();
     const match = all.find(
       (c) =>
         c.provider === args.provider &&
         c.providerAccountId === args.providerAccountId &&
-        c.status === "active" &&
-        c.syncEnabled === true
+        c.status === "active"
     );
-    return match ? { _id: match._id } : null;
+    if (!match) {
+      return null;
+    }
+    const bindings = await ctx.db
+      .query("connectionSyncBinding")
+      .withIndex("by_connection", (q) => q.eq("connectionId", match._id))
+      .collect();
+    if (!bindings.some((b) => b.syncEnabled && !b.syncPaused)) {
+      return null;
+    }
+    return { _id: match._id };
   },
 });
 
 export const markWebhookReceived = internalMutation({
-  args: { connectionId: v.id("connection") },
+  args: {
+    bindingIds: v.array(v.id("connectionSyncBinding")),
+  },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.connectionId, { lastWebhookAt: Date.now() });
+    const now = Date.now();
+    for (const bindingId of args.bindingIds) {
+      await ctx.db.patch(bindingId, { lastWebhookAt: now });
+    }
   },
 });

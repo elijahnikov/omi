@@ -11,6 +11,7 @@ const SETTINGS_TABS: readonly SettingsTab[] = [
   "memory",
   "ai-provider",
   "import",
+  "integrations",
   "advanced",
 ];
 

@@ -22,7 +22,7 @@ export const faqItems: FaqItem[] = [
   {
     question: "What can I connect to Omi?",
     answer:
-      "Notion, Raindrop, Google Drive, Readwise, GitHub, and Linear sync automatically via OAuth. You can also connect external MCP servers so your AI chat can take actions — create issues, check your calendar, send email — grounded in your knowledge.",
+      "Notion, GitHub, Linear, and Google Drive sync automatically via OAuth. You can also connect external MCP servers so your AI chat can take actions — create issues, check your calendar, send email — grounded in your knowledge.",
   },
   {
     question: "Can I import my existing notes?",

@@ -65,9 +65,7 @@ export function decryptToken(ciphertext: string, keyVersion: number): string {
 
 const providerValidator = v.union(
   v.literal("notion"),
-  v.literal("raindrop"),
   v.literal("google_drive"),
-  v.literal("readwise"),
   v.literal("github"),
   v.literal("linear")
 );
@@ -89,7 +87,6 @@ export const encryptAndInsertConnection = internalAction({
     scope: v.optional(v.string()),
     providerAccountId: v.optional(v.string()),
     providerAccountLabel: v.optional(v.string()),
-    workspaceId: v.optional(v.id("workspace")),
   },
   handler: async (ctx, args): Promise<Id<"connection">> => {
     const access = encryptToken(args.accessToken);
@@ -109,7 +106,6 @@ export const encryptAndInsertConnection = internalAction({
         scope: args.scope,
         providerAccountId: args.providerAccountId,
         providerAccountLabel: args.providerAccountLabel,
-        workspaceId: args.workspaceId,
       }
     );
   },

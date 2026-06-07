@@ -63,11 +63,11 @@ function TermsOfServiceComponent() {
       <LegalSection heading="Third-party integrations">
         <Text>
           You may connect third-party services (such as GitHub, Google Drive,
-          Notion, Linear, Raindrop, or Readwise) to import or sync data. Your
-          use of those services is governed by their own terms, and we are not
-          responsible for them. By connecting an integration, you authorise omi
-          to access and process data from it on your behalf. You can disconnect
-          at any time from your settings.
+          Notion, or Linear) to import or sync data. Your use of those services
+          is governed by their own terms, and we are not responsible for them.
+          By connecting an integration, you authorise omi to access and process
+          data from it on your behalf. You can disconnect at any time from your
+          settings.
         </Text>
       </LegalSection>
 

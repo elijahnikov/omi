@@ -123,7 +123,12 @@ export default defineSchema({
   resource: defineTable({
     workspaceId: v.id("workspace"),
     createdBy: v.id("user"),
-    type: v.union(v.literal("website"), v.literal("note"), v.literal("file")),
+    type: v.union(
+      v.literal("website"),
+      v.literal("note"),
+      v.literal("file"),
+      v.literal("synced")
+    ),
     title: v.string(),
     description: v.optional(v.string()),
     isFavorite: v.boolean(),
@@ -256,6 +261,17 @@ export default defineSchema({
     jsonContent: v.optional(v.string()),
     plainTextContent: v.optional(v.string()),
     markdownContent: v.optional(v.string()),
+  }).index("by_resource", ["resourceId"]),
+
+  // SYNCED RESOURCE (third-party items kept in sync via OAuth connections)
+  syncedResource: defineTable({
+    resourceId: v.id("resource"),
+    providerId: v.string(),
+    kind: v.union(v.literal("issue"), v.literal("pr"), v.literal("page")),
+    externalUrl: v.string(),
+    markdownContent: v.optional(v.string()),
+    diffPatch: v.optional(v.string()),
+    subtitle: v.optional(v.string()),
   }).index("by_resource", ["resourceId"]),
 
   // FILE RESOURCE
@@ -484,9 +500,7 @@ export default defineSchema({
     userId: v.id("user"),
     provider: v.union(
       v.literal("notion"),
-      v.literal("raindrop"),
       v.literal("google_drive"),
-      v.literal("readwise"),
       v.literal("github"),
       v.literal("linear")
     ),
@@ -509,28 +523,33 @@ export default defineSchema({
     scope: v.optional(v.string()),
     providerAccountId: v.optional(v.string()),
     providerAccountLabel: v.optional(v.string()),
-    // Workspace this connection's resources are ingested into
-    workspaceId: v.optional(v.id("workspace")),
-    // Optional collection inside the workspace; when unset, synced resources
-    // land at the workspace root.
-    destinationCollectionId: v.optional(v.id("collection")),
-    // Per-provider scope selection (repos, page IDs, folder IDs, team IDs, etc.)
-    scopeSelection: v.optional(v.any()),
     // HMAC secret used to verify provider webhook deliveries
     webhookSecret: v.optional(v.string()),
-    syncEnabled: v.optional(v.boolean()),
-    syncCursor: v.optional(v.string()),
-    lastSyncedAt: v.optional(v.number()),
-    lastWebhookAt: v.optional(v.number()),
+    // Operational webhook state (hook IDs merged across bindings)
+    webhookScope: v.optional(v.any()),
     webhookSubscriptionId: v.optional(v.string()),
     lastError: v.optional(v.string()),
     lastErrorAt: v.optional(v.number()),
     createdAt: v.number(),
     disconnectedAt: v.optional(v.number()),
+  }).index("by_user_provider", ["userId", "provider", "status"]),
+
+  // Per-workspace sync configuration for a user connection
+  connectionSyncBinding: defineTable({
+    connectionId: v.id("connection"),
+    workspaceId: v.id("workspace"),
+    scopeSelection: v.optional(v.any()),
+    destinationCollectionId: v.optional(v.id("collection")),
+    syncEnabled: v.boolean(),
+    syncPaused: v.optional(v.boolean()),
+    lastSyncedAt: v.optional(v.number()),
+    lastWebhookAt: v.optional(v.number()),
+    createdAt: v.number(),
   })
-    .index("by_user_provider", ["userId", "provider", "status"])
-    .index("by_status_syncEnabled", ["status", "syncEnabled"])
-    .index("by_workspace", ["workspaceId"]),
+    .index("by_connection", ["connectionId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_connection_workspace", ["connectionId", "workspaceId"])
+    .index("by_syncEnabled", ["syncEnabled"]),
 
   // SYNC CURSOR (per-connection incremental cursor, scoped by provider sub-source)
   syncCursor: defineTable({
@@ -544,6 +563,7 @@ export default defineSchema({
   // SYNC JOB (run record of a backfill / delta / webhook batch)
   syncJob: defineTable({
     connectionId: v.id("connection"),
+    bindingId: v.optional(v.id("connectionSyncBinding")),
     workspaceId: v.id("workspace"),
     kind: v.union(
       v.literal("backfill"),
@@ -586,13 +606,11 @@ export default defineSchema({
       v.literal("markdown_zip"),
       v.literal("notion_zip"),
       v.literal("evernote_enex"),
-      v.literal("readwise_api"),
       v.literal("url_csv"),
       v.literal("bookmark_html"),
       v.literal("fabric"),
       v.literal("mymind"),
-      v.literal("notion_oauth"),
-      v.literal("raindrop_oauth")
+      v.literal("notion_oauth")
     ),
     uiSourceId: v.optional(v.string()),
     status: v.union(

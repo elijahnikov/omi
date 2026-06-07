@@ -5,6 +5,7 @@ import { RiChat1Line, RiHashtag, RiStickyNoteFill } from "@remixicon/react";
 import { useQuery } from "@tanstack/react-query";
 import { CollectionIcon } from "~/components/common/collection-icon";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
+import { INTEGRATION_LOGO } from "~/components/pages/settings-page/import-tab/integration-logos";
 import type { WorkspaceTab } from "~/lib/workspace-tabs-store";
 
 interface TabIconProps {
@@ -89,6 +90,16 @@ function ResourceTabIcon({
   }
 
   if (resource.type === "note") {
+    return <RiStickyNoteFill className="size-3.5 text-ui-fg-muted" />;
+  }
+
+  if (resource.type === "synced") {
+    const Logo = resource.synced?.providerId
+      ? INTEGRATION_LOGO[resource.synced.providerId]
+      : undefined;
+    if (Logo) {
+      return <Logo className="size-3.5 shrink-0" />;
+    }
     return <RiStickyNoteFill className="size-3.5 text-ui-fg-muted" />;
   }
 

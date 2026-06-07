@@ -74,9 +74,16 @@ interface EnrichedResource {
   note?: { plainTextContent?: string } | null;
   sentiment?: string;
   summary?: string;
+  synced?: {
+    providerId: string;
+    kind: "issue" | "pr" | "page";
+    externalUrl?: string;
+    markdownContent?: string;
+    subtitle?: string;
+  } | null;
   tags: Array<{ _id: Id<"tag">; name: string; color?: string }>;
   title: string;
-  type: "website" | "note" | "file";
+  type: "website" | "note" | "file" | "synced";
   updatedAt: number;
   website?: {
     url?: string;
@@ -140,7 +147,7 @@ interface FiltersArg {
   sentiment?: string;
   tagIds?: Id<"tag">[];
   tagIdsOp?: ListOp;
-  types?: Array<"website" | "note" | "file">;
+  types?: Array<"website" | "note" | "file" | "synced">;
   typesOp?: ListOp;
 }
 
@@ -955,6 +962,13 @@ function computeBestSnippet(
       const extracted = resource.file?.extractedText;
       if (extracted) {
         return buildSnippet(extracted, tokens);
+      }
+      break;
+    }
+    case "synced": {
+      const markdown = resource.synced?.markdownContent;
+      if (markdown) {
+        return buildSnippet(markdown, tokens);
       }
       break;
     }

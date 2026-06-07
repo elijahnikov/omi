@@ -561,5 +561,8 @@ function CommandResourceIcon({
     }
     return <FileKindIcon className="size-4 shrink-0" mimeType={mimeType} />;
   }
+  if (type === "synced") {
+    return <RiStickyNoteFill className="size-4 shrink-0 text-ui-fg-muted" />;
+  }
   return <RiBookmark2Fill className="size-4 shrink-0 text-ui-fg-muted" />;
 }

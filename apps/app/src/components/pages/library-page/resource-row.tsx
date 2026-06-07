@@ -3,6 +3,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { api } from "@omi/backend/_generated/api.js";
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { cn } from "@omi/ui";
+import { Badge } from "@omi/ui/badge";
 import { ContextMenu } from "@omi/ui/context-menu";
 import {
   RiDeleteBinFill,
@@ -23,6 +24,7 @@ import { EditableText } from "~/components/common/editable-text";
 import { FileKindIcon } from "~/components/common/file-kind-icon";
 import { TextShimmer } from "~/components/common/text-shimmer";
 import { UserAvatar } from "~/components/common/user-avatar";
+import { INTEGRATION_LOGO } from "~/components/pages/settings-page/import-tab/integration-logos";
 import type { DragItemData } from "./use-library-dnd";
 
 type Resource = FunctionReturnType<
@@ -92,6 +94,8 @@ function ResourceRowInner(props: ResourceRowProps) {
       return <NoteRow {...props} />;
     case "file":
       return <FileRow {...props} />;
+    case "synced":
+      return <SyncedRow {...props} />;
     default:
       return null;
   }
@@ -254,6 +258,58 @@ function WebsiteRow({
             </motion.div>
           )}
         </AnimatePresence>
+        {snippet ? <SnippetLine html={snippet} /> : null}
+      </div>
+    </ResourceContextMenu>
+  );
+}
+
+function SyncedRow({
+  resource,
+  onUpdateTitle,
+  onTogglePin,
+  isPinned,
+  workspaceId,
+  variant,
+  onDelete,
+  onRestore,
+  onPurge,
+  snippet,
+}: ResourceRowProps) {
+  const synced = "synced" in resource ? resource.synced : null;
+  const Logo = synced?.providerId
+    ? INTEGRATION_LOGO[synced.providerId]
+    : undefined;
+  const handleNavigate = useResourceNavigate(workspaceId, resource._id);
+
+  return (
+    <ResourceContextMenu
+      isPinned={isPinned}
+      onDelete={onDelete}
+      onPurge={onPurge}
+      onRestore={onRestore}
+      onTogglePin={onTogglePin}
+      resource={resource}
+      variant={variant}
+    >
+      <RowLink resourceId={resource._id} workspaceId={workspaceId} />
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ui-bg-subtle text-ui-fg-muted">
+        {Logo ? <Logo className="size-4" /> : <NoteIcon />}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 items-center gap-2">
+          <EditableText
+            className="min-w-0 flex-1 font-medium text-sm text-ui-fg-base"
+            onClick={handleNavigate}
+            onSave={(title) => onUpdateTitle(resource._id, title)}
+            value={resource.title}
+          />
+          {synced?.subtitle ? (
+            <Badge className="shrink-0 text-xs" variant="mono">
+              {synced.subtitle}
+            </Badge>
+          ) : null}
+        </div>
         {snippet ? <SnippetLine html={snippet} /> : null}
       </div>
     </ResourceContextMenu>

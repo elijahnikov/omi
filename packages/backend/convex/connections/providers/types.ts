@@ -1,10 +1,4 @@
-export type ProviderId =
-  | "notion"
-  | "raindrop"
-  | "google_drive"
-  | "readwise"
-  | "github"
-  | "linear";
+export type ProviderId = "notion" | "google_drive" | "github" | "linear";
 
 export type AuthType = "oauth2" | "api_token";
 
@@ -22,8 +16,15 @@ export interface ResourceUpsert {
     jsonContent?: string;
     plainTextContent?: string;
   };
+  synced?: {
+    kind: "issue" | "pr" | "page";
+    externalUrl: string;
+    markdownContent?: string;
+    diffPatch?: string;
+    subtitle?: string;
+  };
   title: string;
-  type: "website" | "note" | "file";
+  type: "website" | "note" | "file" | "synced";
   website?: {
     url: string;
     domain?: string;

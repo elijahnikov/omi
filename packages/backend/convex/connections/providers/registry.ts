@@ -1,8 +1,7 @@
 import { github } from "./github";
 import { googleDrive } from "./google_drive";
+import { linear } from "./linear";
 import { notion } from "./notion";
-import { raindrop } from "./raindrop";
-import { readwise } from "./readwise";
 import type {
   ApiTokenProviderDescriptor,
   OAuth2ProviderDescriptor,
@@ -12,10 +11,9 @@ import type {
 
 const providers: Partial<Record<ProviderId, ProviderDescriptor>> = {
   notion,
-  raindrop,
   google_drive: googleDrive,
-  readwise,
   github,
+  linear,
 };
 
 export function getProvider(id: ProviderId): ProviderDescriptor {

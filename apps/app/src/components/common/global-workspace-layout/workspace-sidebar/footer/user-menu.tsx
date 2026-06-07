@@ -232,7 +232,14 @@ export function UserMenu() {
           sideOffset={6}
         >
           <DropdownMenuItem
-            onClick={() => router.navigate({ to: "/settings" })}
+            onClick={() =>
+              router.navigate({
+                to: "/settings",
+                search: workspaceId
+                  ? { workspaceId: workspaceId as Id<"workspace"> }
+                  : undefined,
+              })
+            }
           >
             <RiSettings4Fill />
             Settings

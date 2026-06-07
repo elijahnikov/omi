@@ -20,6 +20,7 @@ import { toastManager } from "@omi/ui/toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { userSettingsSearch } from "~/lib/user-settings-nav";
 import type { UiImportSource } from "./sources";
 
 export function SourceDialog({
@@ -367,11 +368,14 @@ function ConnectionSourceDialog({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                router.navigate({ to: "/settings" });
+                router.navigate({
+                  to: "/settings",
+                  search: userSettingsSearch({ workspaceId }),
+                });
               }}
               variant="omi"
             >
-              Open connections
+              Connected accounts
             </Button>
           )}
         </DialogFooter>

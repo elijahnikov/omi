@@ -24,7 +24,7 @@ export const pricingTiers: PricingTier[] = [
       "Up to 3 workspaces",
       "100 web captures / month",
       "Auto-summaries, tagging, semantic search, and chat — within your credit budget",
-      "All imports and connections (Notion, Raindrop, Readwise, Fabric, MyMind, Evernote, bookmarks)",
+      "All imports and connections (Notion, GitHub, Linear, Fabric, MyMind, Evernote, bookmarks)",
       "Bring your own API key (skips credit charges for chat and search)",
     ],
   },

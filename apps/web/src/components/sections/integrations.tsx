@@ -10,7 +10,6 @@ import {
   GoogleDriveLogo,
   LinearLogo,
   NotionLogo,
-  ReadwiseLogo,
   SlackLogo,
 } from "~/components/marketing/mcp-logos";
 import { Section } from "~/components/marketing/section";
@@ -79,14 +78,6 @@ const ACTIVE_TILES: ActiveTile[] = [
     Logo: NotionLogo,
     logoClassName: "size-7",
     delay: 0.3,
-  },
-  {
-    row: 2,
-    col: 5,
-    label: "Readwise",
-    Logo: ReadwiseLogo,
-    logoClassName: "size-7",
-    delay: 0.35,
   },
   {
     row: 1,

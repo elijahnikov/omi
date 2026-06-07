@@ -12,8 +12,6 @@ import { parseFabricZip } from "./parsers/fabric";
 import { parseMarkdownZip } from "./parsers/markdown";
 import { parseNotionApi } from "./parsers/notionApi";
 import { parseNotionZip } from "./parsers/notionZip";
-import { parseRaindropApi } from "./parsers/raindropApi";
-import { parseReadwise } from "./parsers/readwise";
 import type { ImportParser, ImportRecord, ImportYield } from "./parsers/types";
 import { isImportError } from "./parsers/types";
 
@@ -35,12 +33,10 @@ const PARSERS: Record<string, ImportParser | undefined> = {
   url_csv: parseUrlCsv,
   mymind: parseUrlCsv,
   bookmark_html: parseBookmarkHtml,
-  readwise_api: parseReadwise,
   evernote_enex: parseEvernoteEnex,
   notion_zip: parseNotionZip,
   fabric: parseFabricZip,
   notion_oauth: parseNotionApi,
-  raindrop_oauth: parseRaindropApi,
 };
 
 export const runImport = internalAction({
@@ -196,16 +192,10 @@ async function resolveAttachment(
   };
 }
 
-function providerForSource(
-  source: string
-): "readwise" | "notion" | "raindrop" | "google_drive" {
+function providerForSource(source: string): "notion" | "google_drive" {
   switch (source) {
-    case "readwise_api":
-      return "readwise";
     case "notion_oauth":
       return "notion";
-    case "raindrop_oauth":
-      return "raindrop";
     default:
       throw new Error(`No provider mapping for source "${source}"`);
   }
@@ -219,8 +209,6 @@ function defaultRootName(source: string): string {
       return "Imported from Notion";
     case "evernote_enex":
       return "Imported from Evernote";
-    case "readwise_api":
-      return "Imported from Readwise";
     case "url_csv":
       return "Imported bookmarks";
     case "bookmark_html":
@@ -231,8 +219,6 @@ function defaultRootName(source: string): string {
       return "Imported from MyMind";
     case "notion_oauth":
       return "Imported from Notion";
-    case "raindrop_oauth":
-      return "Imported from Raindrop";
     default:
       return "Imported";
   }

@@ -15,58 +15,63 @@ import { decryptToken } from "../tokens";
 
 const providerValidator = v.union(
   v.literal("notion"),
-  v.literal("raindrop"),
   v.literal("google_drive"),
-  v.literal("readwise"),
   v.literal("github"),
   v.literal("linear")
 );
 
 interface PreparedRun {
+  bindingId: Id<"connectionSyncBinding">;
   connectionId: Id<"connection">;
   ctx: SyncContext;
-  providerId:
-    | "notion"
-    | "raindrop"
-    | "google_drive"
-    | "readwise"
-    | "github"
-    | "linear";
+  providerId: "notion" | "google_drive" | "github" | "linear";
   sync: ProviderSync;
   workspaceId: Id<"workspace">;
 }
 
 type ActionCtx = GenericActionCtx<DataModel>;
 
-async function prepare(
+async function prepareBinding(
   ctx: ActionCtx,
-  connectionId: Id<"connection">
+  bindingId: Id<"connectionSyncBinding">
 ): Promise<PreparedRun | null> {
-  const conn = await ctx.runQuery(
-    internal.connections.sync.internals.getActiveConnectionForSync,
-    { connectionId }
+  const binding = await ctx.runQuery(
+    internal.connections.sync.internals.getActiveBindingForSync,
+    { bindingId }
   );
-  if (!conn) {
+  if (!binding) {
     return null;
   }
-  const descriptor = getProvider(conn.provider);
+  await ctx.runAction(
+    internal.connections.ensureFreshToken.ensureFreshAccessToken,
+    { connectionId: binding.connectionId }
+  );
+  const refreshed = await ctx.runQuery(
+    internal.connections.sync.internals.getActiveBindingForSync,
+    { bindingId }
+  );
+  if (!refreshed) {
+    return null;
+  }
+  const descriptor = getProvider(refreshed.provider);
   if (!descriptor.sync) {
-    throw new Error(`Provider ${conn.provider} does not support sync`);
+    throw new Error(`Provider ${refreshed.provider} does not support sync`);
   }
   const accessToken = decryptToken(
-    conn.encryptedAccessToken,
-    conn.tokenKeyVersion
+    refreshed.encryptedAccessToken,
+    refreshed.tokenKeyVersion
   );
   return {
-    connectionId: conn._id,
-    workspaceId: conn.workspaceId,
-    providerId: conn.provider,
+    bindingId: refreshed.bindingId,
+    connectionId: refreshed.connectionId,
+    workspaceId: refreshed.workspaceId,
+    providerId: refreshed.provider,
     sync: descriptor.sync,
     ctx: {
       accessToken,
-      scopeSelection: conn.scopeSelection,
-      workspaceId: conn.workspaceId,
-      connectionId: conn._id,
+      scopeSelection: refreshed.scopeSelection,
+      workspaceId: refreshed.workspaceId,
+      connectionId: refreshed.connectionId,
     },
   };
 }
@@ -85,7 +90,7 @@ async function applyUpserts(
       const result: "created" | "updated" | "skipped" = await ctx.runMutation(
         internal.connections.sync.internals.upsertSyncedResource,
         {
-          connectionId: run.connectionId,
+          bindingId: run.bindingId,
           providerId: run.providerId,
           upsert,
         }
@@ -121,9 +126,9 @@ async function applyUpserts(
 }
 
 export const runDelta = internalAction({
-  args: { connectionId: v.id("connection") },
+  args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args): Promise<void> => {
-    const run = await prepare(ctx, args.connectionId);
+    const run = await prepareBinding(ctx, args.bindingId);
     if (!run) {
       return;
     }
@@ -131,6 +136,7 @@ export const runDelta = internalAction({
       internal.connections.sync.internals.createSyncJob,
       {
         connectionId: run.connectionId,
+        bindingId: run.bindingId,
         workspaceId: run.workspaceId,
         kind: "delta",
       }
@@ -177,10 +183,22 @@ export const runDelta = internalAction({
   },
 });
 
-/**
- * Apply a single webhook event (upsert or delete) for one external ID.
- * Called from the webhook HTTP route after dedupe.
- */
+function extractLinearTeamId(
+  rawItemJson: string | undefined
+): string | undefined {
+  if (!rawItemJson) {
+    return undefined;
+  }
+  try {
+    const raw = JSON.parse(rawItemJson) as {
+      issue?: { team?: { id?: string }; teamId?: string };
+    };
+    return raw.issue?.team?.id ?? raw.issue?.teamId;
+  } catch {
+    return undefined;
+  }
+}
+
 export const applyWebhookEvent = internalAction({
   args: {
     connectionId: v.id("connection"),
@@ -188,42 +206,92 @@ export const applyWebhookEvent = internalAction({
     kind: v.union(v.literal("upsert"), v.literal("delete")),
     externalId: v.string(),
     rawItemJson: v.optional(v.string()),
+    linearTeamId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
-    const run = await prepare(ctx, args.connectionId);
-    if (!run) {
-      return;
-    }
-    if (args.kind === "delete") {
-      await ctx.runMutation(
-        internal.connections.sync.internals.tombstoneSyncedResource,
-        { connectionId: run.connectionId, externalId: args.externalId }
-      );
+    const linearTeamId =
+      args.linearTeamId ?? extractLinearTeamId(args.rawItemJson);
+    const bindingIds: Id<"connectionSyncBinding">[] = await ctx.runQuery(
+      internal.connections.sync.internals.listMatchingBindingsForWebhook,
+      {
+        connectionId: args.connectionId,
+        externalId: args.externalId,
+        linearTeamId,
+      }
+    );
+    if (bindingIds.length === 0) {
       return;
     }
 
-    let raw: unknown = args.rawItemJson
-      ? JSON.parse(args.rawItemJson)
-      : undefined;
-    if (!raw) {
-      if (!run.sync.fetchOne) {
-        throw new Error(
-          `Provider ${run.providerId} sent webhook without payload and has no fetchOne`
-        );
-      }
-      raw = await run.sync.fetchOne(run.ctx, args.externalId);
-      if (!raw) {
-        return;
-      }
+    const firstBindingId = bindingIds[0];
+    if (!firstBindingId) {
+      return;
     }
-    const upsert = run.sync.toResource(raw, run.ctx);
+
     await ctx.runMutation(
-      internal.connections.sync.internals.upsertSyncedResource,
-      {
-        connectionId: run.connectionId,
-        providerId: run.providerId,
-        upsert,
-      }
+      internal.connections.sync.internals.markWebhookReceived,
+      { bindingIds }
     );
+
+    const sampleBinding = await ctx.runQuery(
+      internal.connections.sync.internals.getActiveBindingForSync,
+      { bindingId: firstBindingId }
+    );
+    if (!sampleBinding) {
+      return;
+    }
+
+    const descriptor = getProvider(sampleBinding.provider);
+    if (!descriptor.sync) {
+      return;
+    }
+
+    await ctx.runAction(
+      internal.connections.ensureFreshToken.ensureFreshAccessToken,
+      { connectionId: args.connectionId }
+    );
+
+    for (const bindingId of bindingIds) {
+      const run = await prepareBinding(ctx, bindingId);
+      if (!run) {
+        continue;
+      }
+
+      if (args.kind === "delete") {
+        await ctx.runMutation(
+          internal.connections.sync.internals.tombstoneSyncedResource,
+          { bindingId, externalId: args.externalId }
+        );
+        continue;
+      }
+
+      let raw: unknown = args.rawItemJson
+        ? JSON.parse(args.rawItemJson)
+        : undefined;
+      const needsGithubRefetch =
+        run.providerId === "github" &&
+        args.externalId.startsWith("pr:") &&
+        !(raw && (raw as { diffPatch?: string }).diffPatch);
+      if (!raw || needsGithubRefetch) {
+        if (!run.sync.fetchOne) {
+          throw new Error(
+            `Provider ${run.providerId} sent webhook without payload and has no fetchOne`
+          );
+        }
+        raw = await run.sync.fetchOne(run.ctx, args.externalId);
+        if (!raw) {
+          continue;
+        }
+      }
+      const upsert = run.sync.toResource(raw, run.ctx);
+      await ctx.runMutation(
+        internal.connections.sync.internals.upsertSyncedResource,
+        {
+          bindingId: run.bindingId,
+          providerId: run.providerId,
+          upsert,
+        }
+      );
+    }
   },
 });

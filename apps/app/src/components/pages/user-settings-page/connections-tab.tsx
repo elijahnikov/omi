@@ -1,5 +1,7 @@
 import { convexQuery, useConvexAction } from "@convex-dev/react-query";
 import { api } from "@omi/backend/_generated/api.js";
+import type { Id } from "@omi/backend/_generated/dataModel.js";
+import { Badge } from "@omi/ui/badge";
 import { Button } from "@omi/ui/button";
 import {
   Dialog,
@@ -19,112 +21,133 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ConvexError } from "convex/values";
 import { useEffect, useMemo, useState } from "react";
 import { INTEGRATION_LOGO } from "~/components/pages/settings-page/import-tab/integration-logos";
-import { ConnectorsSection } from "./integrations/connectors-section";
+import {
+  CAPABILITY_LABELS,
+  type ConnectionProviderId,
+  INTEGRATION_CATALOG,
+  type IntegrationCapability,
+  type IntegrationCatalogEntry,
+} from "~/lib/integration-catalog";
+import {
+  type ConnectTarget,
+  McpConnectDialog,
+} from "./integrations/mcp-connect-dialog";
+import { McpLogo } from "./integrations/mcp-logos";
+import { McpManageToolsDialog } from "./integrations/mcp-manage-tools-dialog";
 import {
   type ConfigConnection,
   ProviderConfigDialog,
   type ProviderId,
 } from "./integrations/provider-config-dialog";
 
-type AuthType = "oauth2" | "api_token";
-
-interface UiProviderDescriptor {
-  authType: AuthType;
-  description: string;
-  id: ProviderId;
-  label: string;
-  tokenHelpUrl?: string;
-}
-
-const UI_PROVIDERS: UiProviderDescriptor[] = [
-  {
-    id: "readwise",
-    label: "Readwise",
-    description:
-      "Import highlights from books, articles, podcasts, and tweets using an API token.",
-    authType: "api_token",
-    tokenHelpUrl: "https://readwise.io/access_token",
-  },
-  {
-    id: "notion",
-    label: "Notion",
-    description:
-      "Sync pages and databases from a Notion workspace into a chosen folder.",
-    authType: "oauth2",
-  },
-  {
-    id: "raindrop",
-    label: "Raindrop.io",
-    description:
-      "Import bookmarks, collections, and highlights from your Raindrop account.",
-    authType: "oauth2",
-  },
-  {
-    id: "github",
-    label: "GitHub",
-    description: "Sync issues and pull requests from selected repositories.",
-    authType: "oauth2",
-  },
-];
-
-const PROVIDER_LOGO_ID: Partial<Record<ProviderId, string>> = {
+const CONNECTION_LOGO_KEY: Partial<Record<ConnectionProviderId, string>> = {
   notion: "notion_oauth",
-  raindrop: "raindrop_oauth",
-  readwise: "readwise",
   github: "github",
 };
 
+interface MyMcpServer {
+  _id: Id<"mcpServer">;
+  authType: "bearer" | "oauth2";
+  cachedTools: Array<{ name: string; description: string | null }>;
+  catalogId: string | null;
+  enabledTools: string[];
+  lastErrorAt: number | null;
+  lastErrorMessage: string | null;
+  name: string;
+  status: "active" | "error" | "disabled" | "pending_oauth";
+  url: string;
+}
+
 export function ConnectionsTab() {
-  const { data } = useQuery(
+  const { data: connections = [] } = useQuery(
     convexQuery(api.connections.queries.listMyConnections, {})
   );
+  const { data: mcpServers = [] } = useQuery(
+    convexQuery(api.mcpClient.queries.listMyMcpServers, {})
+  );
 
-  const [connectProvider, setConnectProvider] =
-    useState<UiProviderDescriptor | null>(null);
+  const [connectEntry, setConnectEntry] =
+    useState<IntegrationCatalogEntry | null>(null);
   const [configProvider, setConfigProvider] = useState<ProviderId | null>(null);
+  const [mcpConnectTarget, setMcpConnectTarget] =
+    useState<ConnectTarget | null>(null);
+  const [manageMcpServerId, setManageMcpServerId] =
+    useState<Id<"mcpServer"> | null>(null);
   const [search, setSearch] = useState("");
 
-  const filteredProviders = useMemo(() => {
+  const filteredCatalog = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) {
-      return UI_PROVIDERS;
+      return INTEGRATION_CATALOG;
     }
-    return UI_PROVIDERS.filter(
-      (provider) =>
-        provider.label.toLowerCase().includes(query) ||
-        provider.description.toLowerCase().includes(query)
+    return INTEGRATION_CATALOG.filter(
+      (entry) =>
+        entry.label.toLowerCase().includes(query) ||
+        entry.description.toLowerCase().includes(query) ||
+        entry.capabilities.some((cap) =>
+          CAPABILITY_LABELS[cap].toLowerCase().includes(query)
+        )
     );
   }, [search]);
+
+  const customMcpServers = useMemo(
+    () => mcpServers.filter((server) => !server.catalogId),
+    [mcpServers]
+  );
+
+  const manageMcpServer = useMemo(
+    () => mcpServers.find((server) => server._id === manageMcpServerId) ?? null,
+    [mcpServers, manageMcpServerId]
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const connected = params.get("connections");
-    if (!connected) {
-      return;
+    if (connected) {
+      if (connected === "error") {
+        const reason = params.get("reason") ?? "unknown_error";
+        toastManager.add({
+          type: "error",
+          title: "Could not connect",
+          description: reason,
+        });
+      } else {
+        toastManager.add({
+          type: "success",
+          title: "Connected",
+        });
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete("connections");
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", url.toString());
     }
-    if (connected === "error") {
-      const reason = params.get("reason") ?? "unknown_error";
-      toastManager.add({
-        type: "error",
-        title: "Could not connect",
-        description: reason,
-      });
-    } else {
-      toastManager.add({
-        type: "success",
-        title: "Connected",
-      });
+
+    const mcpResult = params.get("mcp_connect");
+    if (mcpResult) {
+      if (mcpResult === "success") {
+        toastManager.add({ type: "success", title: "MCP server connected" });
+      } else {
+        toastManager.add({
+          type: "error",
+          title: "Could not connect MCP server",
+          description: params.get("reason") ?? undefined,
+        });
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete("mcp_connect");
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", url.toString());
     }
-    const url = new URL(window.location.href);
-    url.searchParams.delete("connections");
-    url.searchParams.delete("reason");
-    window.history.replaceState({}, "", url.toString());
   }, []);
 
   const connectionsByProvider = new Map<ProviderId, ConfigConnection>(
-    (data ?? [])
-      .filter((c) => c.status !== "revoked")
-      .map((c) => [c.provider as ProviderId, c as ConfigConnection])
+    connections
+      .filter((connection) => connection.status !== "revoked")
+      .map((connection) => [
+        connection.provider as ProviderId,
+        connection as ConfigConnection,
+      ])
   );
 
   const configConnection = configProvider
@@ -132,64 +155,95 @@ export function ConnectionsTab() {
     : null;
 
   const handleReconnect = (provider: ProviderId) => {
-    const descriptor = UI_PROVIDERS.find((p) => p.id === provider);
-    if (descriptor) {
-      setConnectProvider(descriptor);
+    const entry = INTEGRATION_CATALOG.find(
+      (item) => item.connection?.providerId === provider
+    );
+    if (entry) {
+      setConnectEntry(entry);
     }
   };
 
   return (
     <div className="flex w-full flex-col gap-8">
       <div>
-        <Heading>Integrations</Heading>
+        <Heading>Connected accounts</Heading>
         <Text className="text-ui-fg-subtle" size="small">
-          Third-party accounts that pull content into your workspaces, plus
-          connectors that expose tools to chat. Integrations apply to your user.
+          Accounts you authorize for imports, sync, and chat tools. Configure
+          what syncs where in each workspace&apos;s Integrations settings.
         </Text>
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Heading level="h3">Integrations</Heading>
-        </div>
         <Input
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           placeholder="Search integrations"
           type="search"
           value={search}
         />
         <div className="flex flex-col gap-2">
-          {filteredProviders.length === 0 ? (
+          {filteredCatalog.length === 0 ? (
             <Text className="text-ui-fg-subtle" size="small">
               No integrations match your search.
             </Text>
           ) : (
-            filteredProviders.map((provider) => (
-              <ProviderCard
-                connection={connectionsByProvider.get(provider.id)}
-                description={provider.description}
-                key={provider.id}
-                label={provider.label}
-                onConfigure={() => setConfigProvider(provider.id)}
-                onConnect={() => setConnectProvider(provider)}
-                providerId={provider.id}
+            filteredCatalog.map((entry) => (
+              <IntegrationCard
+                connection={
+                  entry.connection
+                    ? connectionsByProvider.get(entry.connection.providerId)
+                    : undefined
+                }
+                entry={entry}
+                key={entry.id}
+                mcpServer={
+                  entry.mcp
+                    ? (mcpServers.find(
+                        (server) => server.catalogId === entry.mcp?.catalogId
+                      ) ?? null)
+                    : null
+                }
+                onConfigureConnection={() => {
+                  if (entry.connection) {
+                    setConfigProvider(entry.connection.providerId);
+                  }
+                }}
+                onConnectConnection={() => setConnectEntry(entry)}
+                onConnectMcp={() => {
+                  if (!entry.mcp) {
+                    return;
+                  }
+                  setMcpConnectTarget({
+                    catalogId: entry.mcp.catalogId,
+                    defaultName: entry.label,
+                    authType: entry.mcp.authType,
+                    helpUrl: entry.mcp.helpUrl,
+                    logoKey: entry.logoKey,
+                  });
+                }}
+                onManageMcp={(serverId) => setManageMcpServerId(serverId)}
               />
             ))
           )}
+          {customMcpServers.map((server) => (
+            <CustomMcpServerRow
+              key={server._id}
+              onManage={() => setManageMcpServerId(server._id)}
+              server={server}
+            />
+          ))}
         </div>
       </div>
 
-      <ConnectorsSection />
-
-      <ConnectDialog
+      <OAuthConnectDialog
+        entry={connectEntry}
         onOpenChange={(next) => {
           if (!next) {
-            setConnectProvider(null);
+            setConnectEntry(null);
           }
         }}
-        open={connectProvider !== null}
-        provider={connectProvider}
+        open={connectEntry !== null}
       />
+
       <ProviderConfigDialog
         connection={configConnection}
         onOpenChange={(next) => {
@@ -200,94 +254,199 @@ export function ConnectionsTab() {
         onReconnect={handleReconnect}
         open={configProvider !== null && configConnection !== null}
       />
+
+      <McpConnectDialog
+        onOpenChange={(next) => {
+          if (!next) {
+            setMcpConnectTarget(null);
+          }
+        }}
+        open={mcpConnectTarget !== null}
+        target={mcpConnectTarget}
+      />
+
+      <McpManageToolsDialog
+        onOpenChange={(next) => {
+          if (!next) {
+            setManageMcpServerId(null);
+          }
+        }}
+        open={manageMcpServer !== null}
+        server={manageMcpServer}
+      />
     </div>
   );
 }
 
-function ProviderCard({
-  providerId,
-  label,
-  description,
+function IntegrationCard({
+  entry,
   connection,
-  onConnect,
-  onConfigure,
+  mcpServer,
+  onConnectConnection,
+  onConfigureConnection,
+  onConnectMcp,
+  onManageMcp,
 }: {
-  providerId: ProviderId;
-  label: string;
-  description: string;
+  entry: IntegrationCatalogEntry;
   connection: ConfigConnection | undefined;
-  onConnect: () => void;
-  onConfigure: () => void;
+  mcpServer: MyMcpServer | null;
+  onConnectConnection: () => void;
+  onConfigureConnection: () => void;
+  onConnectMcp: () => void;
+  onManageMcp: (serverId: Id<"mcpServer">) => void;
 }) {
-  const logoId = PROVIDER_LOGO_ID[providerId];
-  const Logo = logoId ? INTEGRATION_LOGO[logoId] : undefined;
-  const isConnected = Boolean(connection);
+  const hasConnection = Boolean(entry.connection);
+  const hasMcp = Boolean(entry.mcp);
+  const isConnectionConnected = Boolean(connection);
+  const isMcpConnected = Boolean(mcpServer);
 
   return (
     <div className="flex w-full items-center justify-between gap-4 rounded-lg p-4 hover:bg-ui-bg-component">
       <div className="flex min-w-0 items-start gap-3">
-        {Logo && (
-          <div className="flex size-5 shrink-0 items-center justify-center">
-            <Logo aria-hidden="true" className="size-5" />
-          </div>
-        )}
+        <IntegrationLogo entry={entry} />
         <div className="min-w-0">
-          <Text className="font-medium">{label}</Text>
+          <div className="flex flex-wrap items-center gap-2">
+            <Text className="font-medium">{entry.label}</Text>
+            {entry.capabilities.map((capability) => (
+              <CapabilityBadge capability={capability} key={capability} />
+            ))}
+            {mcpServer?.status === "error" ? (
+              <Badge size="sm" variant="warning">
+                Error
+              </Badge>
+            ) : null}
+          </div>
           <Text className="text-ui-fg-subtle" size="xsmall">
-            {description}
+            {entry.description}
           </Text>
+          {isMcpConnected && mcpServer ? (
+            <Text className="text-ui-fg-muted" size="xsmall">
+              {mcpServer.enabledTools.length} of {mcpServer.cachedTools.length}{" "}
+              tools enabled
+            </Text>
+          ) : null}
         </div>
       </div>
-      <div className="shrink-0">
-        {isConnected ? (
-          <Button onClick={onConfigure} size="small" variant="secondary">
-            Configure
-          </Button>
-        ) : (
-          <Button onClick={onConnect} size="small" variant="omi">
-            Connect
-          </Button>
-        )}
+      <div className="flex shrink-0 items-center gap-2">
+        {hasConnection ? (
+          isConnectionConnected ? (
+            <Button
+              onClick={onConfigureConnection}
+              size="small"
+              variant="secondary"
+            >
+              Configure account
+            </Button>
+          ) : (
+            <Button onClick={onConnectConnection} size="small" variant="omi">
+              Connect
+            </Button>
+          )
+        ) : null}
+        {hasMcp ? (
+          isMcpConnected && mcpServer ? (
+            <Button
+              onClick={() => onManageMcp(mcpServer._id)}
+              size="small"
+              variant="secondary"
+            >
+              Manage tools
+            </Button>
+          ) : (
+            <Button onClick={onConnectMcp} size="small" variant="omi">
+              Connect tools
+            </Button>
+          )
+        ) : null}
       </div>
     </div>
   );
 }
 
-function ConnectDialog({
-  provider,
-  open,
-  onOpenChange,
+function CapabilityBadge({
+  capability,
 }: {
-  provider: UiProviderDescriptor | null;
-  open: boolean;
-  onOpenChange: (next: boolean) => void;
+  capability: IntegrationCapability;
 }) {
-  if (!provider) {
-    return null;
-  }
-  if (provider.authType === "oauth2") {
-    return (
-      <OAuthDialog
-        onOpenChange={onOpenChange}
-        open={open}
-        provider={provider}
-      />
-    );
-  }
   return (
-    <TokenDialog onOpenChange={onOpenChange} open={open} provider={provider} />
+    <Badge size="sm" variant="mono">
+      {CAPABILITY_LABELS[capability]}
+    </Badge>
   );
 }
 
-function OAuthDialog({
-  provider,
+function IntegrationLogo({ entry }: { entry: IntegrationCatalogEntry }) {
+  const connectionLogoKey = entry.connection
+    ? CONNECTION_LOGO_KEY[entry.connection.providerId]
+    : undefined;
+  const ConnectionLogo = connectionLogoKey
+    ? INTEGRATION_LOGO[connectionLogoKey]
+    : undefined;
+
+  if (ConnectionLogo) {
+    return (
+      <div className="flex size-5 shrink-0 items-center justify-center">
+        <ConnectionLogo aria-hidden="true" className="size-5" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex size-5 shrink-0 items-center justify-center">
+      <McpLogo className="size-5" logoKey={entry.logoKey} />
+    </div>
+  );
+}
+
+function CustomMcpServerRow({
+  server,
+  onManage,
+}: {
+  server: MyMcpServer;
+  onManage: () => void;
+}) {
+  return (
+    <div className="flex w-full items-center justify-between gap-4 rounded-lg p-4 hover:bg-ui-bg-component">
+      <div className="flex min-w-0 items-start gap-3">
+        <div className="flex size-5 shrink-0 items-center justify-center">
+          <McpLogo className="size-5" logoKey="__custom__" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Text className="truncate font-medium">{server.name}</Text>
+            <CapabilityBadge capability="mcp" />
+            {server.status === "error" ? (
+              <Badge size="sm" variant="warning">
+                Error
+              </Badge>
+            ) : null}
+          </div>
+          <Text className="text-ui-fg-muted" size="xsmall">
+            {server.enabledTools.length} of {server.cachedTools.length} tools
+            enabled
+          </Text>
+        </div>
+      </div>
+      <div className="shrink-0">
+        <Button onClick={onManage} size="small" variant="secondary">
+          Manage tools
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function OAuthConnectDialog({
+  entry,
   open,
   onOpenChange,
 }: {
-  provider: UiProviderDescriptor;
+  entry: IntegrationCatalogEntry | null;
   open: boolean;
   onOpenChange: (next: boolean) => void;
 }) {
+  const provider = entry?.connection;
+
   const { mutate: getAuthorizeUrl, isPending } = useMutation({
     mutationFn: useConvexAction(
       api.connections.oauth.authorize.getAuthorizeUrl
@@ -304,15 +463,19 @@ function OAuthDialog({
             : "Unknown error";
       toastManager.add({
         type: "error",
-        title: `Could not start ${provider.label} connection`,
+        title: `Could not start ${entry?.label ?? "connection"}`,
         description: message,
       });
     },
   });
 
+  if (!(entry && provider)) {
+    return null;
+  }
+
   const handleRedirect = () => {
-    const returnTo = `${window.location.origin}${window.location.pathname}?connections=${provider.id}`;
-    getAuthorizeUrl({ provider: provider.id, returnTo });
+    const returnTo = `${window.location.origin}${window.location.pathname}?connections=${provider.providerId}`;
+    getAuthorizeUrl({ provider: provider.providerId, returnTo });
   };
 
   return (
@@ -320,12 +483,12 @@ function OAuthDialog({
       <DialogPopup className="max-w-md!">
         <DialogHeader>
           <DialogTitle className="font-medium text-sm">
-            Connect {provider.label}
+            Connect {entry.label}
           </DialogTitle>
         </DialogHeader>
         <div className="px-6 py-4">
           <DialogDescription>
-            You'll be redirected to {provider.label} to authorize omi. After
+            You'll be redirected to {entry.label} to authorize omi. After
             approving, you'll land back here.
           </DialogDescription>
         </div>
@@ -338,111 +501,7 @@ function OAuthDialog({
             onClick={handleRedirect}
             variant="omi"
           >
-            Continue to {provider.label}
-          </LoadingButton>
-        </DialogFooter>
-      </DialogPopup>
-    </Dialog>
-  );
-}
-
-function TokenDialog({
-  provider,
-  open,
-  onOpenChange,
-}: {
-  provider: UiProviderDescriptor;
-  open: boolean;
-  onOpenChange: (next: boolean) => void;
-}) {
-  const [token, setToken] = useState("");
-
-  const { mutate: connect, isPending } = useMutation({
-    mutationFn: useConvexAction(api.connections.actions.connectReadwise),
-    meta: { customErrorToast: true },
-    onSuccess: () => {
-      toastManager.add({
-        type: "success",
-        title: `${provider.label} connected`,
-      });
-      setToken("");
-      onOpenChange(false);
-    },
-    onError: (err) => {
-      const message =
-        err instanceof ConvexError && typeof err.data === "string"
-          ? err.data
-          : err instanceof Error
-            ? err.message
-            : "Unknown error";
-      toastManager.add({
-        type: "error",
-        title: `Could not connect ${provider.label}`,
-        description: message,
-      });
-    },
-  });
-
-  const handleSubmit = () => {
-    const trimmed = token.trim();
-    if (trimmed.length === 0) {
-      return;
-    }
-    connect({ token: trimmed });
-  };
-
-  return (
-    <Dialog
-      onOpenChange={(next) => {
-        if (!next) {
-          setToken("");
-        }
-        onOpenChange(next);
-      }}
-      open={open}
-    >
-      <DialogPopup className="max-w-md!">
-        <DialogHeader>
-          <DialogTitle className="font-medium text-sm">
-            Connect {provider.label}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="px-6 py-4">
-          <DialogDescription className="mb-4">
-            Paste your {provider.label} API token.{" "}
-            {provider.tokenHelpUrl && (
-              <a
-                className="text-ui-fg-interactive underline"
-                href={provider.tokenHelpUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Get your token
-              </a>
-            )}
-          </DialogDescription>
-          <Text className="mb-1.5" size="small">
-            API token
-          </Text>
-          <Input
-            autoComplete="off"
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="readwise_xxxxxxxxxxxxxxxx"
-            type="password"
-            value={token}
-          />
-        </div>
-        <DialogFooter>
-          <DialogClose render={<Button variant="secondary" />}>
-            Cancel
-          </DialogClose>
-          <LoadingButton
-            disabled={token.trim().length === 0}
-            loading={isPending}
-            onClick={handleSubmit}
-            variant="omi"
-          >
-            Connect
+            Continue to {entry.label}
           </LoadingButton>
         </DialogFooter>
       </DialogPopup>

@@ -416,12 +416,13 @@ const notionSync: ProviderSync = {
     const item = rawItem as NotionItem;
     return {
       externalId: item.page.id,
-      externalUrl: item.page.url,
-      type: "note",
+      externalUrl: item.page.url ?? "",
+      type: "synced",
       title: extractTitle(item.page),
-      note: {
-        plainTextContent: item.plaintext,
-        htmlContent: item.html,
+      synced: {
+        kind: "page",
+        externalUrl: item.page.url ?? "",
+        markdownContent: item.plaintext || undefined,
       },
     };
   },

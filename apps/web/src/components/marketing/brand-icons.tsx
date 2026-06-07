@@ -79,32 +79,3 @@ export function GoogleDriveIcon(props: IconProps) {
     </svg>
   );
 }
-
-export function ReadwiseIcon(props: IconProps) {
-  return (
-    <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" {...props}>
-      <path
-        d="M5 19V6.5A2.5 2.5 0 0 1 7.5 4H19v12.5"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.6"
-      />
-      <path
-        d="M7.5 16.5H19a2.5 2.5 0 0 1-2.5 2.5H7.5A2.5 2.5 0 0 1 5 16.5"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.6"
-      />
-    </svg>
-  );
-}
-
-export function RaindropIcon(props: IconProps) {
-  return (
-    <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24" {...props}>
-      <path d="M12 2.5c4.5 4 7 7.3 7 10.5a7 7 0 1 1-14 0c0-3.2 2.5-6.5 7-10.5Z" />
-    </svg>
-  );
-}

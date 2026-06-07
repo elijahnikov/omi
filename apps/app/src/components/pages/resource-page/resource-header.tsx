@@ -25,9 +25,11 @@ import { ShortcutTooltipBody } from "~/components/common/shortcut-tooltip";
 import { UserAvatar } from "~/components/common/user-avatar";
 import {
   GitHub,
+  Linear,
   Notion,
 } from "~/components/pages/settings-page/import-tab/integration-logos";
 import type { GetResourceData } from "~/lib/convex-types";
+import { getSyncedViewModel, isSyncedResource } from "~/lib/synced-resource";
 import { useFloatingPanelsStore } from "./floating-panels-store";
 import { ResourceActionsMenu } from "./resource-actions-menu";
 import { ResourceChatPanel } from "./resource-chat-panel";
@@ -171,16 +173,10 @@ export function ResourceHeader({ resource }: { resource: GetResourceData }) {
       </div>
       <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-2">
         <TypeBadge resource={resource} />
-        {resource.type !== "note" && (
+        {resource.type !== "note" && resource.type !== "synced" && (
           <Separator className="h-4 shrink-0" orientation="vertical" />
         )}
-        <SyncedFromBadge
-          providerId={
-            "sourceProviderId" in resource
-              ? resource.sourceProviderId
-              : undefined
-          }
-        />
+        <SyncedFromBadge resource={resource} />
         <Badge className="shrink-0 text-xs" variant="mono">
           {format(new Date(resource._creationTime), "d MMM yyyy HH:mm")}
         </Badge>
@@ -218,9 +214,14 @@ type LogoSvg = FC<SVGProps<SVGSVGElement>>;
 const SYNC_PROVIDER_LABEL: Record<string, { label: string; Logo: LogoSvg }> = {
   notion: { label: "Notion", Logo: Notion },
   github: { label: "GitHub", Logo: GitHub },
+  linear: { label: "Linear", Logo: Linear },
 };
 
-function SyncedFromBadge({ providerId }: { providerId: string | undefined }) {
+function SyncedFromBadge({ resource }: { resource: GetResourceData }) {
+  const synced = getSyncedViewModel(resource);
+  const providerId =
+    synced?.providerId ??
+    ("sourceProviderId" in resource ? resource.sourceProviderId : undefined);
   if (!providerId) {
     return null;
   }
@@ -325,6 +326,42 @@ function TypeBadge({ resource }: { resource: GetResourceData }) {
             <MiddleTruncate text={file.fileName} />
           </span>
         </Badge>
+      );
+    }
+    case "synced": {
+      const synced = getSyncedViewModel(resource);
+      if (!synced?.externalUrl) {
+        return null;
+      }
+      const hostname = (() => {
+        try {
+          return new URL(synced.externalUrl).hostname;
+        } catch {
+          return synced.externalUrl;
+        }
+      })();
+      const entry = SYNC_PROVIDER_LABEL[synced.providerId];
+      return (
+        <a
+          className="flex min-w-0 max-w-[420px] shrink"
+          href={synced.externalUrl}
+          rel="noopener"
+          target="_blank"
+        >
+          <Badge
+            className="min-w-0 max-w-full shrink text-ui-fg-subtle text-xs"
+            variant="mono"
+          >
+            {entry ? <entry.Logo className="size-3.5 shrink-0" /> : null}
+            <span className="shrink-0 font-medium text-ui-fg-base">
+              {hostname}
+            </span>
+            {synced.subtitle ? (
+              <span className="min-w-0 flex-1 truncate">{synced.subtitle}</span>
+            ) : null}
+            <RiArrowRightUpLine className="shrink-0" />
+          </Badge>
+        </a>
       );
     }
     default:

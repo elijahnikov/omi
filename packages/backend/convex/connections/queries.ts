@@ -21,9 +21,14 @@ export const listMyConnections = protectedQuery({
       .withIndex("by_user_provider", (q) => q.eq("userId", ctx.user._id))
       .collect();
 
-    return rows
-      .filter((c) => c.status !== "revoked")
-      .map((c) => ({
+    const result = [];
+    for (const c of rows.filter((row) => row.status !== "revoked")) {
+      const bindings = await ctx.db
+        .query("connectionSyncBinding")
+        .withIndex("by_connection", (q) => q.eq("connectionId", c._id))
+        .collect();
+
+      result.push({
         _id: c._id,
         provider: c.provider,
         authType: c.authType,
@@ -34,14 +39,18 @@ export const listMyConnections = protectedQuery({
         scope: c.scope,
         lastError: c.lastError,
         lastErrorAt: c.lastErrorAt,
-        syncEnabled: c.syncEnabled,
-        lastSyncedAt: c.lastSyncedAt,
-        workspaceId: c.workspaceId,
-        destinationCollectionId: c.destinationCollectionId,
-        scopeSelection: c.scopeSelection,
         supportsSync: providerSupportsSync(c.provider),
         createdAt: c.createdAt,
-      }));
+        syncBindings: bindings.map((b) => ({
+          _id: b._id,
+          workspaceId: b.workspaceId,
+          syncEnabled: b.syncEnabled,
+          syncPaused: b.syncPaused,
+          lastSyncedAt: b.lastSyncedAt,
+        })),
+      });
+    }
+    return result;
   },
 });
 
@@ -63,8 +72,6 @@ export const getConnection = protectedQuery({
       scope: connection.scope,
       lastError: connection.lastError,
       lastErrorAt: connection.lastErrorAt,
-      syncEnabled: connection.syncEnabled,
-      lastSyncedAt: connection.lastSyncedAt,
       createdAt: connection.createdAt,
     };
   },

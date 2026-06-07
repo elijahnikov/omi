@@ -2,12 +2,14 @@ import type { createOpenAI } from "@ai-sdk/openai";
 import type { ResourceEnricher } from "./base";
 import { FileEnricher, type FileEnricherInput } from "./file";
 import { NoteEnricher, type NoteEnricherInput } from "./note";
+import { SyncedEnricher, type SyncedEnricherInput } from "./synced";
 import { WebsiteEnricher, type WebsiteEnricherInput } from "./website";
 
 export type EnricherInput =
   | { type: "website"; data: WebsiteEnricherInput }
   | { type: "note"; data: NoteEnricherInput }
-  | { type: "file"; data: FileEnricherInput };
+  | { type: "file"; data: FileEnricherInput }
+  | { type: "synced"; data: SyncedEnricherInput };
 
 export function createEnricher(
   provider: ReturnType<typeof createOpenAI>,
@@ -20,6 +22,8 @@ export function createEnricher(
       return new NoteEnricher(provider, input.data);
     case "file":
       return new FileEnricher(provider, input.data);
+    case "synced":
+      return new SyncedEnricher(provider, input.data);
     default: {
       const exhaustive: never = input;
       throw new Error(`Unknown enricher type: ${JSON.stringify(exhaustive)}`);

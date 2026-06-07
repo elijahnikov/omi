@@ -1,11 +1,16 @@
+import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { Button } from "@omi/ui/button";
 import { Heading } from "@omi/ui/heading";
 import { Text } from "@omi/ui/text";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { userSettingsSearch } from "~/lib/user-settings-nav";
 import { HomeCard } from "./card";
 
 export function UpgradeNudgeCard() {
   const navigate = useNavigate();
+  const { workspaceId } = useParams({ strict: false }) as {
+    workspaceId?: Id<"workspace">;
+  };
 
   return (
     <HomeCard className="mx-1 mb-1 overflow-hidden bg-center p-5 shadow-borders-base">
@@ -22,7 +27,13 @@ export function UpgradeNudgeCard() {
           <div className="mt-3 flex items-center gap-2">
             <Button
               onClick={() =>
-                navigate({ to: "/settings", search: { tab: "billing" } })
+                navigate({
+                  to: "/settings",
+                  search: userSettingsSearch({
+                    tab: "billing",
+                    workspaceId,
+                  }),
+                })
               }
               size="small"
               variant="omi"

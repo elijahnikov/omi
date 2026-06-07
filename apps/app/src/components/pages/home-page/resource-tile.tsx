@@ -22,7 +22,7 @@ export interface ResourceTileData {
   _id: Id<"resource">;
   preview: ResourcePreview;
   title: string;
-  type: "website" | "note" | "file";
+  type: "website" | "note" | "file" | "synced";
   updatedAt: number;
 }
 
@@ -84,7 +84,9 @@ function ResourceTileIcon({ resource }: { resource: ResourceTileData }) {
       {resource.type === "website" ? (
         <WebsiteIcon favicon={resource.preview.favicon} />
       ) : null}
-      {resource.type === "note" ? <NoteIcon /> : null}
+      {resource.type === "note" || resource.type === "synced" ? (
+        <NoteIcon />
+      ) : null}
       {resource.type === "file" ? (
         isImage ? (
           <img

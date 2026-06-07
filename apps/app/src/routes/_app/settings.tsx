@@ -1,3 +1,4 @@
+import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   UserSettingsPageComponent,
@@ -18,6 +19,7 @@ const USER_SETTINGS_TABS: readonly UserSettingsTab[] = [
 interface Search {
   checkout?: "success" | "cancel";
   tab?: UserSettingsTab;
+  workspaceId?: Id<"workspace">;
 }
 
 export const Route = createFileRoute("/_app/settings")({
@@ -30,12 +32,16 @@ export const Route = createFileRoute("/_app/settings")({
       search.checkout === "success" || search.checkout === "cancel"
         ? (search.checkout as "success" | "cancel")
         : undefined;
-    return { tab, checkout };
+    const workspaceId =
+      typeof search.workspaceId === "string" && search.workspaceId.length > 0
+        ? (search.workspaceId as Id<"workspace">)
+        : undefined;
+    return { tab, checkout, workspaceId };
   },
 });
 
 function SettingsPage() {
-  const { tab } = Route.useSearch();
+  const { tab, workspaceId } = Route.useSearch();
   const navigate = Route.useNavigate();
 
   return (
@@ -50,6 +56,7 @@ function SettingsPage() {
         })
       }
       tab={tab ?? "general"}
+      workspaceId={workspaceId}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import type { Doc, Id } from "../../_generated/dataModel";
+import type { Id } from "../../_generated/dataModel";
 import { internalMutation, internalQuery } from "../../_generated/server";
 
 interface ScopedRepo {
@@ -7,10 +7,8 @@ interface ScopedRepo {
   name: string;
 }
 
-interface GitHubScopeSelection {
+interface GitHubWebhookScope {
   repos?: ScopedRepo[];
-  starsEnabled?: boolean;
-  starsSnapshot?: string[];
 }
 
 export const getConnectionForGithub = internalQuery({
@@ -22,7 +20,7 @@ export const getConnectionForGithub = internalQuery({
     encryptedAccessToken: string;
     tokenKeyVersion: number;
     webhookSecret: string | undefined;
-    scopeSelection: GitHubScopeSelection;
+    webhookScope: GitHubWebhookScope;
   } | null> => {
     const conn = await ctx.db.get(args.connectionId);
     if (!conn || conn.provider !== "github") {
@@ -35,19 +33,19 @@ export const getConnectionForGithub = internalQuery({
       encryptedAccessToken: conn.encryptedAccessToken,
       tokenKeyVersion: conn.tokenKeyVersion,
       webhookSecret: conn.webhookSecret,
-      scopeSelection: (conn.scopeSelection as GitHubScopeSelection) ?? {},
+      webhookScope: (conn.webhookScope as GitHubWebhookScope) ?? {},
     };
   },
 });
 
-export const writeScopeSelection = internalMutation({
+export const writeWebhookScope = internalMutation({
   args: {
     connectionId: v.id("connection"),
-    scopeSelection: v.any(),
+    webhookScope: v.any(),
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.connectionId, {
-      scopeSelection: args.scopeSelection,
+      webhookScope: args.webhookScope,
     });
   },
 });
@@ -62,23 +60,89 @@ export const finalizeDisconnect = internalMutation({
       encryptedAccessToken: undefined,
       encryptedRefreshToken: undefined,
       tokenKeyVersion: undefined,
-      syncEnabled: false,
       webhookSecret: undefined,
+      webhookScope: undefined,
     });
   },
 });
 
-export const listActiveGithubConnections = internalQuery({
+export const listActiveGithubStarBindings = internalQuery({
   args: {},
-  handler: async (ctx): Promise<Id<"connection">[]> => {
-    const all = await ctx.db
-      .query("connection")
-      .withIndex("by_status_syncEnabled", (q) =>
-        q.eq("status", "active").eq("syncEnabled", true)
-      )
+  handler: async (
+    ctx
+  ): Promise<
+    Array<{
+      bindingId: Id<"connectionSyncBinding">;
+      connectionId: Id<"connection">;
+    }>
+  > => {
+    const bindings = await ctx.db
+      .query("connectionSyncBinding")
+      .withIndex("by_syncEnabled", (q) => q.eq("syncEnabled", true))
       .collect();
-    return all
-      .filter((c: Doc<"connection">) => c.provider === "github")
-      .map((c) => c._id);
+    const out: Array<{
+      bindingId: Id<"connectionSyncBinding">;
+      connectionId: Id<"connection">;
+    }> = [];
+    for (const binding of bindings) {
+      if (binding.syncPaused) {
+        continue;
+      }
+      const conn = await ctx.db.get(binding.connectionId);
+      if (!conn || conn.provider !== "github" || conn.status !== "active") {
+        continue;
+      }
+      const scope = binding.scopeSelection as
+        | { starsEnabled?: boolean }
+        | undefined;
+      if (!scope?.starsEnabled) {
+        continue;
+      }
+      out.push({
+        bindingId: binding._id,
+        connectionId: binding.connectionId,
+      });
+    }
+    return out;
+  },
+});
+
+export const writeBindingScopeSelection = internalMutation({
+  args: {
+    bindingId: v.id("connectionSyncBinding"),
+    scopeSelection: v.any(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.bindingId, {
+      scopeSelection: args.scopeSelection,
+    });
+  },
+});
+
+export const getBindingForGithubStars = internalQuery({
+  args: { bindingId: v.id("connectionSyncBinding") },
+  handler: async (ctx, args) => {
+    const binding = await ctx.db.get(args.bindingId);
+    if (!binding?.syncEnabled || binding.syncPaused) {
+      return null;
+    }
+    const conn = await ctx.db.get(binding.connectionId);
+    if (!conn || conn.provider !== "github") {
+      return null;
+    }
+    if (!(conn.encryptedAccessToken && conn.tokenKeyVersion)) {
+      return null;
+    }
+    return {
+      bindingId: binding._id,
+      connectionId: binding.connectionId,
+      encryptedAccessToken: conn.encryptedAccessToken,
+      tokenKeyVersion: conn.tokenKeyVersion,
+      scopeSelection:
+        (binding.scopeSelection as {
+          starsEnabled?: boolean;
+          starsSnapshot?: string[];
+        }) ?? {},
+    };
   },
 });

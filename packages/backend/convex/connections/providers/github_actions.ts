@@ -118,7 +118,7 @@ export const reconcileWebhooks = internalAction({
       conn.tokenKeyVersion
     );
 
-    const current: ScopedRepo[] = conn.scopeSelection.repos ?? [];
+    const current: ScopedRepo[] = conn.webhookScope.repos ?? [];
     const currentByName = new Map(current.map((r) => [r.name, r]));
     const target = new Set(args.targetRepos);
 
@@ -186,11 +186,10 @@ export const reconcileWebhooks = internalAction({
     });
 
     await ctx.runMutation(
-      internal.connections.providers.github_internals.writeScopeSelection,
+      internal.connections.providers.github_internals.writeWebhookScope,
       {
         connectionId: args.connectionId,
-        scopeSelection: {
-          ...conn.scopeSelection,
+        webhookScope: {
           repos: finalRepos,
         },
       }
@@ -288,30 +287,30 @@ export const disconnectAndCleanup = internalAction({
 export const pollAllStars = internalAction({
   args: {},
   handler: async (ctx): Promise<void> => {
-    const ids: Id<"connection">[] = await ctx.runQuery(
+    const targets = await ctx.runQuery(
       internal.connections.providers.github_internals
-        .listActiveGithubConnections,
+        .listActiveGithubStarBindings,
       {}
     );
-    for (const id of ids) {
+    for (const { bindingId } of targets) {
       try {
         await ctx.runAction(
-          internal.connections.providers.github_actions.pollStarsForConnection,
-          { connectionId: id }
+          internal.connections.providers.github_actions.pollStarsForBinding,
+          { bindingId }
         );
       } catch (err) {
-        console.warn("[github] pollStars failed", id, err);
+        console.warn("[github] pollStars failed", bindingId, err);
       }
     }
   },
 });
 
-export const pollStarsForConnection = internalAction({
-  args: { connectionId: v.id("connection") },
+export const pollStarsForBinding = internalAction({
+  args: { bindingId: v.id("connectionSyncBinding") },
   handler: async (ctx, args): Promise<void> => {
     const conn = await ctx.runQuery(
-      internal.connections.providers.github_internals.getConnectionForGithub,
-      { connectionId: args.connectionId }
+      internal.connections.providers.github_internals.getBindingForGithubStars,
+      { bindingId: args.bindingId }
     );
     if (!conn?.scopeSelection.starsEnabled) {
       return;
@@ -341,11 +340,11 @@ export const pollStarsForConnection = internalAction({
     const currentSet = new Set(currentNames);
 
     if (isFirstRun) {
-      // "From now": baseline only, don't ingest existing stars.
       await ctx.runMutation(
-        internal.connections.providers.github_internals.writeScopeSelection,
+        internal.connections.providers.github_internals
+          .writeBindingScopeSelection,
         {
-          connectionId: args.connectionId,
+          bindingId: args.bindingId,
           scopeSelection: {
             ...conn.scopeSelection,
             starsSnapshot: currentNames,
@@ -365,7 +364,7 @@ export const pollStarsForConnection = internalAction({
         await ctx.runMutation(
           internal.connections.sync.internals.upsertSyncedResource,
           {
-            connectionId: args.connectionId,
+            bindingId: args.bindingId,
             providerId: "github",
             upsert: {
               externalId: `star:${repo.full_name}`,
@@ -393,7 +392,7 @@ export const pollStarsForConnection = internalAction({
         await ctx.runMutation(
           internal.connections.sync.internals.tombstoneSyncedResource,
           {
-            connectionId: args.connectionId,
+            bindingId: args.bindingId,
             externalId: `star:${fullName}`,
           }
         );
@@ -403,9 +402,10 @@ export const pollStarsForConnection = internalAction({
     }
 
     await ctx.runMutation(
-      internal.connections.providers.github_internals.writeScopeSelection,
+      internal.connections.providers.github_internals
+        .writeBindingScopeSelection,
       {
-        connectionId: args.connectionId,
+        bindingId: args.bindingId,
         scopeSelection: {
           ...conn.scopeSelection,
           starsSnapshot: currentNames,
