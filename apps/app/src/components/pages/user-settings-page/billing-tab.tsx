@@ -116,8 +116,6 @@ export function BillingTab({ workspaceId }: { workspaceId?: Id<"workspace"> }) {
     convexQuery(api.billing.queries.getMyBillingState, {})
   );
 
-  usePostCheckoutSync();
-
   if (isLoading) {
     return <TabSkeleton />;
   }
@@ -538,35 +536,31 @@ function ResyncButton() {
   );
 }
 
-function usePostCheckoutSync() {
+export function usePostCheckoutBillingSync(
+  checkout: "success" | "cancel" | undefined,
+  clearCheckout: () => void
+) {
   const queryClient = useQueryClient();
   const resyncAction = useConvexAction(api.billing.repair.resyncMySubscription);
-  const started = useRef(false);
+  const resyncActionRef = useRef(resyncAction);
+  resyncActionRef.current = resyncAction;
+  const handledCheckoutRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (started.current) {
+    if (checkout !== "success") {
       return;
     }
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("checkout") !== "success") {
+    if (handledCheckoutRef.current === "success") {
       return;
     }
-    started.current = true;
+    handledCheckoutRef.current = "success";
+    clearCheckout();
 
-    params.delete("checkout");
-    const newSearch = params.toString();
-    window.history.replaceState(
-      null,
-      "",
-      `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}`
-    );
-
-    let cancelled = false;
-    const syncAfterCheckout = async () => {
-      const deadline = Date.now() + 30_000;
-      while (!cancelled && Date.now() < deadline) {
+    void (async () => {
+      const deadline = Date.now() + 90_000;
+      while (Date.now() < deadline) {
         try {
-          const result = (await resyncAction({})) as ResyncResult;
+          const result = (await resyncActionRef.current({})) as ResyncResult;
           if (result.status === "resynced") {
             notifyResyncResult(result);
             queryClient.invalidateQueries({ queryKey: billingStateQueryKey });
@@ -582,22 +576,13 @@ function usePostCheckoutSync() {
         }
         await new Promise((resolve) => window.setTimeout(resolve, 2000));
       }
-      if (cancelled) {
-        return;
-      }
       queryClient.invalidateQueries({ queryKey: billingStateQueryKey });
       toastManager.add({
         type: "info",
         title: "Still syncing your subscription",
         description:
-          "Payment succeeded but your plan hasn't updated yet. Use Resync from Stripe below in a moment.",
+          "Payment succeeded but your plan hasn't updated yet. Open Billing and use Resync from Stripe.",
       });
-    };
-
-    void syncAfterCheckout();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [queryClient, resyncAction]);
+    })();
+  }, [checkout, clearCheckout, queryClient]);
 }

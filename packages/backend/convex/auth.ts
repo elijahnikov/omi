@@ -174,6 +174,27 @@ function buildStripePlugin(ctx: GenericCtx<DataModel>) {
   const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
     apiVersion: "2026-03-25.dahlia",
   });
+  const scheduleSubscriptionSync = async (referenceId: string) => {
+    if (!("scheduler" in ctx)) {
+      return;
+    }
+    const actionCtx = ctx as ActionCtx;
+    const appUserId = await actionCtx.runQuery(
+      components.betterAuth.queries.getAppUserId,
+      { authId: referenceId as Id<"user"> }
+    );
+    if (!appUserId) {
+      return;
+    }
+    const userId = appUserId as Id<"user">;
+    for (const delayMs of [0, 3000, 10_000]) {
+      await actionCtx.scheduler.runAfter(
+        delayMs,
+        internal.billing.repair.syncBillingForUser,
+        { userId }
+      );
+    }
+  };
   return stripePlugin({
     stripeClient,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
@@ -190,11 +211,13 @@ function buildStripePlugin(ctx: GenericCtx<DataModel>) {
         await applyActiveSubscription(ctx as ActionCtx, subscription, {
           topUp: true,
         });
+        await scheduleSubscriptionSync(subscription.referenceId);
       },
       onSubscriptionUpdate: async ({ subscription }) => {
         await applyActiveSubscription(ctx as ActionCtx, subscription, {
           topUp: false,
         });
+        await scheduleSubscriptionSync(subscription.referenceId);
       },
       onSubscriptionCancel: async ({ subscription }) => {
         await applyCanceledSubscription(ctx as ActionCtx, subscription);

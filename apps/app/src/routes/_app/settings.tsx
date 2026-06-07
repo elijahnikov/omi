@@ -1,9 +1,11 @@
 import type { Id } from "@omi/backend/_generated/dataModel.js";
 import { createFileRoute } from "@tanstack/react-router";
+import { useCallback } from "react";
 import {
   UserSettingsPageComponent,
   type UserSettingsTab,
 } from "~/components/pages/user-settings-page";
+import { usePostCheckoutBillingSync } from "~/components/pages/user-settings-page/billing-tab";
 
 const USER_SETTINGS_TABS: readonly UserSettingsTab[] = [
   "general",
@@ -41,8 +43,20 @@ export const Route = createFileRoute("/_app/settings")({
 });
 
 function SettingsPage() {
-  const { tab, workspaceId } = Route.useSearch();
+  const { tab, workspaceId, checkout } = Route.useSearch();
   const navigate = Route.useNavigate();
+  const clearCheckout = useCallback(() => {
+    navigate({
+      replace: true,
+      search: (prev) => ({ ...prev, checkout: undefined }),
+    });
+  }, [navigate]);
+
+  usePostCheckoutBillingSync(checkout, clearCheckout);
+
+  const activeTab =
+    tab ??
+    (checkout === "success" || checkout === "cancel" ? "billing" : "general");
 
   return (
     <UserSettingsPageComponent
@@ -55,7 +69,7 @@ function SettingsPage() {
           }),
         })
       }
-      tab={tab ?? "general"}
+      tab={activeTab}
       workspaceId={workspaceId}
     />
   );
