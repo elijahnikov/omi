@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../../_generated/dataModel";
 import { protectedQuery, workspaceQuery } from "../../utils";
 import { getProvider, isProviderId } from "../providers/registry";
 
@@ -10,7 +11,23 @@ export const listBindingsForWorkspace = workspaceQuery({
       .withIndex("by_workspace", (q) => q.eq("workspaceId", ctx.workspace._id))
       .collect();
 
-    const result = [];
+    const result: {
+      _id: Id<"connectionSyncBinding">;
+      connectionId: Id<"connection">;
+      workspaceId: Id<"workspace">;
+      scopeSelection?: unknown;
+      destinationCollectionId?: Id<"collection">;
+      syncEnabled: boolean;
+      syncPaused?: boolean;
+      lastSyncedAt?: number;
+      lastWebhookAt?: number;
+      createdAt?: number;
+      provider: string;
+      providerAccountLabel?: string;
+      connectionStatus: string;
+      lastError?: string;
+      supportsSync: boolean;
+    }[] = [];
     for (const binding of bindings) {
       const connection = await ctx.db.get(binding.connectionId);
       if (!connection || connection.userId !== ctx.user._id) {

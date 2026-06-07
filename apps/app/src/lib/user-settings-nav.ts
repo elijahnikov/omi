@@ -10,11 +10,11 @@ export type UserSettingsTab =
   | "billing"
   | "account";
 
-export type UserSettingsSearch = {
+export interface UserSettingsSearch {
   checkout?: "success" | "cancel";
   tab?: UserSettingsTab;
   workspaceId?: Id<"workspace">;
-};
+}
 
 export function userSettingsBackNavigation(workspaceId?: Id<"workspace">) {
   if (workspaceId) {

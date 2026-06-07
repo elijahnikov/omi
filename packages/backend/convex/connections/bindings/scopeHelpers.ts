@@ -38,8 +38,10 @@ export function mergeLinearTeams(scopes: unknown[]): string[] {
   return [...teams];
 }
 
+const GITHUB_EXTERNAL_ID_RE = /^(?:issue|pr|star):([^/]+)\/([^/]+)/;
+
 export function githubRepoFromExternalId(externalId: string): string | null {
-  const match = externalId.match(/^(?:issue|pr|star):([^/]+)\/([^/]+)/);
+  const match = externalId.match(GITHUB_EXTERNAL_ID_RE);
   if (!match) {
     return null;
   }

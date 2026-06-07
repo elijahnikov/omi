@@ -26,12 +26,14 @@ export const migrateToSyncBindings = internalMutation({
       if (!(legacy.syncEnabled && legacy.workspaceId)) {
         continue;
       }
+      const workspaceId = legacy.workspaceId;
+      if (!workspaceId) {
+        continue;
+      }
       const existing = await ctx.db
         .query("connectionSyncBinding")
         .withIndex("by_connection_workspace", (q) =>
-          q
-            .eq("connectionId", connection._id)
-            .eq("workspaceId", legacy.workspaceId!)
+          q.eq("connectionId", connection._id).eq("workspaceId", workspaceId)
         )
         .unique();
       if (!existing) {

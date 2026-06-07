@@ -1,5 +1,4 @@
 import { internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
 import { internalAction, internalMutation } from "../../_generated/server";
 
 const POLL_INTERVAL_MS = 6 * 60 * 60 * 1000;

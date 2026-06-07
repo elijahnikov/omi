@@ -1,4 +1,5 @@
 import { ConvexError, v } from "convex/values";
+import type { Id } from "../_generated/dataModel";
 import { protectedQuery } from "../utils";
 import { getProvider, isProviderId } from "./providers/registry";
 
@@ -21,7 +22,27 @@ export const listMyConnections = protectedQuery({
       .withIndex("by_user_provider", (q) => q.eq("userId", ctx.user._id))
       .collect();
 
-    const result = [];
+    const result: {
+      _id: Id<"connection">;
+      provider: string;
+      authType: string;
+      status: string;
+      providerAccountLabel?: string;
+      providerAccountId?: string;
+      expiresAt?: number;
+      scope?: string;
+      lastError?: string;
+      lastErrorAt?: number;
+      supportsSync?: boolean;
+      createdAt?: number;
+      syncBindings?: {
+        _id: Id<"connectionSyncBinding">;
+        workspaceId: Id<"workspace">;
+        syncEnabled: boolean;
+        syncPaused?: boolean;
+        lastSyncedAt?: number;
+      }[];
+    }[] = [];
     for (const c of rows.filter((row) => row.status !== "revoked")) {
       const bindings = await ctx.db
         .query("connectionSyncBinding")

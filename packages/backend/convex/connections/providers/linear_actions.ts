@@ -2,7 +2,6 @@
 
 import { ConvexError, v } from "convex/values";
 import { internal } from "../../_generated/api";
-import type { Id } from "../../_generated/dataModel";
 import { action, internalAction } from "../../_generated/server";
 import { getAuthIdentity } from "../../utils";
 import { decryptToken } from "../tokens";
