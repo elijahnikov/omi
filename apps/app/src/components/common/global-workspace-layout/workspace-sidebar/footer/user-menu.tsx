@@ -35,6 +35,7 @@ import BoringAvatar from "boring-avatars";
 import { useState } from "react";
 import { CreateWorkspaceDialog } from "~/components/common/create-workspace-dialog";
 import { WorkspaceIcon } from "~/components/common/workspace-icon";
+import { markIntentionalSignOut } from "~/lib/sign-out";
 
 type Workspace = Doc<"workspace"> & { role: string };
 
@@ -250,8 +251,9 @@ export function UserMenu() {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={async () => {
+              markIntentionalSignOut();
               await authClient.signOut();
-              router.navigate({ to: "/login" });
+              router.navigate({ replace: true, to: "/login" });
             }}
           >
             <RiLogoutBoxFill />

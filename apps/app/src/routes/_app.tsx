@@ -9,11 +9,15 @@ import {
 } from "@tanstack/react-router";
 import { Authenticated } from "convex/react";
 import { ErrorState } from "~/components/common/error-state";
+import { consumeIntentionalSignOut } from "~/lib/sign-out";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayoutComponent,
   beforeLoad: ({ context, location }) => {
     if (!context.isAuthenticated) {
+      if (consumeIntentionalSignOut()) {
+        throw redirect({ to: "/login" });
+      }
       throw redirect({
         to: "/login",
         search: { redirect: location.href },

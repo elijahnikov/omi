@@ -23,6 +23,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ConvexError } from "convex/values";
 import { useState } from "react";
+import { markIntentionalSignOut } from "~/lib/sign-out";
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ConvexError) {
@@ -52,8 +53,9 @@ export function AccountTab() {
   }
 
   const handleSignOut = async () => {
+    markIntentionalSignOut();
     await authClient.signOut();
-    navigate({ to: "/login" });
+    navigate({ replace: true, to: "/login" });
   };
 
   const handleExport = async () => {
@@ -163,8 +165,9 @@ function DeleteAccountDialog({
     }
     try {
       await deleteAccount({});
+      markIntentionalSignOut();
       await authClient.signOut();
-      navigate({ to: "/login" });
+      navigate({ replace: true, to: "/login" });
     } catch (err) {
       toastManager.add({
         type: "error",
