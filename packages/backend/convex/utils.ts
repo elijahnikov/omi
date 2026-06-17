@@ -30,7 +30,7 @@ export const getAuthIdentity = (ctx: {
 type AuthResolverCtx = QueryCtx | MutationCtx | ActionCtx;
 type UserResolverCtx = QueryCtx | MutationCtx;
 
-async function getResolvedAuth(
+export async function getResolvedAuth(
   ctx: AuthResolverCtx
 ): Promise<{ identity: AuthIdentity; userId: Id<"user"> } | null> {
   const identity = await getAuthIdentity(ctx);

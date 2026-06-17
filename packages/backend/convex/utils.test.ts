@@ -85,6 +85,49 @@ describe("protectedQuery", () => {
     expect(workspaces[0]?.role).toBe("owner");
   });
 });
+describe("currentUser", () => {
+  it("resolves the app user when identity.userId is missing", async () => {
+    const t = createHarness();
+    const { userId } = await seedUser(t, {
+      email: "oauth-current@example.com",
+      username: "oauth-current",
+    });
+    const now = Date.now();
+    const authUser = await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "user",
+        data: {
+          createdAt: now,
+          email: "oauth-current@example.com",
+          emailVerified: true,
+          name: "OAuth Current User",
+          updatedAt: now,
+          userId: userId as string,
+        },
+      },
+    });
+    const authUserId = authUser._id as string;
+    const session = await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "session",
+        data: {
+          createdAt: now,
+          expiresAt: now + 60_000,
+          token: "oauth-current-session-token",
+          updatedAt: now,
+          userId: authUserId,
+        },
+      },
+    });
+
+    const { user } = await asUser(t, {
+      subject: authUserId,
+      sessionId: session._id as string,
+    }).query(api.user.queries.currentUser);
+
+    expect(user?._id).toBe(userId);
+  });
+});
 describe("protectedMutation", () => {
   it("throws when not authenticated", async () => {
     const t = createHarness();

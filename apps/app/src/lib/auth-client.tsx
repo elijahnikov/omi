@@ -1,7 +1,9 @@
 import { AuthBoundary } from "@convex-dev/better-auth/react";
+import { convexQuery } from "@convex-dev/react-query";
 import { authClient } from "@omi/auth/client";
 import { api } from "@omi/backend/_generated/api.js";
 import { isUnauthenticatedError } from "@omi/backend/shared.js";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import type { PropsWithChildren } from "react";
 
@@ -27,7 +29,21 @@ export const ClientAuthBoundary = ({ children }: PropsWithChildren) => {
         navigate({ to: "/login" });
       }}
     >
-      {children}
+      <AuthReadyGate>{children}</AuthReadyGate>
     </AuthBoundary>
   );
 };
+
+function AuthReadyGate({ children }: PropsWithChildren) {
+  const location = useLocation();
+  const isPublicPath = PUBLIC_PATHS.has(location.pathname);
+  const { data } = useQuery({
+    ...convexQuery(api.user.queries.currentUser, isPublicPath ? "skip" : {}),
+  });
+
+  if (isPublicPath || data?.user) {
+    return children;
+  }
+
+  return null;
+}
