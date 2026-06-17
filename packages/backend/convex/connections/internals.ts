@@ -39,6 +39,8 @@ export const insertConnection = internalMutation({
         status: "active",
         encryptedAccessToken: args.encryptedAccessToken,
         encryptedRefreshToken: args.encryptedRefreshToken,
+        accessToken: undefined,
+        refreshToken: undefined,
         tokenKeyVersion: args.tokenKeyVersion,
         expiresAt: args.expiresAt,
         scope: args.scope,

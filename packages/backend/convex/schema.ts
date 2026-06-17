@@ -455,6 +455,8 @@ export default defineSchema({
     ),
     encryptedAccessToken: v.optional(v.string()),
     encryptedRefreshToken: v.optional(v.string()),
+    accessToken: v.optional(v.string()),
+    refreshToken: v.optional(v.string()),
     tokenKeyVersion: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
     scope: v.optional(v.string()),
