@@ -6,7 +6,7 @@ import {
   seedUser,
   seedWorkspace,
 } from "../test/harness";
-import { api } from "./_generated/api";
+import { api, components } from "./_generated/api";
 
 const notAuthenticatedRegex = /Not authenticated/;
 const userNotFoundRegex = /User not found/;
@@ -38,6 +38,49 @@ describe("protectedQuery", () => {
     const workspaces = await asUser(t, identity).query(
       api.workspace.queries.listByUser
     );
+    expect(workspaces).toHaveLength(1);
+    expect(workspaces[0]?.role).toBe("owner");
+  });
+  it("falls back to the Better Auth app-user mapping when identity.userId is missing", async () => {
+    const t = createHarness();
+    const { userId } = await seedUser(t, {
+      email: "oauth@example.com",
+      username: "oauth",
+    });
+    await seedWorkspace(t, userId);
+    const now = Date.now();
+    const authUser = await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "user",
+        data: {
+          createdAt: now,
+          email: "oauth@example.com",
+          emailVerified: true,
+          name: "OAuth User",
+          updatedAt: now,
+          userId: userId as string,
+        },
+      },
+    });
+    const authUserId = authUser._id as string;
+    const sessionId = await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "session",
+        data: {
+          createdAt: now,
+          expiresAt: now + 60_000,
+          token: "oauth-session-token",
+          updatedAt: now,
+          userId: authUserId,
+        },
+      },
+    });
+
+    const workspaces = await asUser(t, {
+      subject: authUserId,
+      sessionId: sessionId._id as string,
+    }).query(api.workspace.queries.listByUser);
+
     expect(workspaces).toHaveLength(1);
     expect(workspaces[0]?.role).toBe("owner");
   });

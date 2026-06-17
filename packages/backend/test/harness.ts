@@ -75,7 +75,8 @@ export function asUser(
   t: TestHarness,
   identity: {
     subject: string;
-    userId: string;
+    sessionId?: string;
+    userId?: string;
   }
 ): TestHarness {
   return t.withIdentity(

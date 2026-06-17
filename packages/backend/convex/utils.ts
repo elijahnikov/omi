@@ -7,7 +7,15 @@ import {
   customQuery,
 } from "convex-helpers/server/customFunctions";
 import type { Id } from "./_generated/dataModel";
-import { action, mutation, query } from "./_generated/server";
+import {
+  type ActionCtx,
+  action,
+  type MutationCtx,
+  mutation,
+  type QueryCtx,
+  query,
+} from "./_generated/server";
+import { authComponent } from "./auth";
 import { type RateLimitName, rateLimiter } from "./rateLimiter";
 export type AuthIdentity = UserIdentity & {
   userId?: string;
@@ -18,6 +26,44 @@ export const getAuthIdentity = (ctx: {
     getUserIdentity(): Promise<UserIdentity | null>;
   };
 }) => ctx.auth.getUserIdentity() as Promise<AuthIdentity | null>;
+
+type AuthResolverCtx = QueryCtx | MutationCtx | ActionCtx;
+type UserResolverCtx = QueryCtx | MutationCtx;
+
+async function getResolvedAuth(
+  ctx: AuthResolverCtx
+): Promise<{ identity: AuthIdentity; userId: Id<"user"> } | null> {
+  const identity = await getAuthIdentity(ctx);
+  if (!identity) {
+    return null;
+  }
+  if (identity.userId) {
+    return {
+      identity,
+      userId: identity.userId as Id<"user">,
+    };
+  }
+  const authUser = await authComponent.safeGetAuthUser(ctx);
+  if (!authUser?.userId) {
+    return null;
+  }
+  return {
+    identity: { ...identity, userId: authUser.userId },
+    userId: authUser.userId as Id<"user">,
+  };
+}
+
+async function getResolvedUser(ctx: UserResolverCtx) {
+  const auth = await getResolvedAuth(ctx);
+  if (!auth) {
+    throw new ConvexError("Not authenticated");
+  }
+  const user = await ctx.db.get(auth.userId);
+  if (!user) {
+    throw new ConvexError("User not found");
+  }
+  return { user, identity: auth.identity };
+}
 
 export function timingSafeEqualHex(left: string, right: string): boolean {
   if (left.length !== right.length) {
@@ -42,28 +88,13 @@ interface WorkspaceOpts extends ProtectedOpts {
 export const protectedQuery = customQuery(
   query,
   customCtx(async (ctx) => {
-    const identity = await getAuthIdentity(ctx);
-    if (!identity?.userId) {
-      throw new ConvexError("Not authenticated");
-    }
-    const user = await ctx.db.get(identity.userId as Id<"user">);
-    if (!user) {
-      throw new ConvexError("User not found");
-    }
-    return { user, identity };
+    return await getResolvedUser(ctx);
   })
 );
 export const protectedMutation = customMutation(mutation, {
   args: {},
   input: async (ctx, _args, opts: ProtectedOpts = {}) => {
-    const identity = await getAuthIdentity(ctx);
-    if (!identity?.userId) {
-      throw new ConvexError("Not authenticated");
-    }
-    const user = await ctx.db.get(identity.userId as Id<"user">);
-    if (!user) {
-      throw new ConvexError("User not found");
-    }
+    const { user, identity } = await getResolvedUser(ctx);
     if (opts.rateLimit) {
       await rateLimiter.limit(ctx, opts.rateLimit, {
         key: user._id,
@@ -76,18 +107,18 @@ export const protectedMutation = customMutation(mutation, {
 export const protectedAction = customAction(action, {
   args: {},
   input: async (ctx, _args, opts: ProtectedOpts = {}) => {
-    const identity = await getAuthIdentity(ctx);
-    if (!identity?.userId) {
+    const auth = await getResolvedAuth(ctx);
+    if (!auth) {
       throw new ConvexError("Not authenticated");
     }
     if (opts.rateLimit) {
       await rateLimiter.limit(ctx, opts.rateLimit, {
-        key: identity.userId,
+        key: auth.userId,
         throws: true,
       });
     }
     return {
-      ctx: { identity, userId: identity.userId as Id<"user"> },
+      ctx: { identity: auth.identity, userId: auth.userId },
       args: {},
     };
   },
@@ -103,14 +134,7 @@ export const workspaceQuery = customQuery(query, {
       role?: WorkspaceRole[];
     } = {}
   ) => {
-    const identity = await getAuthIdentity(ctx);
-    if (!identity?.userId) {
-      throw new ConvexError("Not authenticated");
-    }
-    const user = await ctx.db.get(identity.userId as Id<"user">);
-    if (!user) {
-      throw new ConvexError("User not found");
-    }
+    const { user, identity } = await getResolvedUser(ctx);
     const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
       throw new ConvexError("Workspace not found");
@@ -133,14 +157,7 @@ export const workspaceQuery = customQuery(query, {
 export const workspaceMutation = customMutation(mutation, {
   args: { workspaceId: v.id("workspace") },
   input: async (ctx, args, opts: WorkspaceOpts = {}) => {
-    const identity = await getAuthIdentity(ctx);
-    if (!identity?.userId) {
-      throw new ConvexError("Not authenticated");
-    }
-    const user = await ctx.db.get(identity.userId as Id<"user">);
-    if (!user) {
-      throw new ConvexError("User not found");
-    }
+    const { user, identity } = await getResolvedUser(ctx);
     const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
       throw new ConvexError("Workspace not found");
@@ -170,18 +187,18 @@ export const workspaceMutation = customMutation(mutation, {
 export const workspaceAction = customAction(action, {
   args: { workspaceId: v.id("workspace") },
   input: async (ctx, _args, opts: WorkspaceOpts = {}) => {
-    const identity = await getAuthIdentity(ctx);
-    if (!identity?.userId) {
+    const auth = await getResolvedAuth(ctx);
+    if (!auth) {
       throw new ConvexError("Not authenticated");
     }
     if (opts.rateLimit) {
       await rateLimiter.limit(ctx, opts.rateLimit, {
-        key: identity.userId,
+        key: auth.userId,
         throws: true,
       });
     }
     return {
-      ctx: { identity, userId: identity.userId as Id<"user"> },
+      ctx: { identity: auth.identity, userId: auth.userId },
       args: {},
     };
   },
